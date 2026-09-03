@@ -1,17 +1,30 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import { getPosts } from '../lib/posts';
+import { siteConfig } from '../config';
 
+const posts = await getPosts();
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout>
+	<section class="shell home-intro">
+		<p class="eyebrow">PERSONAL BLOG</p>
+		<h1>记录想法，分享实践。</h1>
+		<p class="lede">{siteConfig.description}</p>
+	</section>
+
+	<section class="shell section-block" aria-labelledby="latest-heading">
+		<div class="section-heading">
+			<h2 id="latest-heading">最近文章</h2>
+			<a class="text-link" href="/posts/">查看全部 <span aria-hidden="true">→</span></a>
+		</div>
+		{posts.length > 0 ? (
+			<div class="post-list">
+				{posts.slice(0, 5).map((post) => <PostCard post={post} />)}
+			</div>
+		) : (
+			<p class="empty-state">还没有文章。</p>
+		)}
+	</section>
+</BaseLayout>

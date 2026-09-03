@@ -1,0 +1,25 @@
+---
+import type { BlogPost } from '../lib/posts';
+import { formatDate, getReadingTime } from '../lib/posts';
+
+interface Props {
+	post: BlogPost;
+}
+
+const { post } = Astro.props;
+---
+
+<article class="post-card">
+	<div class="post-meta">
+		<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+		<span aria-hidden="true">·</span>
+		<span>{getReadingTime(post.body)}</span>
+	</div>
+	<h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
+	<p>{post.data.description}</p>
+	{post.data.tags.length > 0 && (
+		<div class="tag-row" aria-label="文章标签">
+			{post.data.tags.map((tag) => <a class="tag" href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a>)}
+		</div>
+	)}
+</article>

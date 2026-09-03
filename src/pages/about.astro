@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../config';
+---
+
+<BaseLayout title="关于" description={`关于 ${siteConfig.name}。`}>
+	<section class="shell page-intro">
+		<p class="eyebrow">ABOUT</p>
+		<h1>关于</h1>
+	</section>
+	<section class="shell prose standalone-prose">
+		<p>这里是 {siteConfig.name}，一个用来记录想法、实践和生活片段的个人空间。</p>
+		<p>博客使用 Astro 构建，文章以 Markdown 保存，保持简单、快速，也方便长期维护。</p>
+		<h2>联系我</h2>
+		<p>如果你想交流，可以通过下方链接找到我。</p>
+		<div class="link-list">
+			{siteConfig.social.github && <a href={siteConfig.social.github} rel="me">GitHub ↗</a>}
+			{siteConfig.social.weibo && <a href={siteConfig.social.weibo} rel="me">微博 ↗</a>}
+			{!siteConfig.social.github && !siteConfig.social.weibo && <span class="muted">社交链接将在这里更新。</span>}
+		</div>
+	</section>
+</BaseLayout>

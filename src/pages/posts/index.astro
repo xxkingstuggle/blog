@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPosts } from '../../lib/posts';
+
+const posts = await getPosts();
+---
+
+<BaseLayout title="文章" description="所有文章。">
+	<section class="shell page-intro">
+		<p class="eyebrow">WRITING</p>
+		<h1>文章</h1>
+		<p class="lede">按时间顺序，记录正在思考和实践的事情。</p>
+	</section>
+	<section class="shell section-block" aria-label="文章列表">
+		<div class="post-list">
+			{posts.map((post) => <PostCard post={post} />)}
+		</div>
+	</section>
+</BaseLayout>

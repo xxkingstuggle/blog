@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { formatDate, getPosts } from '../lib/posts';
+
+const posts = await getPosts();
+const years = [...new Set(posts.map((post) => post.data.pubDate.getFullYear()))];
+---
+
+<BaseLayout title="归档" description="按年份浏览所有文章。">
+	<section class="shell page-intro">
+		<p class="eyebrow">ARCHIVE</p>
+		<h1>归档</h1>
+		<p class="lede">共 {posts.length} 篇文章。</p>
+	</section>
+	<section class="shell archive-list">
+		{years.map((year) => (
+			<section class="archive-year" aria-labelledby={`year-${year}`}>
+				<h2 id={`year-${year}`}>{year}</h2>
+				<div class="archive-items">
+					{posts.filter((post) => post.data.pubDate.getFullYear() === year).map((post) => (
+						<a class="archive-item" href={`/posts/${post.id}/`}>
+							<span>{post.data.title}</span>
+							<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+						</a>
+					))}
+				</div>
+			</section>
+		))}
+	</section>
+</BaseLayout>
