@@ -38,3 +38,10 @@ test('image signatures must match their declared safe type', () => {
 	assert.equal(testHelpers.hasValidImageSignature(new TextEncoder().encode('<svg onload=alert(1)>'), 'image/svg+xml'), false);
 	assert.equal(testHelpers.hasValidImageSignature(new TextEncoder().encode('<svg onload=alert(1)>'), 'image/png'), false);
 });
+
+test('GitHub App PKCS#1 keys are wrapped as PKCS#8 for WebCrypto', () => {
+	const pkcs1 = '-----BEGIN RSA PRIVATE KEY-----\nAQID\n-----END RSA PRIVATE KEY-----';
+	const wrapped = testHelpers.pemToBytes(pkcs1);
+	assert.equal(wrapped[0], 0x30);
+	assert.deepEqual([...wrapped.slice(-5)], [0x04, 0x03, 0x01, 0x02, 0x03]);
+});

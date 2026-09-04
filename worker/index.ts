@@ -141,8 +141,35 @@ function decodeJsonPart(value: string): JsonRecord | null {
 	}
 }
 
+function concatBytes(...parts: Uint8Array[]) {
+	const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+	let offset = 0;
+	for (const part of parts) {
+		result.set(part, offset);
+		offset += part.length;
+	}
+	return result;
+}
+
+function derLength(length: number) {
+	if (length < 128) return Uint8Array.of(length);
+	const bytes: number[] = [];
+	for (let value = length; value > 0; value >>>= 8) bytes.unshift(value & 0xff);
+	return Uint8Array.of(0x80 | bytes.length, ...bytes);
+}
+
+function der(tag: number, content: Uint8Array) {
+	return concatBytes(Uint8Array.of(tag), derLength(content.length), content);
+}
+
 function pemToBytes(pem: string) {
-	return decodeBase64Url(pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s+/g, ''));
+	const isPkcs1 = pem.includes('-----BEGIN RSA PRIVATE KEY-----');
+	const body = pem.replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----|-----END (?:RSA )?PRIVATE KEY-----|\s+/g, '');
+	const bytes = decodeBase64Url(body);
+	if (!isPkcs1) return bytes;
+	const version = Uint8Array.of(0x02, 0x01, 0x00);
+	const rsaAlgorithm = Uint8Array.of(0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00);
+	return der(0x30, concatBytes(version, rsaAlgorithm, der(0x04, bytes)));
 }
 
 function toBase64(bytes: Uint8Array) {
@@ -987,6 +1014,7 @@ export const testHelpers = {
 	safePublicUrl,
 	safeMarkdownPreview,
 	hasValidImageSignature,
+	pemToBytes,
 };
 
 export default {
