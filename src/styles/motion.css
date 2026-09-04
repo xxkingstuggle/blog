@@ -36,10 +36,10 @@
 	}
 
 	.hero-canvas {
-		display: none !important;
+		display: none;
 	}
 
 	.hero-canvas-fallback {
-		display: block !important;
+		display: block;
 	}
 }

@@ -11,7 +11,7 @@ const { featuredPostSlug = 'allow-discomfort' } = Astro.props;
 	<canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
 
 	<!-- Static Fallback for prefers-reduced-motion -->
-	<div class="hero-canvas-fallback" aria-hidden="true" style="display: none; position: absolute; inset: 0; background: radial-gradient(circle at 50% 40%, rgba(182, 255, 59, 0.08) 0%, rgba(8, 10, 8, 1) 75%);"></div>
+	<div class="hero-canvas-fallback" aria-hidden="true"></div>
 
 	<div class="shell hero-content">
 		<div class="hero-eyebrow">XINGX.CC.CD / PERSONAL RELEASES</div>
@@ -73,6 +73,7 @@ const { featuredPostSlug = 'allow-discomfort' } = Astro.props;
 
 					canvas.width = Math.floor(width * dpr);
 					canvas.height = Math.floor(height * dpr);
+					context.setTransform(1, 0, 0, 1, 0, 0);
 					context.scale(dpr, dpr);
 
 					initParticles();
@@ -215,28 +216,32 @@ const { featuredPostSlug = 'allow-discomfort' } = Astro.props;
 				}
 
 				// Lifecycle: pause when out of viewport
-				const observer = new IntersectionObserver(
-					([entry]) => {
-						isVisible = entry.isIntersecting;
-						if (isVisible) {
-							startAnimation();
-						} else {
-							stopAnimation();
-						}
-					},
-					{ threshold: 0.05 }
-				);
-
-				observer.observe(heroSection);
+				if ('IntersectionObserver' in window) {
+					const observer = new IntersectionObserver(
+						([entry]) => {
+							isVisible = entry.isIntersecting;
+							if (isVisible) startAnimation();
+							else stopAnimation();
+						},
+						{ threshold: 0.05 }
+					);
+					observer.observe(heroSection);
+				}
 
 				window.addEventListener('resize', resize, { passive: true });
 				window.addEventListener('mousemove', onMouseMove, { passive: true });
 				window.addEventListener('mouseleave', onMouseLeave, { passive: true });
 				window.addEventListener('scroll', onScroll, { passive: true });
 
-				resize();
-				startAnimation();
-			}
+					resize();
+					startAnimation();
+				} else {
+					heroSection.classList.add('hero-no-canvas');
+				}
+		} else {
+			heroSection.classList.add('hero-no-canvas');
 		}
+	} else if (heroSection) {
+		heroSection.classList.add('hero-no-canvas');
 	}
 </script>

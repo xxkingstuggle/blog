@@ -12,6 +12,12 @@
 	padding: clamp(60px, 12vh, 120px) 0 80px;
 }
 
+@supports (min-height: 1svh) {
+	.hero-section {
+		min-height: 92svh;
+	}
+}
+
 .hero-canvas {
 	position: absolute;
 	top: 0;
@@ -20,6 +26,22 @@
 	height: 100%;
 	pointer-events: none;
 	z-index: 1;
+}
+
+.hero-canvas-fallback {
+	display: none;
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background: radial-gradient(circle at 50% 40%, rgba(182, 255, 59, 0.08) 0%, rgba(8, 10, 8, 1) 75%);
+}
+
+.hero-section.hero-no-canvas .hero-canvas {
+	display: none;
+}
+
+.hero-section.hero-no-canvas .hero-canvas-fallback {
+	display: block;
 }
 
 .hero-content {

@@ -1,17 +1,18 @@
 ---
-import { getPosts } from '../../lib/posts';
+import { getPublishedPosts } from '../../lib/posts';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleTemplate from '../../components/article/ArticleTemplate.astro';
 import FeatureTemplate from '../../components/article/FeatureTemplate.astro';
 import { render } from 'astro:content';
 
 export async function getStaticPaths() {
-	const posts = await getPosts();
-	return posts.map((post, index) => ({
+	const posts = await getPublishedPosts();
+	const listedPosts = posts.filter((post) => post.data.listed !== false);
+	return posts.map((post) => ({
 		params: { slug: post.id },
 		props: {
 			post,
-			nextPost: posts[index + 1] ?? null,
+			nextPost: listedPosts.find((candidate) => candidate.data.pubDate.valueOf() < post.data.pubDate.valueOf()) ?? null,
 		},
 	}));
 }

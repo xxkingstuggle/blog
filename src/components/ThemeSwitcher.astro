@@ -1,0 +1,72 @@
+<details class="theme-menu" data-theme-menu>
+	<summary class="theme-menu-trigger" aria-label="选择显示主题" title="选择显示主题">
+		<span class="theme-menu-icon" aria-hidden="true">◐</span>
+		<span class="theme-menu-label">主题</span>
+		<span class="theme-menu-chevron" aria-hidden="true">⌄</span>
+	</summary>
+	<div class="theme-menu-popover" role="group" aria-label="显示主题">
+		<button type="button" class="theme-option" data-theme-value="system" role="radio" aria-checked="true">
+			<span aria-hidden="true">◌</span><span>跟随系统</span>
+		</button>
+		<button type="button" class="theme-option" data-theme-value="light" role="radio" aria-checked="false">
+			<span aria-hidden="true">☼</span><span>日间</span>
+		</button>
+		<button type="button" class="theme-option" data-theme-value="dark" role="radio" aria-checked="false">
+			<span aria-hidden="true">☾</span><span>夜间</span>
+		</button>
+	</div>
+</details>
+
+<script>
+	const menu = document.querySelector<HTMLElement>('[data-theme-menu]');
+	const options = menu?.querySelectorAll<HTMLButtonElement>('[data-theme-value]');
+	const root = document.documentElement;
+	const cookieName = 'xingx-color-mode';
+	type ColorMode = 'system' | 'light' | 'dark';
+
+	function readMode(): ColorMode {
+		const match = document.cookie.match(new RegExp(`(?:^|; )${cookieName}=([^;]+)`));
+		const value = match?.[1];
+		return value === 'light' || value === 'dark' ? value : 'system';
+	}
+
+	function readCachedMode(): ColorMode {
+		const cookieMode = readMode();
+		if (cookieMode !== 'system' || document.cookie.includes(`${cookieName}=system`)) return cookieMode;
+		try {
+			const cached = localStorage.getItem(cookieName);
+			return cached === 'light' || cached === 'dark' ? cached : 'system';
+		} catch { return 'system'; }
+	}
+
+	function setMode(mode: ColorMode) {
+		root.dataset.colorMode = mode;
+		const sharedDomain = location.hostname === 'xingx.cc.cd' || location.hostname.endsWith('.xingx.cc.cd')
+			? ' Domain=xingx.cc.cd;'
+			: '';
+		document.cookie = `${cookieName}=${mode}; Path=/;${sharedDomain} Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+		try { localStorage.setItem(cookieName, mode); } catch { /* storage can be disabled */ }
+		options?.forEach((option) => {
+			option.setAttribute('aria-checked', String(option.dataset.themeValue === mode));
+		});
+	}
+
+	setMode(readCachedMode());
+
+	options?.forEach((option) => {
+		option.addEventListener('click', () => {
+			const value = option.dataset.themeValue;
+			if (value === 'system' || value === 'light' || value === 'dark') {
+				setMode(value);
+				if (menu instanceof HTMLDetailsElement) menu.open = false;
+			}
+		});
+	});
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape' && menu instanceof HTMLDetailsElement && menu.open) {
+			menu.open = false;
+			menu.querySelector<HTMLElement>('summary')?.focus();
+		}
+	});
+</script>

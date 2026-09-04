@@ -3,6 +3,7 @@ import type { BlogPost } from '../../lib/posts';
 import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
 import ArticleRail from './ArticleRail.astro';
 import NextArticle from './NextArticle.astro';
+import CommentsPanel from './CommentsPanel.astro';
 
 interface HeadingItem {
 	depth: number;
@@ -68,6 +69,7 @@ const kicker = post.data.kicker || kindLabel;
 		<div class="article-prose">
 			<slot />
 		</div>
+		<CommentsPanel post={post} />
 		{nextPost && <NextArticle post={nextPost} />}
 	</article>
 

@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getAllTags, getPosts } from '../../lib/posts';
+import { getAllTags, getListedPosts } from '../../lib/posts';
 
-const tags = getAllTags(await getPosts());
+const tags = getAllTags(await getListedPosts());
 ---
 
 <BaseLayout title="标签索引" description="按主题关键词浏览所有文章。">

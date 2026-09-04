@@ -103,6 +103,18 @@ const { caption = '交互实验：拖动滑块或移动光标，观察工具如�
 		width: 100%;
 		height: 100%;
 		display: block;
+		touch-action: none;
+	}
+
+	.friction-canvas-box[data-no-canvas="true"]::after {
+		content: '当前浏览器未启用 Canvas，仍可使用下方聚焦度控制。';
+		display: grid;
+		place-items: center;
+		height: 100%;
+		padding: 24px;
+		color: #949E95;
+		font: 13px/1.6 var(--font-sans);
+		text-align: center;
 	}
 
 	.friction-controls {
@@ -173,7 +185,8 @@ const { caption = '交互实验：拖动滑块或移动光标，观察工具如�
 				height = 340;
 				canvas.width = Math.floor(width * dpr);
 				canvas.height = Math.floor(height * dpr);
-				ctx?.scale(dpr, dpr);
+				ctx!.setTransform(1, 0, 0, 1, 0, 0);
+				ctx!.scale(dpr, dpr);
 				initGrid();
 			}
 
@@ -219,12 +232,12 @@ const { caption = '交互实验：拖动滑块或移动光标，观察工具如�
 
 			let mouseX = -999;
 			let mouseY = -999;
-			canvas.addEventListener('mousemove', (e) => {
+			canvas.addEventListener('pointermove', (e) => {
 				const rect = canvas.getBoundingClientRect();
 				mouseX = e.clientX - rect.left;
 				mouseY = e.clientY - rect.top;
 			});
-			canvas.addEventListener('mouseleave', () => {
+			canvas.addEventListener('pointerleave', () => {
 				mouseX = -999;
 				mouseY = -999;
 			});
@@ -232,6 +245,7 @@ const { caption = '交互实验：拖动滑块或移动光标，观察工具如�
 			let t = 0;
 			let animId = 0;
 			let isVisible = true;
+			const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 			function draw() {
 				if (!isVisible) return;
@@ -302,24 +316,27 @@ const { caption = '交互实验：拖动滑块或移动光标，观察工具如�
 					ctx.shadowBlur = 0;
 				}
 
-				animId = requestAnimationFrame(draw);
+				if (!prefersReducedMotion) animId = requestAnimationFrame(draw);
 			}
 
-			const observer = new IntersectionObserver(([entry]) => {
-				isVisible = entry.isIntersecting;
-				if (isVisible && !animId) {
-					animId = requestAnimationFrame(draw);
-				} else if (!isVisible && animId) {
-					cancelAnimationFrame(animId);
-					animId = 0;
-				}
-			});
-			observer.observe(canvas);
+			if ('IntersectionObserver' in window && !prefersReducedMotion) {
+				const observer = new IntersectionObserver(([entry]) => {
+					isVisible = entry.isIntersecting;
+					if (isVisible && !animId) animId = requestAnimationFrame(draw);
+					else if (!isVisible && animId) {
+						cancelAnimationFrame(animId);
+						animId = 0;
+					}
+				});
+				observer.observe(canvas);
+			}
 
 			window.addEventListener('resize', resize, { passive: true });
 			resize();
 			updateMetrics(75);
-			animId = requestAnimationFrame(draw);
+			if (prefersReducedMotion) draw();
+			else animId = requestAnimationFrame(draw);
 		}
+		else canvas.parentElement?.setAttribute('data-no-canvas', 'true');
 	}
 </script>

@@ -1,4 +1,4 @@
-import { getPosts } from '../lib/posts';
+import { getListedPosts } from '../lib/posts';
 import { siteConfig } from '../config';
 
 function escapeXml(value: string) {
@@ -11,8 +11,12 @@ function escapeXml(value: string) {
 	}[character] ?? character));
 }
 
+function escapeCdata(value: string) {
+	return value.replace(/\]\]>/g, ']]]]><![CDATA[>');
+}
+
 export async function GET() {
-	const posts = await getPosts();
+	const posts = await getListedPosts();
 	const items = posts.map((post) => {
 		const url = new URL(`/posts/${post.id}/`, siteConfig.url).toString();
 		return `
@@ -23,7 +27,7 @@ export async function GET() {
 			<description>${escapeXml(post.data.description)}</description>
 			<pubDate>${post.data.pubDate.toUTCString()}</pubDate>
 			<category>${post.data.tags.map(escapeXml).join('</category><category>')}</category>
-			<content:encoded><![CDATA[${post.body ?? ''}]]></content:encoded>
+				<content:encoded><![CDATA[${escapeCdata(post.body ?? '')}]]></content:encoded>
 		</item>`;
 	}).join('');
 

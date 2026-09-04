@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleRow from '../../components/ArticleRow.astro';
-import { getPosts } from '../../lib/posts';
+import { getListedPosts } from '../../lib/posts';
 
-const posts = await getPosts();
+const posts = await getListedPosts();
 const thoughtCount = posts.filter((p) => p.data.kind === 'thought').length;
 const projectCount = posts.filter((p) => p.data.kind === 'project').length;
 const updateCount = posts.filter((p) => p.data.kind === 'update').length;

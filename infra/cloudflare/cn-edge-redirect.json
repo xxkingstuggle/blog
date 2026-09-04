@@ -1,0 +1,15 @@
+{
+  "name": "cn-edge-redirect",
+  "enabled": false,
+  "description": "CN visitors use the optional nearby overseas fallback line; keep disabled until EdgeOne has passed carrier tests.",
+  "expression": "(ip.src.country eq \"CN\" and http.host eq \"xingx.cc.cd\" and http.request.method in {\"GET\" \"HEAD\"} and not starts_with(http.request.uri.path, \"/admin\") and not starts_with(http.request.uri.path, \"/api\") and not starts_with(http.request.uri.path, \"/.well-known\") and http.request.uri.path ne \"/robots.txt\" and http.request.uri.path ne \"/rss.xml\" and http.request.uri.path ne \"/sitemap.xml\")",
+  "action_parameters": {
+    "from_value": {
+      "target_url": {
+        "expression": "concat(\"https://cn.xingx.cc.cd\", http.request.uri.path)"
+      },
+      "status_code": 302,
+      "preserve_query_string": true
+    }
+  }
+}

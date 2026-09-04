@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="友链" description="Xin 维护的友链与推荐。">
+	<section class="shell links-page" aria-labelledby="links-heading">
+		<div class="hero-eyebrow" style="color: var(--accent-contrast);">LINKS / 友链</div>
+		<h1 id="links-heading">一起保持连接</h1>
+		<p class="links-lead">这里收录我愿意持续阅读和推荐的站点。链接状态由后台定期检查。</p>
+		<div class="links-grid" id="links-grid"><p class="links-empty">正在加载友链…</p></div>
+	</section>
+</BaseLayout>
+
+<style>
+	.links-page { padding: clamp(60px, 8vw, 96px) 0 110px; }
+	.links-page h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); letter-spacing: -.04em; margin: 16px 0; }
+	.links-lead { max-width: 56ch; color: var(--text-muted); font-size: 1.1rem; }
+	.links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-top: 44px; }
+	.link-card { display: block; padding: 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
+	.link-card:hover { border-color: var(--text); transform: translateY(-2px); }
+	.link-card h2 { margin: 0 0 6px; font-size: 1.15rem; }
+	.link-card p { margin: 0; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+	.link-card small { display: block; margin-top: 14px; color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; overflow-wrap: anywhere; }
+	.links-empty { color: var(--text-muted); }
+</style>
+
+<script>
+	const linksGrid = document.getElementById('links-grid');
+	async function loadLinks() {
+		try {
+			const response = await fetch('/api/links');
+			if (!response.ok) throw new Error();
+			const body = await response.json();
+			if (!linksGrid) return;
+			linksGrid.replaceChildren();
+			for (const link of body.links || []) {
+				let safeUrl: URL;
+				try {
+					safeUrl = new URL(String(link.url || ''));
+					if (!['http:', 'https:'].includes(safeUrl.protocol)) continue;
+				} catch { continue; }
+				const card = document.createElement('a'); card.className = 'link-card'; card.href = safeUrl.toString(); card.target = '_blank'; card.rel = 'noopener noreferrer';
+				const title = document.createElement('h2'); title.textContent = String(link.name || '未命名');
+				const description = document.createElement('p'); description.textContent = String(link.description || '');
+				const url = document.createElement('small'); url.textContent = String(link.url || '');
+				card.append(title, description, url); linksGrid.append(card);
+			}
+			if (!body.links?.length) { const empty = document.createElement('p'); empty.className = 'links-empty'; empty.textContent = '友链会在后台配置后出现在这里。'; linksGrid.append(empty); }
+		} catch {
+			if (!linksGrid) return;
+			const empty = document.createElement('p');
+			empty.className = 'links-empty';
+			empty.textContent = '友链功能将在后台上线后开放。';
+			linksGrid.replaceChildren(empty);
+		}
+	}
+	loadLinks();
+</script>

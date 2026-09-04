@@ -1,0 +1,75 @@
+---
+import type { BlogPost } from '../../lib/posts';
+
+interface Props { post: BlogPost }
+const { post } = Astro.props;
+---
+
+<section class="comments-panel" data-comments-panel data-slug={post.id} aria-labelledby="comments-heading">
+	<div class="comments-heading-row">
+		<div>
+			<div class="section-label">RESPONSES / 留言</div>
+			<h2 id="comments-heading">留下你的回应</h2>
+		</div>
+		<span class="comments-note">提交后等待审核</span>
+	</div>
+	<div class="comments-list" data-comments-list aria-live="polite">
+		<p class="comments-empty">正在加载回应…</p>
+	</div>
+	<form class="comments-form" data-comments-form>
+		<div class="comments-form-grid">
+			<label>称呼<input name="authorName" maxlength="80" placeholder="你的名字" /></label>
+			<label>链接（可选）<input name="authorUrl" type="url" maxlength="300" placeholder="https://" /></label>
+		</div>
+		<label>回应<textarea name="body" required minlength="2" maxlength="2000" rows="4" placeholder="分享一个想法…"></textarea></label>
+		<input class="comments-honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+		<div class="comments-submit-row"><button type="submit">提交回应 →</button><span data-comments-status role="status" aria-live="polite"></span></div>
+	</form>
+</section>
+
+<script>
+	const panel = document.querySelector<HTMLElement>('[data-comments-panel]');
+	const list = panel?.querySelector<HTMLElement>('[data-comments-list]');
+	const form = panel?.querySelector<HTMLFormElement>('[data-comments-form]');
+	const status = panel?.querySelector<HTMLElement>('[data-comments-status]');
+	const slug = panel?.dataset.slug;
+
+	function renderComments(comments: Array<{ author_name?: string; body?: string; created_at?: string }>) {
+		if (!list) return;
+		list.replaceChildren();
+		if (!comments.length) { const empty = document.createElement('p'); empty.className = 'comments-empty'; empty.textContent = '还没有回应，欢迎留下第一条。'; list.append(empty); return; }
+		for (const comment of comments) {
+			const item = document.createElement('article'); item.className = 'comment-item';
+			const meta = document.createElement('div'); meta.className = 'comment-meta';
+			const author = document.createElement('strong'); author.textContent = comment.author_name || '匿名访客';
+			const date = document.createElement('time'); date.textContent = comment.created_at ? new Date(`${comment.created_at.replace(' ', 'T')}Z`).toLocaleDateString('zh-CN') : '';
+			meta.append(author, date);
+			const body = document.createElement('p'); body.textContent = comment.body || '';
+			item.append(meta, body); list.append(item);
+		}
+	}
+
+	async function loadComments() {
+		if (!slug) return;
+		try { const response = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`); if (!response.ok) throw new Error(); renderComments((await response.json()).comments || []); }
+		catch {
+			if (!list) return;
+			const empty = document.createElement('p');
+			empty.className = 'comments-empty';
+			empty.textContent = '回应功能将在后台上线后开放。';
+			list.replaceChildren(empty);
+		}
+	}
+
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		const data = new FormData(form); if (status) status.textContent = '正在提交…';
+		try {
+			const response = await fetch('/api/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, authorName: data.get('authorName'), authorUrl: data.get('authorUrl'), body: data.get('body'), website: data.get('website') }) });
+			const body = await response.json(); if (!response.ok) throw new Error(body.error || '提交失败');
+			form.reset(); if (status) status.textContent = '已提交，审核通过后会显示。';
+		} catch (cause) { if (status) status.textContent = cause instanceof Error ? cause.message : '提交失败'; }
+	});
+
+	loadComments();
+</script>

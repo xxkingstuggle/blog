@@ -12,6 +12,8 @@ const blog = defineCollection({
 			description: z.string(),
 			tags: z.array(z.string()).default([]),
 			draft: z.boolean().default(false),
+			listed: z.boolean().default(true),
+			aliases: z.array(z.string()).default([]),
 			kicker: z.string().optional(),
 			featured: z.boolean().default(false),
 			kind: z.enum(['thought', 'project', 'update']).default('thought'),

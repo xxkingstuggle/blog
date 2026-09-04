@@ -21,7 +21,7 @@ export interface GetPostsOptions {
 	kind?: PostKind;
 }
 
-export async function getPosts(options: GetPostsOptions = {}) {
+export async function getPublishedPosts(options: GetPostsOptions = {}) {
 	const { kind } = options;
 	const posts = await getCollection('blog', ({ data }) => {
 		if (data.draft) return false;
@@ -31,13 +31,31 @@ export async function getPosts(options: GetPostsOptions = {}) {
 	return posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 }
 
+export async function getListedPosts(options: GetPostsOptions = {}) {
+	const posts = await getPublishedPosts(options);
+	return posts.filter((post) => post.data.listed !== false);
+}
+
+/**
+ * Backwards-compatible alias for public index consumers. New code should use
+ * getListedPosts() or getPublishedPosts() to make visibility intent explicit.
+ */
+export async function getPosts(options: GetPostsOptions = {}) {
+	return getListedPosts(options);
+}
+
 export async function getFeaturedPost() {
-	const posts = await getPosts();
+	const posts = await getListedPosts();
 	return posts.find((post) => post.data.featured) ?? posts[0];
 }
 
 export async function getProjectPosts() {
-	return getPosts({ kind: 'project' });
+	return getListedPosts({ kind: 'project' });
+}
+
+export async function getNextListedPost(current: BlogPost) {
+	const posts = await getListedPosts();
+	return posts.find((post) => post.data.pubDate.valueOf() < current.data.pubDate.valueOf()) ?? null;
 }
 
 export function formatDate(date: Date) {

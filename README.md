@@ -8,6 +8,8 @@
   - `feature`：独立发布页外壳（沉浸式 Hero、大幅媒体破框、专属交互组件）
 - **视觉系统**：墨黑（`#111310`）、暖白纸感（`#F2F0E9`）与荧光绿（`#B6FF3B`）；Hero 恒深色（`#080A08`），正文自动适配系统浅色/深色主题。
 - **交互组件**：重点发布《允许不舒服存在，然后去做真正重要的事》包含“Noise → Signal”相变场交互模拟（`FrictionField`）。
+- **主题与兼容**：默认跟随系统，可切换日间/夜间；兼容 Chrome/Edge 111+、Firefox 114+、Safari/iOS 16.4+，Canvas、IntersectionObserver、毛玻璃均有降级路径。
+- **在线后台**：`/admin/` 使用 GitHub OAuth 登录，可管理草稿、发布状态、评论与友链；公开页面的现有视觉结构不变。
 
 ---
 
@@ -65,6 +67,19 @@ src/
     ├── article.css           # 文章内文、媒体溢出与阅读进度条
     ├── motion.css            # 动效与减弱动态可访问性
     └── global.css            # 样式总入口
+worker/
+└── index.ts                  # Cloudflare Worker API、鉴权和发布状态机
+migrations/
+├── 0001_initial.sql          # D1 初始结构
+└── 0002_draft_version_and_comment_limits.sql
+infra/cloudflare/
+└── cn-edge-redirect.json     # 大陆访客备用境外线路规则模板（默认关闭）
+docs/
+├── deployment.md             # staging、production、备份与迁移步骤
+└── acceptance.md             # 上线前验收清单
+.github/workflows/
+├── deploy-staging.yml        # cms-staging 自动部署
+└── deploy-production.yml     # production 手动部署
 ```
 
 ---
@@ -89,11 +104,19 @@ astro dev stop
 
 ```bash
 # 类型检查
-npx astro check
+npm run check
+
+# Worker 安全规则测试
+npm test
 
 # 静态生产构建 (输出至 dist/)
 npm run build
 
 # 本地静态预览
 npm run preview
+
+# Worker 本地开发（需先完成 Astro 构建；使用本地模拟 D1，R2 按需绑定）
+npx wrangler dev --local
 ```
+
+公开页面继续由 Astro 静态生成；在线编辑、评论、友链和媒体接口通过 `worker/index.ts` 提供。生产/测试资源必须分别配置，详见 `docs/deployment.md`。

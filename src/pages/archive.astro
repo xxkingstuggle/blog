@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { formatDate, getPosts } from '../lib/posts';
+import { formatDate, getListedPosts } from '../lib/posts';
 
-const posts = await getPosts();
+const posts = await getListedPosts();
 const years = [...new Set(posts.map((post) => post.data.pubDate.getFullYear()))];
 ---
 

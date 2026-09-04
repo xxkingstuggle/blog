@@ -1,5 +1,6 @@
 ---
 import { siteConfig } from '../config';
+import ThemeSwitcher from './ThemeSwitcher.astro';
 
 interface Props {
 	isHeroPage?: boolean;
@@ -9,7 +10,7 @@ const { isHeroPage = false } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="site-header" id="site-header" data-theme={isHeroPage ? 'dark-hero' : 'default'}>
+<header class="site-header" id="site-header" data-header-tone={isHeroPage ? 'dark-hero' : 'default'}>
 	<div class="shell header-inner">
 		<a class="brand" href="/" aria-label={`${siteConfig.name} 首页`}>
 			<span class="brand-mark" aria-hidden="true">✳</span>
@@ -20,6 +21,7 @@ const currentPath = Astro.url.pathname;
 			<a href="/#projects">项目</a>
 			<a href="/about/" aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>关于</a>
 		</nav>
+		<ThemeSwitcher />
 	</div>
 </header>
 
@@ -30,17 +32,23 @@ const currentPath = Astro.url.pathname;
 		const hero = document.getElementById('hero');
 
 		if (header && hero) {
-			const observer = new IntersectionObserver(
-				([entry]) => {
-					if (entry.isIntersecting) {
-						header.setAttribute('data-theme', 'dark-hero');
-					} else {
-						header.removeAttribute('data-theme');
-					}
-				},
-				{ threshold: 0.1 }
-			);
-			observer.observe(hero);
+			const setTone = (isHeroVisible: boolean) => {
+				if (isHeroVisible) header.setAttribute('data-header-tone', 'dark-hero');
+				else header.setAttribute('data-header-tone', 'default');
+			};
+
+			const canObserve = typeof (window as Window & { IntersectionObserver?: typeof IntersectionObserver }).IntersectionObserver === 'function';
+			if (canObserve) {
+				const observer = new IntersectionObserver(
+					([entry]) => setTone(entry.isIntersecting),
+					{ threshold: 0.1 }
+				);
+				observer.observe(hero);
+			} else {
+				const updateFromScroll = () => setTone(hero.getBoundingClientRect().bottom > 72);
+				window.addEventListener('scroll', updateFromScroll, { passive: true });
+				updateFromScroll();
+			}
 		}
 	</script>
 )}

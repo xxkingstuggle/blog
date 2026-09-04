@@ -1,10 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleRow from '../../components/ArticleRow.astro';
-import { getPosts } from '../../lib/posts';
+import { getListedPosts } from '../../lib/posts';
 
 export async function getStaticPaths() {
-	const posts = await getPosts();
+	const posts = await getListedPosts();
 	const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
 	return tags.map((tag) => ({
 		params: { tag },

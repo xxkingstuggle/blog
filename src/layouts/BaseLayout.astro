@@ -35,6 +35,13 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script is:inline>
+			// Apply the cookie before CSS is evaluated to avoid a light/dark flash.
+			(() => {
+				const match = document.cookie.match(/(?:^|; )xingx-color-mode=(system|light|dark)/);
+				document.documentElement.dataset.colorMode = match?.[1] ?? 'system';
+			})();
+		</script>
 		<meta name="generator" content={Astro.generator} />
 		<title>{pageTitle}</title>
 		<meta name="description" content={description} />

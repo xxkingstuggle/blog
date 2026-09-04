@@ -1,0 +1,225 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="内容后台" description="Xin 的发布后台。" noindex>
+	<section class="shell admin-page" aria-labelledby="admin-heading">
+		<div class="hero-eyebrow" style="color: var(--accent-contrast);">EDITORIAL CMS / 后台</div>
+		<div class="admin-heading-row">
+			<div>
+				<h1 id="admin-heading">发布工作台</h1>
+				<p>草稿先保存到 D1，发布时写入 GitHub；部署完成并核对 commit SHA 后才会显示已发布。</p>
+			</div>
+			<div class="admin-session-actions"><span class="admin-status" id="admin-status" role="status" aria-live="polite">正在连接…</span><button type="button" class="admin-small-button" id="logout">退出</button></div>
+		</div>
+
+		<div class="admin-layout">
+			<aside class="admin-sidebar" aria-label="草稿列表">
+				<div class="admin-sidebar-heading">
+					<span>草稿</span>
+					<button type="button" class="admin-small-button" id="new-draft">新建</button>
+				</div>
+				<ul class="admin-draft-list" id="draft-list"></ul>
+			</aside>
+
+			<form class="admin-editor" id="draft-form">
+				<div class="admin-field-grid">
+					<label>Slug<input name="slug" required pattern="[a-z0-9-]+" placeholder="my-release" /></label>
+					<label>标题<input name="title" required placeholder="发布标题" /></label>
+				</div>
+				<label>摘要<input name="description" maxlength="300" placeholder="出现在首页与社交卡片的导语" /></label>
+				<label>Markdown 正文<textarea name="body" required rows="18" placeholder="# 一次新的发布\n\n写下你的想法、项目或近况。"></textarea></label>
+				<div class="admin-field-grid">
+					<label>发布日期<input name="pubDate" type="date" /></label>
+					<label>栏目<select name="kind"><option value="thought">思考</option><option value="project">项目</option><option value="update">近况</option></select></label>
+				</div>
+				<div class="admin-field-grid">
+					<label>展示模板<select name="presentation"><option value="article">标准长文</option><option value="feature">重点发布</option></select></label>
+					<label>源文件路径（由系统限制）<input name="sourcePath" placeholder="保存后自动生成" readonly /></label>
+					<label>仓库 blob SHA<input name="sourceBlobSha" placeholder="首次新建可留空" /></label>
+				</div>
+				<div class="admin-field-grid">
+					<label>标签（逗号分隔）<input name="tags" placeholder="工具, 思考" /></label>
+					<label>栏目眉标（可选）<input name="kicker" placeholder="THOUGHT / FIELD NOTE" /></label>
+				</div>
+				<label>Alias（逗号分隔，必须以 / 开头）<input name="aliases" placeholder="/my-release" /></label>
+				<label class="admin-check"><input type="checkbox" name="listed" checked /> 出现在公开索引、RSS、Sitemap 与下一篇入口</label>
+				<div class="admin-actions">
+					<button type="button" class="admin-button" id="preview-draft">安全预览</button>
+					<button type="submit" class="admin-button">保存草稿</button>
+					<button type="button" class="admin-button admin-button-primary" id="publish-draft">发布到 GitHub</button>
+				</div>
+				<iframe class="admin-preview" id="preview-frame" sandbox="allow-forms" title="Markdown 安全预览"></iframe>
+			</form>
+		</div>
+	</section>
+</BaseLayout>
+
+<style>
+	.admin-page { padding: clamp(60px, 8vw, 96px) 0 110px; }
+	.admin-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 16px 0 40px; }
+	.admin-heading-row h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); letter-spacing: -0.04em; margin: 0 0 12px; }
+	.admin-heading-row p { max-width: 64ch; color: var(--text-muted); margin: 0; }
+	.admin-status { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+	.admin-session-actions { display: flex; align-items: center; gap: 10px; }
+	.admin-layout { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 28px; align-items: start; }
+	.admin-sidebar, .admin-editor { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+	.admin-sidebar { position: sticky; top: 92px; padding: 16px; }
+	.admin-sidebar-heading { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+	.admin-small-button, .admin-button { border: 1px solid var(--line); border-radius: 7px; background: var(--surface-subtle); color: var(--text); cursor: pointer; }
+	.admin-small-button { padding: 5px 8px; font-size: 12px; }
+	.admin-draft-list { list-style: none; padding: 12px 0 0; margin: 0; display: grid; gap: 4px; }
+	.admin-draft-list button { width: 100%; padding: 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted); text-align: left; cursor: pointer; }
+	.admin-draft-list button:hover, .admin-draft-list button[aria-current="true"] { background: var(--surface-subtle); color: var(--text); }
+	.admin-draft-list small { display: block; margin-top: 3px; color: var(--text-muted); font-family: var(--font-mono); font-size: 10px; }
+	.admin-editor { display: grid; gap: 18px; padding: clamp(18px, 3vw, 30px); }
+	.admin-editor label { display: grid; gap: 7px; color: var(--text-muted); font-size: 13px; }
+	.admin-editor input, .admin-editor textarea { width: 100%; border: 1px solid var(--line); border-radius: 7px; padding: 10px 12px; background: var(--bg); color: var(--text); }
+	.admin-editor textarea { min-height: 300px; resize: vertical; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; }
+	.admin-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+	.admin-check { display: flex !important; grid-template-columns: auto 1fr; display: flex !important; align-items: center; gap: 8px !important; }
+	.admin-check input { width: auto; }
+	.admin-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+	.admin-button { min-height: 44px; padding: 10px 15px; font-size: 13px; font-weight: 650; }
+	.admin-button:hover { border-color: var(--text); }
+	.admin-button-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+	.admin-preview { width: 100%; min-height: 260px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+	@media (max-width: 760px) {
+		.admin-heading-row { display: block; }
+		.admin-status { display: block; margin-top: 14px; }
+		.admin-layout { grid-template-columns: 1fr; }
+		.admin-sidebar { position: static; }
+	}
+	@media (max-width: 480px) { .admin-field-grid { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+	const form = document.getElementById('draft-form') as HTMLFormElement | null;
+	const status = document.getElementById('admin-status');
+	const draftList = document.getElementById('draft-list');
+	const previewFrame = document.getElementById('preview-frame') as HTMLIFrameElement | null;
+	let csrfToken = '';
+	let currentId = '';
+	let currentVersion = 0;
+
+	function setStatus(message: string) { if (status) status.textContent = message; }
+
+	async function api(path: string, init: RequestInit = {}) {
+		const headers = new Headers(init.headers);
+		if (csrfToken) headers.set('X-CSRF-Token', csrfToken);
+		const response = await fetch(path, { ...init, headers });
+		const body = await response.json().catch(() => ({}));
+		if (!response.ok) throw new Error(body.error || `请求失败（${response.status}）`);
+		return body;
+	}
+
+	function values() {
+		if (!form) return null;
+		const data = new FormData(form);
+		return {
+			slug: String(data.get('slug') || '').trim(),
+			title: String(data.get('title') || '').trim(),
+			description: String(data.get('description') || '').trim(),
+			body: String(data.get('body') || ''),
+			pubDate: String(data.get('pubDate') || ''),
+			kind: String(data.get('kind') || 'thought'),
+			presentation: String(data.get('presentation') || 'article'),
+			tags: String(data.get('tags') || '').split(',').map((value) => value.trim()).filter(Boolean),
+			kicker: String(data.get('kicker') || '').trim() || undefined,
+			sourcePath: String(data.get('sourcePath') || '').trim() || undefined,
+			sourceBlobSha: String(data.get('sourceBlobSha') || '').trim() || undefined,
+			aliases: String(data.get('aliases') || '').split(',').map((value) => value.trim()).filter(Boolean),
+			listed: data.get('listed') === 'on',
+			...(currentVersion > 0 ? { version: currentVersion } : {}),
+		};
+	}
+
+	function fillDraft(draft: Record<string, unknown>) {
+		if (!form) return;
+			currentId = String(draft.id || '');
+			currentVersion = Number(draft.version || 0);
+		for (const [name, value] of Object.entries({ slug: draft.slug, title: draft.title, description: draft.description, body: draft.body, pubDate: draft.pub_date, sourcePath: draft.source_path, sourceBlobSha: draft.source_blob_sha })) {
+			const input = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+			if (input) input.value = String(value || '');
+		}
+		for (const name of ['kind', 'presentation']) {
+			const select = form.elements.namedItem(name) as HTMLSelectElement | null;
+			if (select && typeof draft[name] === 'string') select.value = String(draft[name]);
+		}
+		const tags = form.elements.namedItem('tags') as HTMLInputElement | null;
+		if (tags) { try { tags.value = Array.isArray(draft.tags_json) ? draft.tags_json.join(', ') : JSON.parse(String(draft.tags_json || '[]')).join(', '); } catch { tags.value = ''; } }
+		const kicker = form.elements.namedItem('kicker') as HTMLInputElement | null;
+		if (kicker) kicker.value = String(draft.kicker || '');
+		const listed = form.elements.namedItem('listed') as HTMLInputElement | null;
+		if (listed) listed.checked = draft.listed !== 0;
+		const aliases = form.elements.namedItem('aliases') as HTMLInputElement | null;
+		if (aliases) aliases.value = Array.isArray(draft.aliases) ? draft.aliases.join(', ') : '';
+	}
+
+	async function loadDrafts() {
+		const result = await api('/api/admin/drafts');
+		if (!draftList) return;
+		draftList.replaceChildren();
+		for (const draft of result.drafts || []) {
+			const item = document.createElement('li');
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.textContent = String(draft.title || draft.slug);
+			button.dataset.id = String(draft.id);
+			const detail = document.createElement('small');
+			detail.textContent = `${String(draft.status || 'draft')} · ${String(draft.slug || '')}`;
+			button.append(detail);
+			button.addEventListener('click', async () => {
+				const detail = await api(`/api/admin/drafts/${encodeURIComponent(String(draft.id))}`);
+				fillDraft(detail.draft || draft);
+				draftList.querySelectorAll('button').forEach((candidate) => candidate.setAttribute('aria-current', String(candidate === button)));
+			});
+			item.append(button);
+			draftList.append(item);
+		}
+	}
+
+	async function start() {
+		try {
+			const session = await api('/api/admin/session');
+			csrfToken = session.csrfToken;
+			await loadDrafts();
+			setStatus(`已登录：${session.email}`);
+		} catch (cause) {
+			setStatus(cause instanceof Error ? cause.message : '后台连接失败');
+		}
+	}
+
+	document.getElementById('new-draft')?.addEventListener('click', () => { currentId = ''; currentVersion = 0; form?.reset(); if (previewFrame) previewFrame.srcdoc = ''; });
+	document.getElementById('logout')?.addEventListener('click', async () => {
+		try { await api('/auth/logout', { method: 'POST' }); location.assign('/'); }
+		catch (cause) { setStatus(cause instanceof Error ? cause.message : '退出失败'); }
+	});
+	document.getElementById('preview-draft')?.addEventListener('click', async () => {
+		try {
+			const result = await api('/api/admin/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ markdown: values()?.body || '' }) });
+			if (previewFrame) previewFrame.srcdoc = `<style>body{font:16px/1.7 system-ui,sans-serif;max-width:680px;margin:24px auto;padding:0 18px;color:#121512}img{max-width:100%}</style>${result.html}`;
+			setStatus('预览已更新（sandbox 隔离）');
+		} catch (cause) { setStatus(cause instanceof Error ? cause.message : '预览失败'); }
+	});
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		try {
+				const result = await api(currentId ? `/api/admin/drafts/${encodeURIComponent(currentId)}` : '/api/admin/drafts', { method: currentId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values()) });
+			currentId = result.id || currentId;
+			currentVersion = Number(result.version || currentVersion);
+			setStatus('草稿已保存');
+			await loadDrafts();
+		} catch (cause) { setStatus(cause instanceof Error ? cause.message : '保存失败'); }
+	});
+	document.getElementById('publish-draft')?.addEventListener('click', async () => {
+		if (!currentId) { setStatus('请先保存草稿'); return; }
+		try {
+			const result = await api('/api/admin/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: currentId }) });
+			setStatus(`已提交部署，commit ${result.commitSha || '等待生成'}`);
+			await loadDrafts();
+		} catch (cause) { setStatus(cause instanceof Error ? cause.message : '发布失败'); }
+	});
+
+	start();
+</script>
