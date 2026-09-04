@@ -57,5 +57,5 @@ GitHub Actions 仓库 Secrets 只需要：
 ## 5. 当前边界
 
 - staging 已建立独立 D1；R2 未开通，因此媒体上传会明确返回 `media_storage_unavailable`，不会产生费用。
-- production 的 D1 UUID、Access/域名和线路规则仍是占位值；不得部署生产环境。
+- production 已使用独立 D1；Access/自定义域名和线路规则配置完成前，大陆备用线路仍不得启用。
 - 大陆分流规则保持 `enabled:false`，直到备用线路、origin 保护和三网故障切换验收全部通过。

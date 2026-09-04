@@ -30,7 +30,7 @@
 		{
 			"binding": "DB",
 			"database_name": "blog-production",
-			"database_id": "00000000-0000-0000-0000-000000000000"
+			"database_id": "e6e5331e-391b-43d0-8c75-e19c019d37ae"
 		}
 	],
 	"vars": {
@@ -46,7 +46,7 @@
 		"GITHUB_OWNER": "xxkingstuggle",
 		"GITHUB_REPO": "blog",
 		"GITHUB_BRANCH": "main",
-		"ORIGIN_BUILD_URL": "https://origin.xingx.cc.cd/__build.json",
+		"ORIGIN_BUILD_URL": "https://blog-production.guozhongeba.workers.dev/__build.json",
 		"CN_HEALTH_URL": "https://cn.xingx.cc.cd/__health",
 		"CF_RULE_API_URL": "REPLACE_WITH_SINGLE_REDIRECT_RULE_API_URL"
 	},
