@@ -1,34 +1,47 @@
 ---
 import { siteConfig } from '../config';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 import '../styles/global.css';
+
+import type { ImageMetadata } from 'astro';
 
 interface Props {
 	title?: string;
 	description?: string;
-	image?: string;
+	image?: string | ImageMetadata;
+	ogType?: string;
+	noindex?: boolean;
+	isHeroPage?: boolean;
 }
 
 const {
 	title = siteConfig.name,
 	description = siteConfig.description,
 	image,
+	ogType = 'website',
+	noindex = false,
+	isHeroPage = false,
 } = Astro.props;
+
 const canonical = new URL(Astro.url.pathname, siteConfig.url).toString();
 const pageTitle = title === siteConfig.name ? title : `${title} · ${siteConfig.name}`;
-const socialImage = image ? new URL(image, siteConfig.url).toString() : undefined;
+const rawImagePath = typeof image === 'object' && image !== null && 'src' in image ? image.src : image;
+const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toString() : undefined;
 ---
 
 <!doctype html>
 <html lang="zh-CN">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{pageTitle}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={canonical} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta property="og:type" content="website" />
+		{noindex && <meta name="robots" content="noindex, follow" />}
+		<meta property="og:type" content={ogType} />
 		<meta property="og:site_name" content={siteConfig.name} />
 		<meta property="og:title" content={pageTitle} />
 		<meta property="og:description" content={description} />
@@ -41,28 +54,10 @@ const socialImage = image ? new URL(image, siteConfig.url).toString() : undefine
 	</head>
 	<body>
 		<a class="skip-link" href="#main-content">跳到主要内容</a>
-		<header class="site-header">
-			<div class="shell header-inner">
-				<a class="brand" href="/" aria-label={`${siteConfig.name} 首页`}>
-					<span class="brand-mark" aria-hidden="true">✳</span>
-					<span>{siteConfig.name}</span>
-				</a>
-				<nav aria-label="主导航">
-					<a href="/posts/">文章</a>
-					<a href="/archive/">归档</a>
-					<a href="/tags/">标签</a>
-					<a href="/about/">关于</a>
-				</nav>
-			</div>
-		</header>
+		<SiteHeader isHeroPage={isHeroPage} />
 		<main id="main-content">
 			<slot />
 		</main>
-		<footer class="site-footer">
-			<div class="shell footer-inner">
-				<span>© {new Date().getFullYear()} {siteConfig.author}</span>
-				<a href="/rss.xml">RSS</a>
-			</div>
-		</footer>
+		<SiteFooter />
 	</body>
 </html>

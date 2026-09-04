@@ -1,0 +1,93 @@
+---
+import type { BlogPost } from '../../lib/posts';
+import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
+import ArticleRail from './ArticleRail.astro';
+import NextArticle from './NextArticle.astro';
+
+interface HeadingItem {
+	depth: number;
+	slug: string;
+	text: string;
+}
+
+interface Props {
+	post: BlogPost;
+	headings: HeadingItem[];
+	nextPost?: BlogPost | null;
+}
+
+const { post, headings, nextPost } = Astro.props;
+const description = post.data.description;
+const kindLabel = KIND_LABELS[post.data.kind] || '思考';
+const kicker = post.data.kicker || kindLabel;
+---
+
+<!-- Fixed Reading Progress Indicator -->
+<div class="reading-progress-bar" id="reading-progress" aria-hidden="true"></div>
+
+<!-- Standard Article Header Section -->
+<header class="article-header-section">
+	<div class="shell article-header-inner">
+		<a class="article-back-link" href="/posts/">
+			<span aria-hidden="true">←</span>
+			<span>返回发布列表</span>
+		</a>
+
+		<div class="article-kicker-row">
+			<span class="article-kicker">{kicker}</span>
+		</div>
+
+		<h1 class="article-page-title">{post.data.title}</h1>
+		<p class="article-lead">{description}</p>
+
+		<div class="article-meta-bar">
+			<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+			{post.data.updatedDate && (
+				<>
+					<span aria-hidden="true">·</span>
+					<time datetime={post.data.updatedDate.toISOString()}>更新于 {formatDate(post.data.updatedDate)}</time>
+				</>
+			)}
+			<span aria-hidden="true">·</span>
+			<span>{getReadingTime(post.body)}</span>
+
+			{post.data.tags.length > 0 && (
+				<div class="tag-list" style="margin-left: auto;">
+					{post.data.tags.map((tag) => (
+						<a class="tag-item" href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a>
+					))}
+				</div>
+			)}
+		</div>
+	</div>
+</header>
+
+<!-- Article Body & TOC Rail -->
+<div class="shell article-layout">
+	<article class="article-content-wrapper">
+		<div class="article-prose">
+			<slot />
+		</div>
+		{nextPost && <NextArticle post={nextPost} />}
+	</article>
+
+	<ArticleRail headings={headings} />
+</div>
+
+<script>
+	// Reading progress bar tracker
+	const progressBar = document.getElementById('reading-progress');
+	if (progressBar) {
+		const updateProgress = () => {
+			const scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
+			if (scrollTotal > 0) {
+				const progress = (window.scrollY / scrollTotal) * 100;
+				progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+			}
+		};
+
+		window.addEventListener('scroll', updateProgress, { passive: true });
+		window.addEventListener('resize', updateProgress, { passive: true });
+		updateProgress();
+	}
+</script>

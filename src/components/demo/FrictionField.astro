@@ -1,0 +1,325 @@
+---
+interface Props {
+	caption?: string;
+}
+
+const { caption = '交互实验：拖动滑块或移动光标，观察工具如何将发散混乱的熵（Noise）转化为确定有序的作品（Signal）。' } = Astro.props;
+---
+
+<div class="friction-demo-wrap" aria-label="Noise to Signal 交互演练">
+	<div class="friction-header">
+		<div class="friction-header-left">
+			<span class="friction-pill">DEMO / 01</span>
+			<span class="friction-title">NOISE → SIGNAL / 相变场模拟</span>
+		</div>
+		<div class="friction-metrics">
+			<span class="metric-item">SNR: <strong id="metric-snr">12.4 dB</strong></span>
+			<span class="metric-item">ENTROPY: <strong id="metric-entropy">0.24</strong></span>
+		</div>
+	</div>
+
+	<div class="friction-canvas-box">
+		<canvas id="friction-canvas" class="friction-canvas" height="340"></canvas>
+	</div>
+
+	<div class="friction-controls">
+		<label for="friction-slider" class="friction-label">
+			<span>模糊阻抗 (Chaos)</span>
+			<span class="friction-current-val" id="slider-val">聚焦度: 75%</span>
+			<span>清晰作品 (Signal)</span>
+		</label>
+		<input
+			type="range"
+			id="friction-slider"
+			class="friction-slider"
+			min="0"
+			max="100"
+			value="75"
+			aria-label="聚焦度控制滑块"
+		/>
+		<p class="friction-caption">{caption}</p>
+	</div>
+</div>
+
+<style>
+	.friction-demo-wrap {
+		margin: 3.5em 0;
+		background: #080A08;
+		border: 1px solid #222923;
+		border-radius: 12px;
+		overflow: hidden;
+		color: #EDEFEA;
+		box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+	}
+
+	.friction-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px 20px;
+		background: #0F1310;
+		border-bottom: 1px solid #1C241D;
+		font-family: var(--font-mono);
+		font-size: 12px;
+	}
+
+	.friction-header-left {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.friction-pill {
+		padding: 2px 6px;
+		border-radius: 3px;
+		background: rgba(182, 255, 59, 0.15);
+		color: #B6FF3B;
+		font-weight: 700;
+	}
+
+	.friction-title {
+		letter-spacing: 0.06em;
+		color: #949E95;
+	}
+
+	.friction-metrics {
+		display: flex;
+		gap: 16px;
+	}
+
+	.metric-item strong {
+		color: #B6FF3B;
+		font-weight: 700;
+	}
+
+	.friction-canvas-box {
+		position: relative;
+		width: 100%;
+		height: 340px;
+		background: #060806;
+	}
+
+	.friction-canvas {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	.friction-controls {
+		padding: 20px 24px;
+		background: #0F1310;
+		border-top: 1px solid #1C241D;
+	}
+
+	.friction-label {
+		display: flex;
+		justify-content: space-between;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: #949E95;
+		margin-bottom: 10px;
+	}
+
+	.friction-current-val {
+		color: #B6FF3B;
+		font-weight: 700;
+	}
+
+	.friction-slider {
+		width: 100%;
+		accent-color: #B6FF3B;
+		cursor: pointer;
+	}
+
+	.friction-caption {
+		margin: 12px 0 0;
+		font-size: 13px;
+		color: #7E8A80;
+		line-height: 1.5;
+	}
+</style>
+
+<script>
+	const canvas = document.getElementById('friction-canvas') as HTMLCanvasElement | null;
+	const slider = document.getElementById('friction-slider') as HTMLInputElement | null;
+	const sliderVal = document.getElementById('slider-val');
+	const metricSnr = document.getElementById('metric-snr');
+	const metricEntropy = document.getElementById('metric-entropy');
+
+	if (canvas && slider) {
+		const ctx = canvas.getContext('2d');
+		if (ctx) {
+			let width = 0;
+			let height = 0;
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+			interface Particle {
+				x: number;
+				y: number;
+				vx: number;
+				vy: number;
+				targetX: number;
+				targetY: number;
+				phase: number;
+			}
+
+			let particles: Particle[] = [];
+			const numCols = 24;
+			const numRows = 10;
+
+			function resize() {
+				if (!canvas) return;
+				width = canvas.parentElement?.clientWidth || 700;
+				height = 340;
+				canvas.width = Math.floor(width * dpr);
+				canvas.height = Math.floor(height * dpr);
+				ctx?.scale(dpr, dpr);
+				initGrid();
+			}
+
+			function initGrid() {
+				particles = [];
+				const paddingX = width * 0.08;
+				const paddingY = height * 0.15;
+				const stepX = (width - paddingX * 2) / (numCols - 1);
+				const stepY = (height - paddingY * 2) / (numRows - 1);
+
+				for (let r = 0; r < numRows; r++) {
+					for (let c = 0; c < numCols; c++) {
+						const targetX = paddingX + c * stepX;
+						const targetY = paddingY + r * stepY;
+						particles.push({
+							x: Math.random() * width,
+							y: Math.random() * height,
+							vx: (Math.random() - 0.5) * 1.5,
+							vy: (Math.random() - 0.5) * 1.5,
+							targetX,
+							targetY,
+							phase: (c / numCols) * Math.PI * 2,
+						});
+					}
+				}
+			}
+
+			let focusLevel = 0.75; // 0 (full noise) to 1 (full signal)
+
+			function updateMetrics(val: number) {
+				focusLevel = val / 100;
+				if (sliderVal) sliderVal.textContent = `聚焦度: ${val}%`;
+				const snr = (-8 + focusLevel * 32).toFixed(1);
+				const entropy = (1 - focusLevel * 0.88).toFixed(2);
+				if (metricSnr) metricSnr.textContent = `${snr} dB`;
+				if (metricEntropy) metricEntropy.textContent = entropy;
+			}
+
+			slider.addEventListener('input', (e) => {
+				const val = Number((e.target as HTMLInputElement).value);
+				updateMetrics(val);
+			});
+
+			let mouseX = -999;
+			let mouseY = -999;
+			canvas.addEventListener('mousemove', (e) => {
+				const rect = canvas.getBoundingClientRect();
+				mouseX = e.clientX - rect.left;
+				mouseY = e.clientY - rect.top;
+			});
+			canvas.addEventListener('mouseleave', () => {
+				mouseX = -999;
+				mouseY = -999;
+			});
+
+			let t = 0;
+			let animId = 0;
+			let isVisible = true;
+
+			function draw() {
+				if (!isVisible) return;
+				t += 0.03;
+				ctx?.clearRect(0, 0, width, height);
+
+				if (!ctx) return;
+
+				// Background wave field grid lines when focused
+				if (focusLevel > 0.3) {
+					ctx.strokeStyle = `rgba(182, 255, 59, ${(focusLevel - 0.3) * 0.15})`;
+					ctx.lineWidth = 1;
+					for (let r = 0; r < numRows; r++) {
+						ctx.beginPath();
+						for (let c = 0; c < numCols; c++) {
+							const idx = r * numCols + c;
+							const p = particles[idx];
+							if (c === 0) ctx.moveTo(p.x, p.y);
+							else ctx.lineTo(p.x, p.y);
+						}
+						ctx.stroke();
+					}
+				}
+
+				// Update & render particles
+				for (let i = 0; i < particles.length; i++) {
+					const p = particles[i];
+
+					// Noise component: brownian walk
+					p.vx += (Math.random() - 0.5) * 0.8;
+					p.vy += (Math.random() - 0.5) * 0.8;
+					p.vx *= 0.94;
+					p.vy *= 0.94;
+
+					// Signal component: harmonic crystalline wave
+					const waveOffsetY = Math.sin(t * 1.5 + p.phase) * (14 * focusLevel);
+					const sigX = p.targetX;
+					const sigY = p.targetY + waveOffsetY;
+
+					// Interpolate between pure noise and pure signal
+					p.x += (sigX - p.x) * (0.02 + focusLevel * 0.1) + p.vx * (1 - focusLevel);
+					p.y += (sigY - p.y) * (0.02 + focusLevel * 0.1) + p.vy * (1 - focusLevel);
+
+					// Mouse brush effect
+					const dx = mouseX - p.x;
+					const dy = mouseY - p.y;
+					const d = Math.sqrt(dx * dx + dy * dy);
+					if (d < 80 && d > 0) {
+						// Local tool alignment
+						p.x += (dx / d) * 2;
+						p.y += (dy / d) * 2;
+					}
+
+					// Draw node
+					const radius = 1.5 + focusLevel * 2;
+					ctx.beginPath();
+					ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+
+					if (focusLevel > 0.5) {
+						ctx.fillStyle = '#B6FF3B';
+						ctx.shadowColor = '#B6FF3B';
+						ctx.shadowBlur = 6 * focusLevel;
+					} else {
+						ctx.fillStyle = '#6E7C70';
+						ctx.shadowBlur = 0;
+					}
+					ctx.fill();
+					ctx.shadowBlur = 0;
+				}
+
+				animId = requestAnimationFrame(draw);
+			}
+
+			const observer = new IntersectionObserver(([entry]) => {
+				isVisible = entry.isIntersecting;
+				if (isVisible && !animId) {
+					animId = requestAnimationFrame(draw);
+				} else if (!isVisible && animId) {
+					cancelAnimationFrame(animId);
+					animId = 0;
+				}
+			});
+			observer.observe(canvas);
+
+			window.addEventListener('resize', resize, { passive: true });
+			resize();
+			updateMetrics(75);
+			animId = requestAnimationFrame(draw);
+		}
+	}
+</script>

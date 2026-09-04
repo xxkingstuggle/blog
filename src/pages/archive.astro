@@ -6,23 +6,40 @@ const posts = await getPosts();
 const years = [...new Set(posts.map((post) => post.data.pubDate.getFullYear()))];
 ---
 
-<BaseLayout title="归档" description="按年份浏览所有文章。">
-	<section class="shell page-intro">
-		<p class="eyebrow">ARCHIVE</p>
-		<h1>归档</h1>
-		<p class="lede">共 {posts.length} 篇文章。</p>
+<BaseLayout title="时间归档" description="按年份编排的所有历史文章归档。">
+	<section class="shell" style="padding: clamp(60px, 8vw, 96px) 0 40px;">
+		<div class="hero-eyebrow" style="color: var(--accent-contrast);">CHRONOLOGY / 归档</div>
+		<h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -0.035em; margin-bottom: 16px;">
+			时间归档
+		</h1>
+		<p style="font-size: 1.15rem; color: var(--text-muted); max-width: 54ch; line-height: 1.6; margin: 0;">
+			共收录 {posts.length} 篇发布内容。
+		</p>
 	</section>
-	<section class="shell archive-list">
+
+	<section class="shell" style="padding-bottom: 110px;">
 		{years.map((year) => (
-			<section class="archive-year" aria-labelledby={`year-${year}`}>
-				<h2 id={`year-${year}`}>{year}</h2>
-				<div class="archive-items">
-					{posts.filter((post) => post.data.pubDate.getFullYear() === year).map((post) => (
-						<a class="archive-item" href={`/posts/${post.id}/`}>
-							<span>{post.data.title}</span>
-							<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-						</a>
-					))}
+			<section style="margin-bottom: 48px;" aria-labelledby={`year-${year}`}>
+				<h2 id={`year-${year}`} style="font-family: var(--font-mono); font-size: 1.4rem; padding-bottom: 12px; border-bottom: 2px solid var(--text);">
+					{year}
+				</h2>
+				<div style="display: flex; flex-direction: column;">
+					{posts
+						.filter((post) => post.data.pubDate.getFullYear() === year)
+						.map((post) => (
+							<a
+								href={`/posts/${post.id}/`}
+								style="display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding: 18px 8px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit;"
+							>
+								<span style="font-size: 1.1rem; font-weight: 600;">{post.data.title}</span>
+								<time
+									datetime={post.data.pubDate.toISOString()}
+									style="font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); white-space: nowrap;"
+								>
+									{formatDate(post.data.pubDate)}
+								</time>
+							</a>
+						))}
 				</div>
 			</section>
 		))}

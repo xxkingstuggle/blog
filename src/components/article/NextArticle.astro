@@ -1,0 +1,19 @@
+---
+import type { BlogPost } from '../../lib/posts';
+
+interface Props {
+	post?: BlogPost;
+}
+
+const { post } = Astro.props;
+---
+
+{post && (
+	<section class="next-article-section" aria-label="下一篇阅读">
+		<div class="next-article-label">NEXT DISPATCH / 下一篇</div>
+		<a class="next-article-card" href={`/posts/${post.id}/`}>
+			<h4>{post.data.title}</h4>
+			<p>{post.data.description}</p>
+		</a>
+	</section>
+)}

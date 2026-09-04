@@ -1,0 +1,33 @@
+---
+import type { BlogPost } from '../lib/posts';
+import { formatDate, getReadingTime, KIND_LABELS } from '../lib/posts';
+
+interface Props {
+	post: BlogPost;
+	index?: number;
+}
+
+const { post, index } = Astro.props;
+const formattedIndex = index !== undefined ? String(index + 1).padStart(2, '0') : '';
+const kindLabel = KIND_LABELS[post.data.kind] || '思考';
+const kicker = post.data.kicker || kindLabel;
+---
+
+<a class="article-row" href={`/posts/${post.id}/`}>
+	<div class="article-row-index">{formattedIndex}</div>
+	<div class="article-row-kicker">{kicker}</div>
+	<div class="article-row-content">
+		<div class="article-row-title-wrap">
+			<h3 class="article-row-title">{post.data.title}</h3>
+			{post.data.presentation === 'feature' && (
+				<span class="badge-featured" style="font-size: 10px;">FEATURE</span>
+			)}
+		</div>
+		<p class="article-row-desc">{post.data.description}</p>
+	</div>
+	<div class="article-row-meta">
+		<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+		<span aria-hidden="true">·</span>
+		<span>{getReadingTime(post.body)}</span>
+	</div>
+</a>

@@ -1,20 +1,183 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostCard from '../../components/PostCard.astro';
+import ArticleRow from '../../components/ArticleRow.astro';
 import { getPosts } from '../../lib/posts';
 
 const posts = await getPosts();
+const thoughtCount = posts.filter((p) => p.data.kind === 'thought').length;
+const projectCount = posts.filter((p) => p.data.kind === 'project').length;
+const updateCount = posts.filter((p) => p.data.kind === 'update').length;
 ---
 
-<BaseLayout title="文章" description="所有文章。">
-	<section class="shell page-intro">
-		<p class="eyebrow">WRITING</p>
-		<h1>文章</h1>
-		<p class="lede">按时间顺序，记录正在思考和实践的事情。</p>
+<BaseLayout title="全部发布" description="记录我的思考、项目与近况。按时间倒序排列。">
+	<section class="shell" style="padding: clamp(60px, 8vw, 96px) 0 32px;">
+		<div class="hero-eyebrow" style="color: var(--accent-contrast);">ALL RELEASES / 全部发布</div>
+		<h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -0.035em; margin-bottom: 16px;">
+			全部发布
+		</h1>
+		<p style="font-size: 1.15rem; color: var(--text-muted); max-width: 54ch; line-height: 1.6; margin: 0;">
+			这里记录我的思考、项目和近况，也记录它们如何从想法变成作品。
+		</p>
+
+		<!-- Category Filter Tabs with Accessibility -->
+		<div class="filter-tabs" id="filter-tabs" role="tablist" aria-label="按分类筛选发布">
+			<button
+				class="filter-tab is-active"
+				role="tab"
+				id="tab-all"
+				aria-selected="true"
+				aria-controls="posts-list"
+				data-filter="all"
+			>
+				全部 ({posts.length})
+			</button>
+			<button
+				class="filter-tab"
+				role="tab"
+				id="tab-thought"
+				aria-selected="false"
+				aria-controls="posts-list"
+				data-filter="thought"
+			>
+				思考 ({thoughtCount})
+			</button>
+			<button
+				class="filter-tab"
+				role="tab"
+				id="tab-project"
+				aria-selected="false"
+				aria-controls="posts-list"
+				data-filter="project"
+			>
+				项目 ({projectCount})
+			</button>
+			<button
+				class="filter-tab"
+				role="tab"
+				id="tab-update"
+				aria-selected="false"
+				aria-controls="posts-list"
+				data-filter="update"
+			>
+				近况 ({updateCount})
+			</button>
+		</div>
 	</section>
-	<section class="shell section-block" aria-label="文章列表">
-		<div class="post-list">
-			{posts.map((post) => <PostCard post={post} />)}
+
+	<section class="shell" style="padding-bottom: 100px;" aria-label="发布列表">
+		<div class="editorial-list" role="feed" id="posts-list">
+			{posts.map((post, i) => (
+				<div class="post-item-wrapper" data-kind={post.data.kind}>
+					<ArticleRow post={post} index={i} />
+				</div>
+			))}
+		</div>
+
+		<!-- Empty state message when a filtered category has no items -->
+		<div class="posts-empty-state" id="posts-empty-state" role="status" aria-live="polite" style="display: none;">
+			<p id="empty-state-text" class="empty-state-text"></p>
 		</div>
 	</section>
 </BaseLayout>
+
+<style>
+	.filter-tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 28px;
+		padding-top: 24px;
+		border-top: 1px solid var(--line);
+	}
+
+	.filter-tab {
+		padding: 6px 14px;
+		border-radius: 999px;
+		background: var(--surface-subtle);
+		border: 1px solid var(--line);
+		color: var(--text-muted);
+		font-size: 13.5px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all var(--duration-fast) ease;
+	}
+
+	.filter-tab:hover {
+		color: var(--text);
+		border-color: var(--text);
+	}
+
+	.filter-tab.is-active {
+		background: var(--text);
+		color: var(--bg);
+		border-color: var(--text);
+	}
+
+	.post-item-wrapper {
+		transition: opacity var(--duration-fast) ease;
+	}
+
+	.post-item-wrapper.is-hidden {
+		display: none;
+	}
+
+	.posts-empty-state {
+		padding: 64px 20px;
+		text-align: center;
+		background: var(--surface);
+		border: 1px dashed var(--line);
+		border-radius: 12px;
+		margin-top: 20px;
+	}
+
+	.empty-state-text {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: 1.05rem;
+		line-height: 1.6;
+	}
+</style>
+
+<script>
+	const tabs = document.querySelectorAll<HTMLButtonElement>('.filter-tab');
+	const items = document.querySelectorAll<HTMLElement>('.post-item-wrapper');
+	const emptyState = document.getElementById('posts-empty-state');
+	const emptyText = document.getElementById('empty-state-text');
+
+	tabs.forEach((tab) => {
+		tab.addEventListener('click', () => {
+			const filter = tab.getAttribute('data-filter') || 'all';
+
+			tabs.forEach((t) => {
+				t.classList.remove('is-active');
+				t.setAttribute('aria-selected', 'false');
+			});
+			tab.classList.add('is-active');
+			tab.setAttribute('aria-selected', 'true');
+
+			let visibleCount = 0;
+			items.forEach((item) => {
+				const itemKind = item.getAttribute('data-kind');
+				if (filter === 'all' || itemKind === filter) {
+					item.classList.remove('is-hidden');
+					visibleCount++;
+				} else {
+					item.classList.add('is-hidden');
+				}
+			});
+
+			if (emptyState && emptyText) {
+				if (visibleCount === 0) {
+					emptyState.style.display = 'block';
+					if (filter === 'project') {
+						emptyText.textContent = '暂无项目发布，项目介绍会在完成后出现在这里。';
+					} else {
+						emptyText.textContent = '暂无相关发布。';
+					}
+				} else {
+					emptyState.style.display = 'none';
+				}
+			}
+		});
+	});
+</script>

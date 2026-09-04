@@ -3,20 +3,59 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config';
 ---
 
-<BaseLayout title="关于" description={`关于 ${siteConfig.name}。`}>
-	<section class="shell page-intro">
-		<p class="eyebrow">ABOUT</p>
-		<h1>关于</h1>
+<BaseLayout title="关于" description={`关于 ${siteConfig.name} 与我的个人记录。`}>
+	<section class="shell" style="padding: clamp(60px, 8vw, 96px) 0 40px;">
+		<div class="hero-eyebrow" style="color: var(--accent-contrast);">ABOUT / 关于</div>
+		<h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -0.035em; margin-bottom: 24px;">
+			关于这个站点与我
+		</h1>
+		<p style="font-size: 1.25rem; color: var(--text-muted); max-width: 58ch; line-height: 1.6; margin: 0;">
+			把想法做成可以被看见的东西。这里是我的个人发布站，用来长期收纳思考、项目与近况。
+		</p>
 	</section>
-	<section class="shell prose standalone-prose">
-		<p>这里是 {siteConfig.name}，一个用来记录想法、实践和生活片段的个人空间。</p>
-		<p>博客使用 Astro 构建，文章以 Markdown 保存，保持简单、快速，也方便长期维护。</p>
-		<h2>联系我</h2>
-		<p>如果你想交流，可以通过下方链接找到我。</p>
-		<div class="link-list">
-			{siteConfig.social.github && <a href={siteConfig.social.github} rel="me">GitHub ↗</a>}
-			{siteConfig.social.weibo && <a href={siteConfig.social.weibo} rel="me">微博 ↗</a>}
-			{!siteConfig.social.github && !siteConfig.social.weibo && <span class="muted">社交链接将在这里更新。</span>}
+
+	<section class="shell" style="max-width: 760px; margin-inline: auto; padding-bottom: 110px;">
+		<div class="article-prose">
+			<p>
+				你好，我是 <strong>Xin</strong>。
+			</p>
+			<p>
+				<strong>{siteConfig.name}</strong> 是我的个人发布记录站。在日常的工程开发与创作中，许多想法往往开始于零散的灵感或突发的困惑。我希望建立一个稳定的空间，将这些感知通过长文、工程实践或交互演示的形式完整记录下来。
+			</p>
+
+			<h2>为什么做成发布站</h2>
+			<p>
+				相比于传统博客千篇一律的列表与模板，我更倾向于像发布产品一样对待自己的创作：每一项重要的输出——无论是一篇长文、一个开源工具还是一次实验——都应当拥有适合其叙事节奏的展示方式。
+			</p>
+			<p>
+				因此，站点的信息架构统一收纳不同类型的内容（思考、项目、近况），但具体内容可以自由采用通用长文或独立专属发布页。
+			</p>
+
+			<h2>技术与选型</h2>
+			<p>
+				网站基于 <strong>Astro 7</strong> 静态架构驱动，保留静态 HTML 的轻快与高性能；首屏光场采用原生 HTML5 Canvas 2D，并针对滚动离开视口与减少动画偏好进行了性能调优；富媒体与交互内容采用 MDX 实现。
+			</p>
+
+			<h2>联系与连接</h2>
+			<p>
+				如果你对这里的内容感兴趣，或有想法想要交流，欢迎通过以下方式找到我：
+			</p>
+
+			<div class="tag-list" style="margin-top: 24px;">
+				<a class="tag-item" href="https://github.com/xxkingstuggle/blog" target="_blank" rel="noopener noreferrer">
+					GitHub (本站开源仓库) ↗
+				</a>
+				{siteConfig.social.github && (
+					<a class="tag-item" href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">
+						GitHub Profile ↗
+					</a>
+				)}
+				{siteConfig.social.weibo && (
+					<a class="tag-item" href={siteConfig.social.weibo} target="_blank" rel="noopener noreferrer">
+						微博 ↗
+					</a>
+				)}
+			</div>
 		</div>
 	</section>
 </BaseLayout>

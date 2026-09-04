@@ -1,0 +1,27 @@
+---
+import type { BlogPost } from '../../lib/posts';
+import ArticleRow from '../ArticleRow.astro';
+
+interface Props {
+	posts: BlogPost[];
+}
+
+const { posts } = Astro.props;
+---
+
+<section class="home-section" id="latest" aria-labelledby="latest-heading">
+	<div class="shell">
+		<div class="section-label-row">
+			<span class="section-label" id="latest-heading">LATEST / 最新发布</span>
+			<a class="section-label" href="/posts/" style="text-decoration: underline; text-underline-offset: 3px;">
+				查看全部发布 ({posts.length}) →
+			</a>
+		</div>
+
+		<div class="editorial-list" role="feed" aria-label="最新发布列表">
+			{posts.map((post, i) => (
+				<ArticleRow post={post} index={i} />
+			))}
+		</div>
+	</div>
+</section>

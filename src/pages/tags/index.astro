@@ -5,15 +5,28 @@ import { getAllTags, getPosts } from '../../lib/posts';
 const tags = getAllTags(await getPosts());
 ---
 
-<BaseLayout title="标签" description="按标签浏览文章。">
-	<section class="shell page-intro">
-		<p class="eyebrow">TAGS</p>
-		<h1>标签</h1>
-		<p class="lede">从一个关键词开始浏览。</p>
+<BaseLayout title="标签索引" description="按主题关键词浏览所有文章。">
+	<section class="shell" style="padding: clamp(60px, 8vw, 96px) 0 40px;">
+		<div class="hero-eyebrow" style="color: var(--accent-contrast);">TAXONOMY / 索引</div>
+		<h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -0.035em; margin-bottom: 16px;">
+			标签索引
+		</h1>
+		<p style="font-size: 1.15rem; color: var(--text-muted); max-width: 54ch; line-height: 1.6; margin: 0;">
+			按主题与栏目关键词聚合所有内容。
+		</p>
 	</section>
-	<section class="shell section-block">
-		<div class="tag-cloud">
-			{tags.map((tag) => <a class="tag tag-large" href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a>)}
+
+	<section class="shell" style="padding-bottom: 110px;">
+		<div class="tag-list" style="gap: 12px;">
+			{tags.map((tag) => (
+				<a
+					class="tag-item"
+					href={`/tags/${encodeURIComponent(tag)}/`}
+					style="padding: 8px 16px; font-size: 15px;"
+				>
+					#{tag}
+				</a>
+			))}
 		</div>
 	</section>
 </BaseLayout>

@@ -2,10 +2,42 @@ import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 
 export type BlogPost = CollectionEntry<'blog'>;
+export type PostKind = 'thought' | 'project' | 'update';
+export type PostPresentation = 'article' | 'feature';
 
-export async function getPosts() {
-	const posts = await getCollection('blog', ({ data }) => !data.draft);
+export const KIND_LABELS: Record<PostKind, string> = {
+	thought: '思考',
+	project: '项目',
+	update: '近况',
+};
+
+export const KIND_SLUGS: Record<PostKind, string> = {
+	thought: 'thoughts',
+	project: 'projects',
+	update: 'updates',
+};
+
+export interface GetPostsOptions {
+	kind?: PostKind;
+}
+
+export async function getPosts(options: GetPostsOptions = {}) {
+	const { kind } = options;
+	const posts = await getCollection('blog', ({ data }) => {
+		if (data.draft) return false;
+		if (kind && data.kind !== kind) return false;
+		return true;
+	});
 	return posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+}
+
+export async function getFeaturedPost() {
+	const posts = await getPosts();
+	return posts.find((post) => post.data.featured) ?? posts[0];
+}
+
+export async function getProjectPosts() {
+	return getPosts({ kind: 'project' });
 }
 
 export function formatDate(date: Date) {

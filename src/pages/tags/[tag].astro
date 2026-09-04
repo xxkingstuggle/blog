@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import PostCard from '../../components/PostCard.astro';
+import ArticleRow from '../../components/ArticleRow.astro';
 import { getPosts } from '../../lib/posts';
 
 export async function getStaticPaths() {
@@ -16,15 +16,25 @@ const { tag, posts } = Astro.props;
 ---
 
 <BaseLayout title={`标签：${tag}`} description={`带有“${tag}”标签的文章。`}>
-	<section class="shell page-intro">
-		<a class="back-link" href="/tags/">← 全部标签</a>
-		<p class="eyebrow">TAG</p>
-		<h1>#{tag}</h1>
-		<p class="lede">{posts.length} 篇文章</p>
+	<section class="shell" style="padding: clamp(60px, 8vw, 96px) 0 40px;">
+		<a class="article-back-link" href="/tags/">
+			<span aria-hidden="true">←</span>
+			<span>返回所有标签</span>
+		</a>
+		<div class="hero-eyebrow" style="color: var(--accent-contrast);">TAG INDEX</div>
+		<h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -0.035em; margin-bottom: 16px;">
+			#{tag}
+		</h1>
+		<p style="font-size: 1.15rem; color: var(--text-muted); max-width: 54ch; line-height: 1.6; margin: 0;">
+			共收录 {posts.length} 篇相关文章。
+		</p>
 	</section>
-	<section class="shell section-block">
-		<div class="post-list">
-			{posts.map((post) => <PostCard post={post} />)}
+
+	<section class="shell" style="padding-bottom: 100px;" aria-label={`标签 ${tag} 下的文章`}>
+		<div class="editorial-list" role="feed">
+			{posts.map((post, i) => (
+				<ArticleRow post={post} index={i} />
+			))}
 		</div>
 	</section>
 </BaseLayout>

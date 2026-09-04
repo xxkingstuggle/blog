@@ -1,7 +1,7 @@
 export const siteConfig = {
 	name: 'xingx.cc.cd',
-	description: '一个极简、中文优先的个人博客。',
-	author: 'xingx.cc.cd',
+	description: '发布我的想法、项目与近况',
+	author: 'Xin',
 	url: 'https://xingx.cc.cd',
 	social: {
 		github: '',

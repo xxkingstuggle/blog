@@ -1,0 +1,20 @@
+---
+interface Props {
+	quote: string;
+	author?: string;
+	source?: string;
+}
+
+const { quote, author, source } = Astro.props;
+---
+
+<aside class="pull-quote" aria-label="重点引语">
+	<blockquote class="pull-quote-text">
+		“{quote}”
+	</blockquote>
+	{(author || source) && (
+		<cite class="pull-quote-author">
+			{author}{author && source && ' — '}{source}
+		</cite>
+	)}
+</aside>

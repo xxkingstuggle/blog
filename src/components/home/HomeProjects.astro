@@ -1,0 +1,61 @@
+---
+import { projects } from '../../data/projects';
+import { getProjectPosts } from '../../lib/posts';
+
+const projectPosts = await getProjectPosts();
+---
+
+<section class="home-section" id="projects" aria-labelledby="projects-heading">
+	<div class="shell">
+		<div class="section-label-row">
+			<span class="section-label" id="projects-heading">PROJECTS / 项目</span>
+			<span class="section-label">SELECTED WORK</span>
+		</div>
+
+		<div class="projects-grid">
+			{/* Project posts created as MDX */}
+			{projectPosts.map((post) => (
+				<a class="project-card" href={`/posts/${post.id}/`}>
+					<div>
+						<div class="project-card-header">
+							<h3 class="project-title">{post.data.title}</h3>
+							<span class="project-year">{post.data.pubDate.getFullYear()}</span>
+						</div>
+						<div class="project-tagline">{post.data.kicker || '项目详细发布'}</div>
+						<p class="project-desc">{post.data.description}</p>
+					</div>
+					<div class="project-footer">
+						<div class="project-tags">
+							{post.data.tags.map((tag) => (
+								<span class="project-tag">{tag}</span>
+							))}
+						</div>
+						<span class="project-link-indicator" aria-hidden="true">→</span>
+					</div>
+				</a>
+			))}
+
+			{/* Baseline projects from data */}
+			{projects.map((project) => (
+				<a class="project-card" href={project.url} target="_blank" rel="noopener noreferrer">
+					<div>
+						<div class="project-card-header">
+							<h3 class="project-title">{project.name}</h3>
+							<span class="project-year">{project.year}</span>
+						</div>
+						<div class="project-tagline">{project.tagline}</div>
+						<p class="project-desc">{project.description}</p>
+					</div>
+					<div class="project-footer">
+						<div class="project-tags">
+							{project.tags.map((tag) => (
+								<span class="project-tag">{tag}</span>
+							))}
+						</div>
+						<span class="project-link-indicator" aria-hidden="true">↗</span>
+					</div>
+				</a>
+			))}
+		</div>
+	</div>
+</section>

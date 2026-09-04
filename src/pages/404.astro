@@ -2,11 +2,23 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="页面不存在" description="你访问的页面不存在。">
-	<section class="shell not-found">
-		<p class="not-found-code">404</p>
-		<h1>页面不存在</h1>
-		<p>这个地址没有对应的内容，回首页看看吧。</p>
-		<a class="button-link" href="/">回到首页</a>
+<BaseLayout title="页面未找到 (404)" description="你所请求的内容不存在或已迁移。">
+	<section class="shell" style="padding: clamp(80px, 15vh, 160px) 0; text-align: center;">
+		<div style="font-family: var(--font-mono); font-size: clamp(4rem, 10vw, 7rem); font-weight: 800; line-height: 1; color: var(--accent-contrast); margin-bottom: 20px;">
+			404
+		</div>
+		<h1 style="font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: 750; margin-bottom: 16px;">
+			内容已跃迁或不存在
+		</h1>
+		<p style="font-size: 1.1rem; color: var(--text-muted); max-width: 44ch; margin: 0 auto 32px; line-height: 1.6;">
+			这里目前处于纯粹的真空状态。请检查地址输入是否有误，或返回主站索引。
+		</p>
+		<a
+			href="/"
+			style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 999px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 700; text-decoration: none;"
+		>
+			<span>回到首页</span>
+			<span aria-hidden="true">→</span>
+		</a>
 	</section>
 </BaseLayout>

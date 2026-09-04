@@ -1,0 +1,140 @@
+---
+import type { BlogPost } from '../../lib/posts';
+import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
+import ArticleRail from './ArticleRail.astro';
+import NextArticle from './NextArticle.astro';
+
+interface HeadingItem {
+	depth: number;
+	slug: string;
+	text: string;
+}
+
+interface Props {
+	post: BlogPost;
+	headings: HeadingItem[];
+	nextPost?: BlogPost | null;
+}
+
+const { post, headings, nextPost } = Astro.props;
+const description = post.data.description;
+const kindLabel = KIND_LABELS[post.data.kind] || '重点发布';
+const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
+---
+
+<!-- Fixed Reading Progress Indicator -->
+<div class="reading-progress-bar" id="reading-progress" aria-hidden="true"></div>
+
+<!-- Feature Release Immersive Header -->
+<header class="feature-header-section">
+	<div class="shell feature-header-inner">
+		<div class="feature-nav-row">
+			<a class="article-back-link" href="/posts/">
+				<span aria-hidden="true">←</span>
+				<span>返回全部发布</span>
+			</a>
+			<div class="feature-badge-row">
+				<span class="badge-featured">{kicker}</span>
+			</div>
+		</div>
+
+		<h1 class="feature-page-title">{post.data.title}</h1>
+		<p class="feature-lead">{description}</p>
+
+		<div class="article-meta-bar">
+			<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+			{post.data.updatedDate && (
+				<>
+					<span aria-hidden="true">·</span>
+					<time datetime={post.data.updatedDate.toISOString()}>更新于 {formatDate(post.data.updatedDate)}</time>
+				</>
+			)}
+			<span aria-hidden="true">·</span>
+			<span>{getReadingTime(post.body)}</span>
+
+			{post.data.tags.length > 0 && (
+				<div class="tag-list" style="margin-left: auto;">
+					{post.data.tags.map((tag) => (
+						<a class="tag-item" href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a>
+					))}
+				</div>
+			)}
+		</div>
+	</div>
+</header>
+
+<!-- Feature Body Layout with TOC Rail -->
+<div class="shell article-layout feature-layout">
+	<article class="article-content-wrapper feature-content-wrapper">
+		<div class="article-prose feature-prose">
+			<slot />
+		</div>
+		{nextPost && <NextArticle post={nextPost} />}
+	</article>
+
+	{headings.length > 0 && <ArticleRail headings={headings} />}
+</div>
+
+<style>
+	.feature-header-section {
+		padding: clamp(64px, 10vw, 108px) 0 44px;
+		border-bottom: 1px solid var(--line);
+		background: radial-gradient(circle at 50% 0%, var(--surface-subtle) 0%, transparent 70%);
+	}
+
+	.feature-header-inner {
+		max-width: 900px;
+		margin-inline: auto;
+	}
+
+	.feature-nav-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		margin-bottom: 32px;
+	}
+
+	.feature-nav-row .article-back-link {
+		margin-bottom: 0;
+	}
+
+	.feature-page-title {
+		font-size: clamp(2.5rem, 5.8vw, 4.4rem);
+		font-weight: 800;
+		line-height: 1.1;
+		letter-spacing: -0.04em;
+		margin-bottom: 24px;
+		color: var(--text);
+		word-break: break-word;
+	}
+
+	.feature-lead {
+		font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+		line-height: 1.6;
+		color: var(--text-muted);
+		margin-bottom: 36px;
+	}
+
+	.feature-layout {
+		padding-top: 56px;
+	}
+</style>
+
+<script>
+	// Reading progress bar tracker
+	const progressBar = document.getElementById('reading-progress');
+	if (progressBar) {
+		const updateProgress = () => {
+			const scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
+			if (scrollTotal > 0) {
+				const progress = (window.scrollY / scrollTotal) * 100;
+				progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+			}
+		};
+
+		window.addEventListener('scroll', updateProgress, { passive: true });
+		window.addEventListener('resize', updateProgress, { passive: true });
+		updateProgress();
+	}
+</script>

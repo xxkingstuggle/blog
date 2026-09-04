@@ -1,0 +1,52 @@
+---
+interface Props {
+	src: string;
+	poster?: string;
+	caption?: string;
+	title?: string;
+	width?: 'content' | 'wide' | 'full';
+	autoplay?: boolean;
+	loop?: boolean;
+	muted?: boolean;
+}
+
+const {
+	src,
+	poster,
+	caption,
+	title = '视频内容',
+	width = 'wide',
+	autoplay = false,
+	loop = false,
+	muted = false,
+} = Astro.props;
+
+const isDirectVideo = src.endsWith('.mp4') || src.endsWith('.webm');
+---
+
+<div class="article-media" data-width={width}>
+	<figure class="article-media-figure">
+		<div class="video-embed-container">
+			{isDirectVideo ? (
+				<video
+					src={src}
+					poster={poster}
+					controls
+					autoplay={autoplay}
+					loop={loop}
+					muted={muted}
+					playsinline
+					title={title}
+				></video>
+			) : (
+				<iframe
+					src={src}
+					title={title}
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+					allowfullscreen
+				></iframe>
+			)}
+		</div>
+		{caption && <figcaption class="article-media-caption">{caption}</figcaption>}
+	</figure>
+</div>

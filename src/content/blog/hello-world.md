@@ -2,9 +2,11 @@
 title: Hello World
 pubDate: 2026-09-04
 description: 这个博客已经成功部署。
+kind: update
+presentation: article
 tags:
   - 开始
-  - 博客
+  - 近况
 ---
 
 这个博客已经成功部署。

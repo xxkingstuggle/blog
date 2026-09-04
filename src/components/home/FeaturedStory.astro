@@ -1,0 +1,51 @@
+---
+import { Image } from 'astro:assets';
+import type { BlogPost } from '../../lib/posts';
+import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
+import defaultCover from '../../assets/demo/liquid-glass-cover.png';
+
+interface Props {
+	post: BlogPost;
+}
+
+const { post } = Astro.props;
+const kindLabel = KIND_LABELS[post.data.kind] || '发布';
+const kicker = post.data.kicker || `${kindLabel} · FEATURED`;
+const coverSrc = post.data.cover || defaultCover;
+---
+
+<section class="featured-section" id="featured" aria-labelledby="featured-heading">
+	<div class="shell">
+		<div class="section-label-row">
+			<span class="section-label" id="featured-heading">FEATURED / 重点发布</span>
+			<span class="section-label">{kindLabel.toUpperCase()}</span>
+		</div>
+		<a class="featured-card" href={`/posts/${post.id}/`}>
+			<div class="featured-media">
+				<Image
+					src={coverSrc}
+					alt={post.data.title}
+					width={960}
+					height={540}
+					loading="eager"
+				/>
+			</div>
+			<div class="featured-info">
+				<div class="featured-badges">
+					<span class="badge-featured">{kicker}</span>
+				</div>
+				<h2 class="featured-title">{post.data.title}</h2>
+				<p class="featured-summary">{post.data.description}</p>
+				<div class="featured-meta">
+					<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+					<span aria-hidden="true">·</span>
+					<span>{getReadingTime(post.body)}</span>
+				</div>
+				<div class="featured-cta">
+					<span>查看详情</span>
+					<span aria-hidden="true">→</span>
+				</div>
+			</div>
+		</a>
+	</div>
+</section>
