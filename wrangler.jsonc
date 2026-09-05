@@ -46,7 +46,7 @@
 		"GITHUB_OWNER": "xxkingstuggle",
 		"GITHUB_REPO": "blog",
 		"GITHUB_BRANCH": "main",
-		"ORIGIN_BUILD_URL": "https://blog-production.guozhongeba.workers.dev/__build.json",
+		"ORIGIN_BUILD_URL": "https://xingx.cc.cd/__build.json",
 		"CN_HEALTH_URL": "https://cn.xingx.cc.cd/__health",
 		"CF_RULE_API_URL": "REPLACE_WITH_SINGLE_REDIRECT_RULE_API_URL"
 	},

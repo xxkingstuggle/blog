@@ -36,7 +36,7 @@ GitHub Actions 仓库 Secrets 只需要：
 - `CLOUDFLARE_API_TOKEN`：单一 Cloudflare 账户范围，仅 `D1:编辑` 和 `Workers 脚本:编辑`。
 - `CLOUDFLARE_ACCOUNT_ID`：Cloudflare 账户 ID。
 
-推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产工作流只能手动触发，并且在 production D1 UUID、域名和全部生产 Secrets 配好前不得运行。
+推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产公开页面继续由 Vercel 自动部署 `main`；`/api/*`、`/auth/*`、`/admin/*` 和 `/media/*` 通过 `vercel.json` 代理到 production Worker，发布状态以 `https://xingx.cc.cd/__build.json` 的 commit SHA 为准。
 
 ## 3. 大陆访客备用境外加速线路
 
