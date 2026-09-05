@@ -58,6 +58,7 @@ interface Env {
 	DB: D1DatabaseLike;
 	MEDIA?: R2BucketLike;
 	COMMENTS_RATE_LIMIT?: RateLimitLike;
+	ENVIRONMENT?: 'staging' | 'production' | string;
 	PUBLIC_ORIGIN: string;
 	CN_ORIGIN?: string;
 	ACCESS_ISSUER: string;
@@ -353,9 +354,8 @@ async function requireAdmin(request: Request, env: Env) {
 	return { subject };
 }
 
-async function githubOAuthStart(request: Request, env: Env) {
+async function githubOAuthStart(_request: Request, env: Env) {
 	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return error('GitHub 登录尚未配置。', 503, 'oauth_unavailable');
-	if (new URL(request.url).origin !== env.PUBLIC_ORIGIN) return error('登录入口只允许主站访问。', 404);
 	const state = toBase64Url(crypto.getRandomValues(new Uint8Array(24)));
 	const expires = Math.floor(Date.now() / 1000) + 600;
 	const signedState = `${state}.${expires}.${await hmac(`${state}.${expires}`, env.SESSION_SECRET)}`;
@@ -369,7 +369,6 @@ async function githubOAuthStart(request: Request, env: Env) {
 async function githubOAuthCallback(request: Request, env: Env) {
 	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return error('GitHub 登录尚未配置。', 503, 'oauth_unavailable');
 	const url = new URL(request.url);
-	if (url.origin !== env.PUBLIC_ORIGIN) return error('登录回调只允许主站访问。', 404);
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
 	const cookie = cookieValue(request, '__Host-xingx-oauth-state');
@@ -610,17 +609,30 @@ async function putGithubFile(env: Env, token: string, path: string, body: string
 async function adminSession(request: Request, env: Env) {
 	const auth = await requireAdmin(request, env);
 	if (auth.response) return auth.response;
-	return json({ email: auth.subject, csrfToken: await issueCsrf(auth.subject ?? '', env), expiresIn: 3600 });
+	const environment = env.ENVIRONMENT || (env.PUBLIC_ORIGIN?.includes('staging') ? 'staging' : 'production');
+	return json({
+		email: auth.subject,
+		csrfToken: await issueCsrf(auth.subject ?? '', env),
+		expiresIn: 3600,
+		environment,
+		publicOrigin: env.PUBLIC_ORIGIN,
+	});
 }
 
 async function listDrafts(env: Env) {
-	const result = await env.DB.prepare('SELECT id, slug, title, description, pub_date, kind, presentation, status, source_path, source_blob_sha, listed, version, updated_at, publish_commit_sha, error_code FROM drafts ORDER BY updated_at DESC LIMIT 100').all();
+	const result = await env.DB.prepare('SELECT id, slug, title, description, pub_date, kind, presentation, featured, status, source_path, source_blob_sha, listed, version, updated_at, publish_commit_sha, error_code FROM drafts ORDER BY updated_at DESC LIMIT 100').all();
 	return json({ drafts: result.results });
 }
 
-async function getDraft(env: Env, id: string) {
-	const draft = await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<JsonRecord>();
+async function getDraft(request: Request, env: Env, id: string) {
+	const url = new URL(request.url);
+	const recheck = url.searchParams.get('recheck') === '1';
+	let draft = await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<JsonRecord>();
 	if (!draft) return error('草稿不存在。', 404);
+	if (draft.status === 'deploying' || (recheck && draft.status === 'publish_failed' && draft.error_code === 'deployment_timeout')) {
+		await reconcilePublishing(env, id);
+		draft = (await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<JsonRecord>()) ?? draft;
+	}
 	try { draft.aliases = JSON.parse(String(draft.aliases_json ?? '[]')); } catch { draft.aliases = []; }
 	return json({ draft });
 }
@@ -634,9 +646,6 @@ async function saveDraft(request: Request, env: Env, id?: string) {
 	if (!title || title.length > 160 || input.body.length > 900_000) return error('标题或正文长度无效。', 422, 'invalid_draft');
 	const aliases = normalizeAliases(input.aliases ?? []);
 	if (!aliases) return error('Alias 只能使用未占用的小写根路径，最多 20 个。', 422, 'invalid_alias');
-	const sourcePath = sourcePathForSlug(slug, typeof input.sourcePath === 'string' ? input.sourcePath : undefined);
-	if (!sourcePath) return error('源文件只能位于 src/content/blog，且必须与 slug 一致。', 422, 'invalid_source_path');
-	const draftId = id ?? crypto.randomUUID();
 	const kind = ['thought', 'project', 'update'].includes(String(input.kind)) ? String(input.kind) : 'thought';
 	const presentation = ['article', 'feature'].includes(String(input.presentation)) ? String(input.presentation) : 'article';
 	const description = typeof input.description === 'string' && input.description.trim() ? input.description.trim().slice(0, 300) : title;
@@ -644,37 +653,68 @@ async function saveDraft(request: Request, env: Env, id?: string) {
 		? input.tags.filter((tag): tag is string => typeof tag === 'string').map((tag) => tag.trim().slice(0, 40)).filter(Boolean).slice(0, 20)
 		: [];
 	const pubDate = typeof input.pubDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input.pubDate) ? input.pubDate : new Date().toISOString().slice(0, 10);
-	const values = [
-		slug,
-		title,
-		description,
-		input.body,
-		pubDate,
-		JSON.stringify(tags),
-		kind,
-		presentation,
-		input.featured === true ? 1 : 0,
-		typeof input.kicker === 'string' ? input.kicker.trim().slice(0, 120) : null,
-		sourcePath,
-		typeof input.sourceBlobSha === 'string' && /^[a-f0-9]{40}$/.test(input.sourceBlobSha) ? input.sourceBlobSha : null,
-		input.listed === false ? 0 : 1,
-		JSON.stringify(aliases),
-	] as const;
+	const featured = input.featured === true ? 1 : 0;
+	const kicker = typeof input.kicker === 'string' ? input.kicker.trim().slice(0, 120) : null;
+	const listed = input.listed === false ? 0 : 1;
+	const aliasesJson = JSON.stringify(aliases);
+	const tagsJson = JSON.stringify(tags);
 
 	if (!id) {
+		const sourcePath = sourcePathForSlug(slug, typeof input.sourcePath === 'string' ? input.sourcePath : undefined);
+		if (!sourcePath) return error('源文件只能位于 src/content/blog，且必须与 slug 一致。', 422, 'invalid_source_path');
+		const draftId = crypto.randomUUID();
 		await env.DB.prepare(`INSERT INTO drafts (id, slug, title, description, body, pub_date, tags_json, kind, presentation, featured, kicker, source_path, source_blob_sha, listed, aliases_json, status, version, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 1, datetime('now'))`).bind(draftId, ...values).run();
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 'draft', 1, datetime('now'))`).bind(
+			draftId,
+			slug,
+			title,
+			description,
+			input.body,
+			pubDate,
+			tagsJson,
+			kind,
+			presentation,
+			featured,
+			kicker,
+			sourcePath,
+			listed,
+			aliasesJson,
+		).run();
 		return json({ id: draftId, status: 'draft', version: 1 }, 201);
 	}
 
 	const version = Number(input.version);
 	if (!Number.isInteger(version) || version < 1) return error('缺少有效的草稿版本，请重新载入。', 428, 'draft_version_required');
-	const existing = await env.DB.prepare('SELECT status FROM drafts WHERE id=?').bind(id).first<{ status: string }>();
+	const existing = await env.DB.prepare('SELECT status, slug, source_path, source_blob_sha FROM drafts WHERE id=?').bind(id).first<{ status: string; slug: string; source_path: string; source_blob_sha: string | null }>();
 	if (!existing) return error('草稿不存在。', 404);
 	if (existing.status === 'publishing' || existing.status === 'deploying') return error('草稿正在发布，暂时不能保存。', 409, 'publish_in_progress');
-	const result = await env.DB.prepare(`UPDATE drafts SET slug=?, title=?, description=?, body=?, pub_date=?, tags_json=?, kind=?, presentation=?, featured=?, kicker=?, source_path=?, source_blob_sha=?, listed=?, aliases_json=?, status='draft', error_code=NULL, version=version+1, updated_at=datetime('now')
-	WHERE id=? AND version=?`).bind(...values, id, version).run();
-	if (changes(result) !== 1) return error('草稿已在其他页面被修改，请重新载入后合并。', 409, 'draft_version_conflict');
+	if (slug !== existing.slug) return error('已保存的草稿不能修改 Slug。', 422, 'slug_immutable');
+
+	const result = await env.DB.prepare(`UPDATE drafts SET title=?, description=?, body=?, pub_date=?, tags_json=?, kind=?, presentation=?, featured=?, kicker=?, source_path=?, listed=?, aliases_json=?, status='draft', error_code=NULL, version=version+1, updated_at=datetime('now')
+	WHERE id=? AND version=? AND status NOT IN ('publishing', 'deploying')`).bind(
+		title,
+		description,
+		input.body,
+		pubDate,
+		tagsJson,
+		kind,
+		presentation,
+		featured,
+		kicker,
+		existing.source_path,
+		listed,
+		aliasesJson,
+		id,
+		version,
+	).run();
+	if (changes(result) !== 1) {
+		const check = await env.DB.prepare('SELECT status, version FROM drafts WHERE id=?').bind(id).first<{ status: string; version: number }>();
+		if (!check) return error('草稿不存在。', 404);
+		if (check.status === 'publishing' || check.status === 'deploying') {
+			return error('草稿正在发布，暂时不能保存。', 409, 'publish_in_progress');
+		}
+		return error('草稿已在其他页面被修改，请重新载入后合并。', 409, 'draft_version_conflict');
+	}
 	return json({ id, status: 'draft', version: version + 1 });
 }
 
@@ -719,14 +759,40 @@ async function preview(request: Request, env: Env) {
 async function publish(request: Request, env: Env, ctx: ExecutionContextLike) {
 	const input = await readJson(request);
 	if (!input || typeof input.id !== 'string') return error('缺少草稿 id。', 422);
+
+	const version = Number(input.version);
+	if (!Number.isInteger(version) || version < 1) {
+		return error('缺少有效的草稿版本号，发布已拒绝。', 428, 'draft_version_required');
+	}
+
+	// 抢占发布任务：原子检查 ID、版本号及非发布中状态
+	const claimed = await env.DB.prepare(
+		"UPDATE drafts SET status='publishing', error_code=NULL, updated_at=datetime('now') WHERE id=? AND version=? AND status NOT IN ('publishing','deploying')"
+	).bind(input.id, version).run();
+
+	if (changes(claimed) !== 1) {
+		const existing = await env.DB.prepare('SELECT status, version FROM drafts WHERE id=?').bind(input.id).first<{ status: string; version: number }>();
+		if (!existing) return error('草稿不存在。', 404);
+		if (existing.status === 'publishing' || existing.status === 'deploying') return error('已有发布任务进行中。', 409, 'publish_in_progress');
+		if (Number(existing.version) !== version) return error('草稿版本不匹配，请先保存最新内容再发布。', 409, 'draft_version_conflict');
+		return error('发布任务抢占失败，请稍后重试。', 409, 'publish_conflict');
+	}
+
+	// 抢占成功后读取已锁定的最新草稿内容
 	const draft = await env.DB.prepare('SELECT * FROM drafts WHERE id = ?').bind(input.id).first<JsonRecord>();
 	if (!draft) return error('草稿不存在。', 404);
+
 	const slug = String(draft.slug ?? '');
-	if (!isValidSlug(slug)) return error('草稿 slug 无效，发布已拒绝。', 422, 'invalid_slug');
+	if (!isValidSlug(slug)) {
+		await env.DB.prepare("UPDATE drafts SET status='draft', error_code='invalid_slug', updated_at=datetime('now') WHERE id=?").bind(input.id).run();
+		return error('草稿 slug 无效，发布已拒绝。', 422, 'invalid_slug');
+	}
 	const path = sourcePathForSlug(slug, typeof draft.source_path === 'string' ? draft.source_path : undefined);
-	if (!path) return error('草稿源文件路径无效，发布已拒绝。', 422, 'invalid_source_path');
-	const claimed = await env.DB.prepare("UPDATE drafts SET status='publishing', error_code=NULL, updated_at=datetime('now') WHERE id=? AND status NOT IN ('publishing','deploying')").bind(input.id).run();
-	if (changes(claimed) !== 1) return error('已有发布任务进行中。', 409, 'publish_in_progress');
+	if (!path) {
+		await env.DB.prepare("UPDATE drafts SET status='draft', error_code='invalid_source_path', updated_at=datetime('now') WHERE id=?").bind(input.id).run();
+		return error('草稿源文件路径无效，发布已拒绝。', 422, 'invalid_source_path');
+	}
+
 	try {
 		const token = await githubAppToken(env);
 		const current = await githubFile(env, token, path);
@@ -735,10 +801,11 @@ async function publish(request: Request, env: Env, ctx: ExecutionContextLike) {
 		if (!expectedSha && current) throw new Error('source_exists');
 		const commit = await putGithubFile(env, token, path, markdownFileFromDraft(draft), current?.sha);
 		const commitSha = commit.commit?.sha ?? null;
-		await env.DB.prepare("UPDATE drafts SET status='deploying', publish_commit_sha=?, updated_at=datetime('now') WHERE id=?").bind(commitSha, input.id).run();
+		const blobSha = commit.content?.sha ?? current?.sha ?? null;
+		await env.DB.prepare("UPDATE drafts SET status='deploying', publish_commit_sha=?, source_blob_sha=COALESCE(?, source_blob_sha), updated_at=datetime('now') WHERE id=?").bind(commitSha, blobSha, input.id).run();
 		ctx.waitUntil(markPublishedMedia(env, String(draft.body ?? '')));
 		ctx.waitUntil(reconcilePublishing(env));
-		return json({ id: input.id, status: 'deploying', commitSha }, 202);
+		return json({ id: input.id, status: 'deploying', commitSha, sourceBlobSha: blobSha }, 202);
 	} catch (cause) {
 		const message = cause instanceof Error ? cause.message : 'publish_failed';
 		const conflict = message === 'source_changed' || message === 'source_exists';
@@ -779,30 +846,112 @@ async function cleanupCommentRateCounters(env: Env) {
 }
 
 async function checkLinks(env: Env) {
-	const links = await env.DB.prepare("SELECT id, url FROM links WHERE checked_at IS NULL OR checked_at < datetime('now', '-20 minutes') LIMIT 20").all<{ id: string; url: string }>();
+	const links = await env.DB.prepare("SELECT id, url FROM links WHERE status != 'hidden' AND (checked_at IS NULL OR checked_at < datetime('now', '-20 minutes')) LIMIT 20").all<{ id: string; url: string }>();
 	for (const link of links.results) {
 		let online = false;
 		try {
 			online = await checkPublicLink(link.url);
 		} catch { online = false; }
-		await env.DB.prepare("UPDATE links SET status=?, checked_at=datetime('now') WHERE id=?").bind(online ? 'active' : 'offline', link.id).run();
+		await env.DB.prepare("UPDATE links SET status=?, checked_at=datetime('now') WHERE id=? AND status != 'hidden'").bind(online ? 'active' : 'offline', link.id).run();
 	}
 }
 
-async function reconcilePublishing(env: Env) {
-	const jobs = await env.DB.prepare("SELECT id, publish_commit_sha, updated_at FROM drafts WHERE status='deploying'").all<{ id: string; publish_commit_sha: string | null; updated_at: string }>();
-	const deployedSha = env.ORIGIN_BUILD_URL
-		? await fetch(`${env.ORIGIN_BUILD_URL}${env.ORIGIN_BUILD_URL.includes('?') ? '&' : '?'}verify=${Date.now()}`, { headers: { 'Cache-Control': 'no-cache' } }).then(async (response) => {
-			if (!response.ok) return null;
-			const manifest = (await response.json()) as { commitSha?: string; dirty?: boolean };
-			return manifest.dirty === false ? manifest.commitSha ?? null : null;
-		}).catch(() => null)
-		: null;
+async function reconcilePublishing(env: Env, targetDraftId?: string) {
+	const jobs = targetDraftId
+		? await env.DB.prepare(
+				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, status, error_code, updated_at FROM drafts WHERE id = ?"
+			)
+				.bind(targetDraftId)
+				.all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; status: string; error_code: string | null; updated_at: string }>()
+		: await env.DB.prepare(
+				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, status, error_code, updated_at FROM drafts WHERE status = 'deploying' OR (status = 'publish_failed' AND error_code = 'deployment_timeout')"
+			).all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; status: string; error_code: string | null; updated_at: string }>();
+
+	if (!jobs.results.length) return;
+
+	let deployedSha: string | null = null;
+	if (env.ORIGIN_BUILD_URL) {
+		try {
+			const res = await fetch(`${env.ORIGIN_BUILD_URL}${env.ORIGIN_BUILD_URL.includes('?') ? '&' : '?'}verify=${Date.now()}`, {
+				headers: { 'Cache-Control': 'no-cache' },
+			});
+			if (res.ok) {
+				const manifest = (await res.json()) as { commitSha?: string; dirty?: boolean };
+				if (manifest.dirty === false && typeof manifest.commitSha === 'string' && manifest.commitSha.trim()) {
+					deployedSha = manifest.commitSha.trim();
+				}
+			}
+		} catch {}
+	}
+
+	if (!deployedSha) {
+		// Online is dirty: true, unreachable, or failed: do not confirm.
+		for (const job of jobs.results) {
+			if (job.status === 'deploying' && Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
+				await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND status='deploying'").bind(job.id).run();
+			}
+		}
+		return;
+	}
+
+	let gitHubToken: string | null = null;
 	for (const job of jobs.results) {
-		if (job.publish_commit_sha && deployedSha === job.publish_commit_sha) {
-			await env.DB.prepare("UPDATE drafts SET status='published', updated_at=datetime('now') WHERE id=?").bind(job.id).run();
-		} else if (Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
-			await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+		if (!job.publish_commit_sha) continue;
+
+		// 1. Exact SHA match
+		if (deployedSha === job.publish_commit_sha) {
+			await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+			continue;
+		}
+
+		// 2. Continuous publish / ancestor check
+		let matched = false;
+		if (env.GITHUB_OWNER && env.GITHUB_REPO) {
+			try {
+				if (!gitHubToken) gitHubToken = await githubAppToken(env);
+				const compareRes = await fetch(
+					`https://api.github.com/repos/${encodeURIComponent(env.GITHUB_OWNER)}/${encodeURIComponent(env.GITHUB_REPO)}/compare/${encodeURIComponent(job.publish_commit_sha)}...${encodeURIComponent(deployedSha)}`,
+					{
+						headers: {
+							Accept: 'application/vnd.github+json',
+							Authorization: `Bearer ${gitHubToken}`,
+							'User-Agent': 'xingx-blog-worker',
+						},
+					}
+				);
+				if (compareRes.ok) {
+					const compareData = (await compareRes.json()) as { status?: string };
+					if (compareData.status === 'ahead' || compareData.status === 'identical') {
+						const filePath = sourcePathForSlug(job.slug, job.source_path ?? undefined);
+						if (filePath) {
+							const fileRes = await fetch(
+								`https://api.github.com/repos/${encodeURIComponent(env.GITHUB_OWNER)}/${encodeURIComponent(env.GITHUB_REPO)}/contents/${githubPath(filePath)}?ref=${encodeURIComponent(deployedSha)}`,
+								{
+									headers: {
+										Accept: 'application/vnd.github+json',
+										Authorization: `Bearer ${gitHubToken}`,
+										'User-Agent': 'xingx-blog-worker',
+									},
+								}
+							);
+							if (fileRes.ok) {
+								const fileData = (await fileRes.json()) as { sha?: string };
+								if (job.source_blob_sha && fileData.sha === job.source_blob_sha) {
+									await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+									matched = true;
+								} else {
+									await env.DB.prepare("UPDATE drafts SET status='published_superseded', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+									matched = true;
+								}
+							}
+						}
+					}
+				}
+			} catch {}
+		}
+
+		if (!matched && job.status === 'deploying' && Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
+			await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND status='deploying'").bind(job.id).run();
 		}
 	}
 }
@@ -873,7 +1022,9 @@ async function comments(request: Request, env: Env, ctx: ExecutionContextLike) {
 async function adminComments(request: Request, env: Env) {
 	if (request.method === 'GET') {
 		const status = new URL(request.url).searchParams.get('status') || 'pending';
-		const result = await env.DB.prepare('SELECT * FROM comments WHERE status=? ORDER BY created_at DESC LIMIT 100').bind(status).all();
+		const result = status === 'all'
+			? await env.DB.prepare('SELECT * FROM comments ORDER BY created_at DESC LIMIT 100').all()
+			: await env.DB.prepare('SELECT * FROM comments WHERE status=? ORDER BY created_at DESC LIMIT 100').bind(status).all();
 		return json({ comments: result.results });
 	}
 	const match = new URL(request.url).pathname.match(/^\/api\/admin\/comments\/([^/]+)$/);
@@ -910,30 +1061,59 @@ VALUES (?, ?, ?, ?, NULL, NULL) ON CONFLICT(sha256) DO UPDATE SET soft_deleted_a
 	return json({ key, url: `/media/${sha}.${extension}`, sha256: sha }, 201);
 }
 
-async function links(request: Request, env: Env) {
-	if (request.method === 'GET') {
-		const result = await env.DB.prepare("SELECT id, name, url, description, status, checked_at FROM links WHERE status='active' ORDER BY sort_order ASC, name ASC").all();
-		return json({ links: result.results }, 200, { 'Cache-Control': 'public, max-age=300' });
-	}
-	const auth = await requireAdmin(request, env);
-	if (auth.response) return auth.response;
-	if (request.method !== 'POST' && request.method !== 'PUT') return error('只支持 GET/POST/PUT。', 405);
+async function publicLinks(env: Env) {
+	const result = await env.DB.prepare("SELECT id, name, url, description, status, checked_at FROM links WHERE status='active' ORDER BY sort_order ASC, name ASC").all();
+	return json({ links: result.results }, 200, { 'Cache-Control': 'public, max-age=300' });
+}
+
+async function getAdminLinks(env: Env) {
+	const result = await env.DB.prepare("SELECT id, name, url, description, status, sort_order, checked_at FROM links ORDER BY sort_order ASC, id ASC").all();
+	return json({ links: result.results });
+}
+
+async function createAdminLink(request: Request, env: Env) {
 	const input = await readJson(request, 16 * 1024);
 	if (!input || typeof input.name !== 'string' || typeof input.url !== 'string') return error('友链必须包含 name 与 url。', 422);
-	if (!input.name.trim() || input.name.trim().length > 100) return error('友链名称长度必须为 1–100。', 422);
+	const name = input.name.trim();
+	if (!name || name.length > 100) return error('友链名称长度必须为 1–100。', 422);
 	const safeUrl = safePublicUrl(input.url);
 	if (!safeUrl) return error('友链必须使用公开的 HTTP/HTTPS 地址。', 422, 'invalid_link_url');
-	const id = typeof input.id === 'string' ? input.id : crypto.randomUUID();
-	await env.DB.prepare(`INSERT INTO links (id, name, url, description, status, sort_order, checked_at)
-	VALUES (?, ?, ?, ?, 'active', ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET name=excluded.name, url=excluded.url, description=excluded.description, sort_order=excluded.sort_order`).bind(id, input.name.trim().slice(0, 100), safeUrl, typeof input.description === 'string' ? input.description.trim().slice(0, 500) : null, Number(input.sortOrder) || 0).run();
-	return json({ id }, 201);
+	const status = ['active', 'hidden', 'offline'].includes(String(input.status)) ? String(input.status) : 'active';
+	const sortOrder = Number(input.sortOrder) || 0;
+	const description = typeof input.description === 'string' && input.description.trim() ? input.description.trim().slice(0, 500) : null;
+	const id = crypto.randomUUID();
+	await env.DB.prepare("INSERT INTO links (id, name, url, description, status, sort_order, checked_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))").bind(id, name, safeUrl, description, status, sortOrder).run();
+	return json({ id, name, url: safeUrl, description, status, sort_order: sortOrder }, 201);
+}
+
+async function updateAdminLink(request: Request, env: Env, id: string) {
+	const existing = await env.DB.prepare('SELECT id FROM links WHERE id=?').bind(id).first();
+	if (!existing) return error('友链不存在。', 404);
+	const input = await readJson(request, 16 * 1024);
+	if (!input || typeof input.name !== 'string' || typeof input.url !== 'string') return error('友链必须包含 name 与 url。', 422);
+	const name = input.name.trim();
+	if (!name || name.length > 100) return error('友链名称长度必须为 1–100。', 422);
+	const safeUrl = safePublicUrl(input.url);
+	if (!safeUrl) return error('友链必须使用公开的 HTTP/HTTPS 地址。', 422, 'invalid_link_url');
+	const status = ['active', 'hidden', 'offline'].includes(String(input.status)) ? String(input.status) : 'active';
+	const sortOrder = Number(input.sortOrder) || 0;
+	const description = typeof input.description === 'string' && input.description.trim() ? input.description.trim().slice(0, 500) : null;
+	await env.DB.prepare("UPDATE links SET name=?, url=?, description=?, status=?, sort_order=? WHERE id=?").bind(name, safeUrl, description, status, sortOrder, id).run();
+	return json({ id, name, url: safeUrl, description, status, sort_order: sortOrder });
+}
+
+async function deleteAdminLink(env: Env, id: string) {
+	const existing = await env.DB.prepare('SELECT id FROM links WHERE id=?').bind(id).first();
+	if (!existing) return error('友链不存在。', 404);
+	await env.DB.prepare("DELETE FROM links WHERE id=?").bind(id).run();
+	return json({ deleted: true });
 }
 
 async function api(request: Request, env: Env, ctx: ExecutionContextLike) {
 	const url = new URL(request.url);
 	if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true, commitSha: await buildSha(env) }, 200, { 'Cache-Control': 'no-store' });
 	if (url.pathname === '/api/comments') return comments(request, env, ctx);
-	if (url.pathname === '/api/links') return links(request, env);
+	if (url.pathname === '/api/links' && request.method === 'GET') return publicLinks(env);
 	if (url.pathname === '/api/admin/session' && request.method === 'GET') return adminSession(request, env);
 	if (url.pathname === '/api/admin/preview' && request.method === 'POST') return preview(request, env);
 	if (url.pathname === '/api/admin/comments' && request.method === 'GET') {
@@ -943,6 +1123,23 @@ async function api(request: Request, env: Env, ctx: ExecutionContextLike) {
 	if (url.pathname.startsWith('/api/admin/comments/')) {
 		const auth = await requireAdmin(request, env);
 		return auth.response ?? adminComments(request, env);
+	}
+	if (url.pathname === '/api/admin/links' && request.method === 'GET') {
+		const auth = await requireAdmin(request, env);
+		return auth.response ?? getAdminLinks(env);
+	}
+	if (url.pathname === '/api/admin/links' && request.method === 'POST') {
+		const auth = await requireAdmin(request, env);
+		return auth.response ?? createAdminLink(request, env);
+	}
+	const adminLinkMatch = url.pathname.match(/^\/api\/admin\/links\/([^/]+)$/);
+	if (adminLinkMatch && request.method === 'PUT') {
+		const auth = await requireAdmin(request, env);
+		return auth.response ?? updateAdminLink(request, env, decodeURIComponent(adminLinkMatch[1]));
+	}
+	if (adminLinkMatch && request.method === 'DELETE') {
+		const auth = await requireAdmin(request, env);
+		return auth.response ?? deleteAdminLink(env, decodeURIComponent(adminLinkMatch[1]));
 	}
 	if (url.pathname === '/api/admin/drafts' && request.method === 'GET') {
 		const auth = await requireAdmin(request, env);
@@ -955,7 +1152,7 @@ async function api(request: Request, env: Env, ctx: ExecutionContextLike) {
 	const draftMatch = url.pathname.match(/^\/api\/admin\/drafts\/([^/]+)$/);
 	if (draftMatch && request.method === 'GET') {
 		const auth = await requireAdmin(request, env);
-		return auth.response ?? getDraft(env, decodeURIComponent(draftMatch[1]));
+		return auth.response ?? getDraft(request, env, decodeURIComponent(draftMatch[1]));
 	}
 	if (draftMatch && request.method === 'PUT') {
 		const auth = await requireAdmin(request, env);
@@ -1015,6 +1212,22 @@ export const testHelpers = {
 	safeMarkdownPreview,
 	hasValidImageSignature,
 	pemToBytes,
+	issueCsrf,
+	issueAdminSession,
+	secureCookie,
+	adminSession,
+	reconcilePublishing,
+	saveDraft,
+	publish,
+	getDraft,
+	listDrafts,
+	adminComments,
+	getAdminLinks,
+	createAdminLink,
+	updateAdminLink,
+	deleteAdminLink,
+	markdownFileFromDraft,
+	checkLinks,
 };
 
 export default {

@@ -1,0 +1,25 @@
+---
+---
+
+<div class="admin-comments-container">
+	<div class="admin-panel-header">
+		<div>
+			<h2 style="font-size: 1.4rem; margin: 0 0 6px;">评论审核</h2>
+			<p style="margin: 0; color: var(--text-muted); font-size: 13px;">查看并审核全站访客留言。内容纯文本安全输出，防止 HTML 与脚本注入。</p>
+		</div>
+		<div class="admin-session-actions">
+			<div class="admin-filter-bar" id="comments-filter-bar">
+				<button type="button" class="admin-filter-btn" data-status="all">全部</button>
+				<button type="button" class="admin-filter-btn active" data-status="pending">待审核</button>
+				<button type="button" class="admin-filter-btn" data-status="approved">已通过</button>
+				<button type="button" class="admin-filter-btn" data-status="rejected">已拒绝</button>
+				<button type="button" class="admin-filter-btn" data-status="spam">垃圾</button>
+			</div>
+			<button type="button" class="admin-small-button" id="refresh-comments">刷新</button>
+		</div>
+	</div>
+
+	<div class="admin-comments-list" id="comments-list">
+		<div class="admin-empty-state" id="comments-empty">正在加载评论…</div>
+	</div>
+</div>

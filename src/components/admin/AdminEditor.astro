@@ -1,0 +1,148 @@
+---
+---
+
+<div class="admin-layout" id="admin-editor-layout">
+	<aside class="admin-sidebar" aria-label="草稿列表">
+		<div class="admin-sidebar-heading">
+			<span>草稿</span>
+			<button type="button" class="admin-small-button" id="new-draft">+ 新建</button>
+		</div>
+		<ul class="admin-draft-list" id="draft-list">
+			<li class="admin-empty-state" id="draft-list-empty">暂无草稿</li>
+		</ul>
+	</aside>
+
+	<form class="admin-editor" id="draft-form">
+		<!-- 1. 基本内容 -->
+		<div class="admin-editor-section">
+			<div class="admin-editor-section-title">基本内容</div>
+			<div class="admin-field-row">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-title">标题 *</label>
+					<input class="admin-control" id="field-title" name="title" required placeholder="发布标题" />
+				</div>
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-slug">Slug *</label>
+					<input class="admin-control admin-control-mono" id="field-slug" name="slug" required pattern="[a-z0-9-]+" placeholder="my-release" />
+					<span class="admin-field-helper" id="slug-helper">小写字母、数字与连字符；已保存草稿将自动锁定</span>
+				</div>
+			</div>
+			<div class="admin-field-row-full">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-description">摘要</label>
+					<input class="admin-control" id="field-description" name="description" maxlength="300" placeholder="出现在首页与社交卡片的导语（留空时默认取标题）" />
+				</div>
+			</div>
+			<div class="admin-field-row-full">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-body">Markdown 正文 *</label>
+					<textarea class="admin-control" id="field-body" name="body" required rows="18" placeholder="# 一次新的发布&#10;&#10;写下你的想法、项目或近况。"></textarea>
+				</div>
+			</div>
+		</div>
+
+		<!-- 2. 发布设置 -->
+		<div class="admin-editor-section">
+			<div class="admin-editor-section-title">发布设置</div>
+			<div class="admin-field-row">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-pubDate">发布日期</label>
+					<input class="admin-control admin-control-mono" id="field-pubDate" name="pubDate" type="date" />
+				</div>
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-kind">栏目</label>
+					<select class="admin-control" id="field-kind" name="kind">
+						<option value="thought">思考 (Thought)</option>
+						<option value="project">项目 (Project)</option>
+						<option value="update">近况 (Update)</option>
+					</select>
+				</div>
+			</div>
+			<div class="admin-field-row">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-presentation">展示模板</label>
+					<select class="admin-control" id="field-presentation" name="presentation">
+						<option value="article">标准长文 (Article)</option>
+						<option value="feature">重点发布 (Feature)</option>
+					</select>
+				</div>
+				<div class="admin-field-col" style="justify-content: flex-end;">
+					<label class="admin-checkbox-label">
+						<input type="checkbox" name="featured" id="field-featured" />
+						<span>首页重点推荐（Featured）</span>
+					</label>
+				</div>
+			</div>
+			<div class="admin-field-row-full">
+				<label class="admin-checkbox-label">
+					<input type="checkbox" name="listed" id="field-listed" checked />
+					<span>公开索引（取消后发布仍可通过直达链接访问，但不进入首页、文章列表、RSS 及站点地图）</span>
+				</label>
+			</div>
+		</div>
+
+		<!-- 3. 内容信息 -->
+		<div class="admin-editor-section">
+			<div class="admin-editor-section-title">内容信息</div>
+			<div class="admin-field-row">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-tags">标签（逗号分隔）</label>
+					<input class="admin-control" id="field-tags" name="tags" placeholder="工具, 思考, 行动" />
+				</div>
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-kicker">栏目眉标（可选）</label>
+					<input class="admin-control admin-control-mono" id="field-kicker" name="kicker" placeholder="THOUGHT / FIELD NOTE" />
+				</div>
+			</div>
+			<div class="admin-field-row-full">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-aliases">Alias 永久链接重定向（逗号分隔，必须以 / 开头）</label>
+					<input class="admin-control admin-control-mono" id="field-aliases" name="aliases" placeholder="/my-release, /release-notes" />
+				</div>
+			</div>
+		</div>
+
+		<!-- 4. 系统信息（只读，默认折叠） -->
+		<details class="admin-details" id="system-info-details">
+			<summary>系统信息</summary>
+			<div class="admin-details-body">
+				<div class="admin-field-row">
+					<div class="admin-field-col">
+						<label class="admin-field-label" for="field-sourcePath">源文件路径</label>
+						<input class="admin-control admin-control-mono" id="field-sourcePath" name="sourcePath" placeholder="保存后自动生成" readonly />
+					</div>
+					<div class="admin-field-col">
+						<label class="admin-field-label" for="field-sourceBlobSha">GitHub Blob SHA</label>
+						<input class="admin-control admin-control-mono" id="field-sourceBlobSha" name="sourceBlobSha" placeholder="由后端托管，首次发布后自动获取" readonly />
+					</div>
+				</div>
+				<div class="admin-field-row">
+					<div class="admin-field-col">
+						<label class="admin-field-label" for="field-publishCommitSha">发布 Commit</label>
+						<input class="admin-control admin-control-mono" id="field-publishCommitSha" name="publishCommitSha" placeholder="部署提交生成后显示" readonly />
+					</div>
+					<div class="admin-field-col">
+						<label class="admin-field-label" for="field-systemStatusText">当前状态</label>
+						<input class="admin-control admin-control-mono" id="field-systemStatusText" name="systemStatusText" value="未保存草稿" readonly />
+					</div>
+				</div>
+				<div class="admin-notice">
+					说明：媒体存储尚未启用。<code>source_blob_sha</code> 由后端管理，已保存草稿自动锁定 Slug，以防源文件与路由失配。
+				</div>
+			</div>
+		</details>
+
+		<!-- 操作按钮栏 -->
+		<div class="admin-actions">
+			<button type="button" class="admin-btn" id="preview-draft">安全预览</button>
+			<button type="submit" class="admin-btn" id="save-draft">保存草稿</button>
+			<button type="button" class="admin-btn admin-btn-primary" id="publish-draft">发布文章</button>
+		</div>
+
+		<!-- 安全预览沙盒 -->
+		<div class="admin-preview-container">
+			<div class="admin-preview-title">Markdown 渲染预览 (Iframe Sandbox 隔离)</div>
+			<iframe class="admin-preview" id="preview-frame" sandbox="allow-forms" title="Markdown 安全预览"></iframe>
+		</div>
+	</form>
+</div>

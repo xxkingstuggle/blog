@@ -13,9 +13,10 @@ function git(command, fallback) {
 	}
 }
 
-const sha = git(['rev-parse', 'HEAD'], 'local');
-const dirty = git(['status', '--porcelain'], '') !== '';
-if (process.env.CI && dirty) {
+const providerSha = process.env.GITHUB_SHA || process.env.VERCEL_GIT_COMMIT_SHA;
+const sha = providerSha || git(['rev-parse', 'HEAD'], 'local');
+const dirty = providerSha ? false : git(['status', '--porcelain'], '') !== '';
+if (process.env.CI && !providerSha && dirty) {
 	throw new Error('Refusing to create a release manifest from a dirty CI checkout.');
 }
 const manifest = {

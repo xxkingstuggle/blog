@@ -36,7 +36,7 @@ GitHub Actions 仓库 Secrets 只需要：
 - `CLOUDFLARE_API_TOKEN`：单一 Cloudflare 账户范围，仅 `D1:编辑` 和 `Workers 脚本:编辑`。
 - `CLOUDFLARE_ACCOUNT_ID`：Cloudflare 账户 ID。
 
-推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产工作流只能手动触发，并且在 production D1 UUID、域名和全部生产 Secrets 配好前不得运行。
+推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产公开页面继续由 Vercel 自动部署 `main`；`/api/*`、`/auth/*`、`/admin/*` 和 `/media/*` 通过 `vercel.json` 代理到 production Worker，发布状态以 `https://xingx.cc.cd/__build.json` 的 commit SHA 为准。
 
 ## 3. 大陆访客备用境外加速线路
 
@@ -57,5 +57,5 @@ GitHub Actions 仓库 Secrets 只需要：
 ## 5. 当前边界
 
 - staging 已建立独立 D1；R2 未开通，因此媒体上传会明确返回 `media_storage_unavailable`，不会产生费用。
-- production 的 D1 UUID、Access/域名和线路规则仍是占位值；不得部署生产环境。
+- production 已使用独立 D1；Access/自定义域名和线路规则配置完成前，大陆备用线路仍不得启用。
 - 大陆分流规则保持 `enabled:false`，直到备用线路、origin 保护和三网故障切换验收全部通过。

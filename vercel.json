@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://blog-production.guozhongeba.workers.dev/api/:path*" },
+    { "source": "/auth/:path*", "destination": "https://blog-production.guozhongeba.workers.dev/auth/:path*" },
+    { "source": "/admin", "destination": "https://blog-production.guozhongeba.workers.dev/admin/" },
+    { "source": "/admin/", "destination": "https://blog-production.guozhongeba.workers.dev/admin/" },
+    { "source": "/admin/:path*", "destination": "https://blog-production.guozhongeba.workers.dev/admin/:path*" },
+    { "source": "/media/:path*", "destination": "https://blog-production.guozhongeba.workers.dev/media/:path*" }
+  ]
+}
