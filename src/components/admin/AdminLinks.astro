@@ -1,0 +1,83 @@
+---
+---
+
+<div class="admin-links-container">
+	<div class="admin-panel-header">
+		<div>
+			<h2 style="font-size: 1.4rem; margin: 0 0 6px;">友链管理</h2>
+			<p style="margin: 0; color: var(--text-muted); font-size: 13px;">管理博客友链与外部链接。公开页面仅返回正常状态的友链。</p>
+		</div>
+		<div class="admin-session-actions">
+			<button type="button" class="admin-btn admin-btn-primary" id="btn-add-link" style="min-height: 32px; padding: 6px 12px; font-size: 12px;">+ 新增友链</button>
+			<button type="button" class="admin-small-button" id="refresh-links">刷新</button>
+		</div>
+	</div>
+
+	<!-- 新增 / 编辑表单（默认折叠） -->
+	<div class="admin-link-form-card" id="link-form-card" hidden>
+		<div style="display: flex; justify-content: space-between; align-items: center;">
+			<div style="font-weight: 650; font-size: 14px;" id="link-form-title">新增友链</div>
+			<button type="button" class="admin-small-button" id="btn-cancel-link">关闭</button>
+		</div>
+		<form id="link-form" style="display: grid; gap: 14px;">
+			<input type="hidden" id="link-id" name="id" />
+			<div class="admin-field-row">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="link-field-name">网站名称 *</label>
+					<input class="admin-control" id="link-field-name" name="name" required placeholder="例如：某某的思考空间" />
+				</div>
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="link-field-url">链接地址 *</label>
+					<input class="admin-control admin-control-mono" id="link-field-url" name="url" type="url" required placeholder="https://example.com" />
+				</div>
+			</div>
+			<div class="admin-field-row-full">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="link-field-desc">站点简介</label>
+					<input class="admin-control" id="link-field-desc" name="description" placeholder="写下一两句推荐语或站点主题" />
+				</div>
+			</div>
+			<div class="admin-field-row">
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="link-field-order">排序权重</label>
+					<input class="admin-control admin-control-mono" id="link-field-order" name="sortOrder" type="number" value="0" placeholder="0（越小越靠前）" />
+				</div>
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="link-field-status">展示状态</label>
+					<select class="admin-control" id="link-field-status" name="status">
+						<option value="active">正常展示 (Active)</option>
+						<option value="hidden">隐藏不公开 (Hidden)</option>
+						<option value="offline">暂无法访问 (Offline)</option>
+					</select>
+				</div>
+			</div>
+			<div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px;">
+				<button type="submit" class="admin-btn admin-btn-primary" style="min-height: 38px;">保存友链</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- 桌面端表格 -->
+	<div id="links-table-container">
+		<table class="admin-links-table" id="links-table">
+			<thead>
+				<tr>
+					<th style="width: 50px;">权重</th>
+					<th style="width: 180px;">网站</th>
+					<th>链接与简介</th>
+					<th style="width: 90px;">状态</th>
+					<th style="width: 140px;">检查时间</th>
+					<th style="width: 160px; text-align: right;">操作</th>
+				</tr>
+			</thead>
+			<tbody id="links-tbody">
+				<tr>
+					<td colspan="6" class="admin-empty-state" id="links-empty">正在加载友链…</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<!-- 移动端卡片列表 -->
+	<div class="admin-links-card-list" id="links-cards"></div>
+</div>
