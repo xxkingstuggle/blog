@@ -912,3 +912,64 @@ VALUES
 		globalThis.fetch = originalFetch;
 	}
 });
+
+test('reconcilePublishing: 旧检查任务等待网络响应期间草稿进入新发布任务，旧任务返回后不将新发布误标为已发布 (P1)', async () => {
+	const { db, env } = await createTestEnv();
+
+	// 初始状态：草稿处于第一次发布任务 A（version=1, commit=commit-A）
+	db.prepare(`INSERT INTO drafts (id, slug, title, body, status, source_path, publish_commit_sha, source_blob_sha, version, updated_at)
+VALUES ('draft-race', 'post-race', 'Race', 'Body v1', 'deploying', 'src/content/blog/post-race.md', 'commit-A', 'blob-v1', 1, datetime('now'))`).run();
+
+	const originalFetch = globalThis.fetch;
+	try {
+		const reconcileEnv = {
+			...env,
+			ORIGIN_BUILD_URL: 'https://test.local/__build.json',
+		};
+
+		// 模拟检查任务 A 执行：
+		// 在 fetch 检查期间，用户发布了新版本 B（version 升级为 2，commit 变为 commit-B）
+		globalThis.fetch = async (input: any) => {
+			const url = String(input?.url || input);
+			if (url.includes('/__build.json')) {
+				// 任务 A 网络返回前，草稿进入新发布任务 B
+				db.prepare(`UPDATE drafts SET version=2, publish_commit_sha='commit-B', status='deploying', updated_at=datetime('now') WHERE id='draft-race'`).run();
+
+				// 任务 A 网络返回：线上 SHA 刚刚赶上 commit-A
+				return new Response(JSON.stringify({
+					commitSha: 'commit-A',
+					dirty: false,
+				}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+			return new Response('not found', { status: 404 });
+		};
+
+		// 执行任务 A 的 reconcile
+		await testHelpers.reconcilePublishing(reconcileEnv as any);
+
+		// 验证：任务 A 的旧结果必须被安全丢弃，任务 B（尚未上线）绝不能被标记为 published！
+		const rowAfterA = db.prepare('SELECT status, version, publish_commit_sha FROM drafts WHERE id=?').get('draft-race') as any;
+		assert.equal(rowAfterA.version, 2, '草稿版本必须仍为任务 B 的版本 2');
+		assert.equal(rowAfterA.publish_commit_sha, 'commit-B', 'commit SHA 必须仍为任务 B 的 commit-B');
+		assert.equal(rowAfterA.status, 'deploying', '尚未上线的任务 B 绝不能被旧检查任务 A 误标记为 published');
+
+		// 随后：线上构建真正完成了任务 B（commit-B 上线）
+		globalThis.fetch = async (input: any) => {
+			const url = String(input?.url || input);
+			if (url.includes('/__build.json')) {
+				return new Response(JSON.stringify({
+					commitSha: 'commit-B',
+					dirty: false,
+				}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+			return new Response('not found', { status: 404 });
+		};
+
+		// 任务 B 的 reconcile 正常确认
+		await testHelpers.reconcilePublishing(reconcileEnv as any);
+		const rowAfterB = db.prepare('SELECT status FROM drafts WHERE id=?').get('draft-race') as any;
+		assert.equal(rowAfterB.status, 'published', '任务 B 真正上线后被正确标记为 published');
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});

@@ -76,8 +76,10 @@ let currentCommentFilter = 'pending';
 let currentPublicOrigin = '';
 let currentEnvironment: 'staging' | 'production' = 'production';
 
-// Map of active polling timers per draft ID
+// Map of active polling timers and task generations per draft ID
 const activePollTimers = new Map<string, number>();
+const activePollTasks = new Map<string, { taskId: number; commitSha?: string }>();
+let nextPollTaskId = 1;
 
 // Elements
 let form: HTMLFormElement | null = null;
@@ -581,7 +583,7 @@ async function loadDrafts() {
 		}
 
 		for (const draft of result.drafts) {
-			if (draft.status === 'deploying' && !activePollTimers.has(draft.id)) {
+			if (draft.status === 'deploying' && !activePollTimers.has(draft.id) && !activePollTasks.has(draft.id)) {
 				startPublishPolling(draft.id, draft.publish_commit_sha ?? undefined);
 			}
 
@@ -890,19 +892,38 @@ async function recheckDeployment(draftId: string) {
 	}
 }
 
-function startPublishPolling(draftId: string, commitSha?: string, wasPublished = false) {
+function startPublishPolling(draftId: string, commitSha?: string, wasPublished = false, delayMs = 5000) {
 	if (activePollTimers.has(draftId)) {
 		window.clearTimeout(activePollTimers.get(draftId));
 		activePollTimers.delete(draftId);
 	}
+
+	const taskId = ++nextPollTaskId;
+	activePollTasks.set(draftId, { taskId, commitSha });
 
 	let isPolling = true;
 	let consecutiveNetworkErrors = 0;
 
 	async function poll() {
 		if (!isPolling) return;
+		const currentTask = activePollTasks.get(draftId);
+		if (!currentTask || currentTask.taskId !== taskId) return;
+		if (commitSha && currentTask.commitSha && currentTask.commitSha !== commitSha) return;
+
 		try {
 			const detail = await api<{ draft: DraftRecord }>(`/api/admin/drafts/${encodeURIComponent(draftId)}`);
+
+			// Drop stale responses if polling was restarted while request was in-flight
+			const taskAfterFetch = activePollTasks.get(draftId);
+			if (!taskAfterFetch || taskAfterFetch.taskId !== taskId) {
+				isPolling = false;
+				return;
+			}
+			if (commitSha && taskAfterFetch.commitSha && taskAfterFetch.commitSha !== commitSha) {
+				isPolling = false;
+				return;
+			}
+
 			consecutiveNetworkErrors = 0;
 			const draft = detail.draft;
 			if (!draft) return;
@@ -910,12 +931,14 @@ function startPublishPolling(draftId: string, commitSha?: string, wasPublished =
 			// If another newer commit took over for this draft, stop this polling instance
 			if (commitSha && draft.publish_commit_sha && draft.publish_commit_sha !== commitSha && draft.status === 'deploying') {
 				isPolling = false;
+				activePollTasks.delete(draftId);
 				activePollTimers.delete(draftId);
 				return;
 			}
 
 			if (draft.status === 'published') {
 				isPolling = false;
+				activePollTasks.delete(draftId);
 				activePollTimers.delete(draftId);
 
 				const origin = getPublicOrigin();
@@ -937,6 +960,7 @@ function startPublishPolling(draftId: string, commitSha?: string, wasPublished =
 				return;
 			} else if (draft.status === 'published_superseded') {
 				isPolling = false;
+				activePollTasks.delete(draftId);
 				activePollTimers.delete(draftId);
 
 				const origin = getPublicOrigin();
@@ -957,6 +981,7 @@ function startPublishPolling(draftId: string, commitSha?: string, wasPublished =
 				return;
 			} else if (draft.status === 'publish_failed') {
 				isPolling = false;
+				activePollTasks.delete(draftId);
 				activePollTimers.delete(draftId);
 
 				if (draft.error_code === 'deployment_timeout') {
@@ -980,6 +1005,7 @@ function startPublishPolling(draftId: string, commitSha?: string, wasPublished =
 				return;
 			} else if (draft.status === 'conflict') {
 				isPolling = false;
+				activePollTasks.delete(draftId);
 				activePollTimers.delete(draftId);
 				setStatus('发布失败，草稿已保留', 'warning');
 				await loadDrafts();
@@ -991,8 +1017,19 @@ function startPublishPolling(draftId: string, commitSha?: string, wasPublished =
 				}
 			}
 		} catch (err: any) {
+			const taskAfterErr = activePollTasks.get(draftId);
+			if (!taskAfterErr || taskAfterErr.taskId !== taskId) {
+				isPolling = false;
+				return;
+			}
+			if (commitSha && taskAfterErr.commitSha && taskAfterErr.commitSha !== commitSha) {
+				isPolling = false;
+				return;
+			}
+
 			if (err?.code === 'unauthorized' || err?.status === 401) {
 				isPolling = false;
+				activePollTasks.delete(draftId);
 				activePollTimers.delete(draftId);
 				setStatus('会话已失效，请重新登录', 'error');
 				return;
@@ -1001,6 +1038,7 @@ function startPublishPolling(draftId: string, commitSha?: string, wasPublished =
 			if (consecutiveNetworkErrors >= 6) {
 				// Pausing after persistent network errors
 				isPolling = false;
+				activePollTasks.delete(draftId);
 				activePollTimers.delete(draftId);
 				setStatus('尚未确认上线，草稿已保留', 'warning', undefined, {
 					label: '重新检查',
@@ -1011,13 +1049,14 @@ function startPublishPolling(draftId: string, commitSha?: string, wasPublished =
 		}
 
 		// Wait 5 seconds AFTER previous request completes before sending the next one
-		if (isPolling) {
+		const taskBeforeTimer = activePollTasks.get(draftId);
+		if (isPolling && taskBeforeTimer && taskBeforeTimer.taskId === taskId) {
 			const timerId = window.setTimeout(poll, 5000);
 			activePollTimers.set(draftId, timerId);
 		}
 	}
 
-	const timerId = window.setTimeout(poll, 5000);
+	const timerId = window.setTimeout(poll, delayMs);
 	activePollTimers.set(draftId, timerId);
 }
 
@@ -1674,5 +1713,6 @@ export const testHelpers = {
 		get currentEnvironment() { return currentEnvironment; },
 		set currentEnvironment(v: 'staging' | 'production') { currentEnvironment = v; },
 		get activePollTimers() { return activePollTimers; },
+		get activePollTasks() { return activePollTasks; },
 	}),
 };

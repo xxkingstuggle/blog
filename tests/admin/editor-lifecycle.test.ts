@@ -686,3 +686,94 @@ test('9. 会话环境信息正确且查看文章指向当前环境 publicOrigin'
 		globalThis.fetch = originalFetch;
 	}
 });
+
+test('10. 重新启动轮询时，旧的在途请求返回后核对编号和 commit，旧任务立即退出，不更新界面也不创建新定时器 (P2)', async () => {
+	resetEditorDOM();
+	const originalFetch = globalThis.fetch;
+	const dockText = elementsMap.get('admin-dock-text')!;
+	const systemStatusText = elementsMap.get('field-systemStatusText') as any;
+
+	let deferredResolve: ((val: Response) => void) | null = null;
+	const inFlightPromise = new Promise<Response>((resolve) => {
+		deferredResolve = resolve;
+	});
+
+	let callCount = 0;
+	globalThis.fetch = async (input: any) => {
+		const url = String(input?.url || input);
+		if (url.includes('/api/admin/drafts/draft-race-poll')) {
+			callCount++;
+			if (callCount === 1) {
+				// 任务 1 的请求阻塞在途
+				return inFlightPromise;
+			}
+			// 任务 2 的请求
+			return new Response(JSON.stringify({
+				draft: {
+					id: 'draft-race-poll',
+					slug: 'race-poll',
+					title: 'Race Poll',
+					status: 'deploying',
+					publish_commit_sha: 'commit-new-2',
+					version: 2,
+				},
+			}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+		}
+		return new Response(JSON.stringify({ drafts: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+	};
+
+	try {
+		testHelpers.getState().currentId = 'draft-race-poll';
+		systemStatusText.value = '正在发布 (v1)';
+		dockText.textContent = '正在发布，网站更新完成后会通知你';
+
+		// 1. 启动任务 1（针对 commit-old-1，delayMs=0 立即执行 poll 发起在途请求）
+		testHelpers.startPublishPolling('draft-race-poll', 'commit-old-1', false, 0);
+		await new Promise((r) => setTimeout(r, 10));
+
+		const task1 = testHelpers.getState().activePollTasks.get('draft-race-poll');
+		assert.ok(task1 !== undefined, '任务 1 必须记录在 activePollTasks 中');
+		assert.equal(task1.commitSha, 'commit-old-1');
+		assert.equal(callCount, 1, '任务 1 的请求已成功发出并阻塞在途');
+
+		// 2. 此时草稿重新发起轮询（任务 2，针对 commit-new-2）
+		testHelpers.startPublishPolling('draft-race-poll', 'commit-new-2', false, 5000);
+		const task2 = testHelpers.getState().activePollTasks.get('draft-race-poll');
+		assert.ok(task2 !== undefined);
+		assert.equal(task2.commitSha, 'commit-new-2');
+		assert.notEqual(task1.taskId, task2.taskId, '新任务必须分配新的 taskId');
+
+		// 3. 此时任务 1 的在途请求终于返回，返回内容声称已发布
+		// 如果没有 P2 修复，旧响应会把界面和状态覆写成已发布，并销毁任务 2 的追踪
+		if (deferredResolve) {
+			(deferredResolve as any)(new Response(JSON.stringify({
+				draft: {
+					id: 'draft-race-poll',
+					slug: 'race-poll',
+					title: 'Race Poll',
+					status: 'published',
+					publish_commit_sha: 'commit-old-1',
+					version: 1,
+				},
+			}), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+		}
+
+		await new Promise((r) => setTimeout(r, 20));
+
+		// 4. 验证：旧任务 1 必须立即退出，不更新界面为“已发布”，不影响任务 2 的追踪
+		const currentActiveTask = testHelpers.getState().activePollTasks.get('draft-race-poll');
+		assert.equal(currentActiveTask?.taskId, task2.taskId, '任务 2 仍在正常追踪，未被旧响应销毁');
+		assert.equal(currentActiveTask?.commitSha, 'commit-new-2');
+		assert.notEqual(dockText.textContent, '已发布', '旧响应返回后绝不能把状态误标记为已发布');
+		assert.notEqual(dockText.textContent, '已发布／已更新');
+		assert.notEqual(systemStatusText.value, '已发布 (v1)');
+
+		// 清理任务 2 定时器
+		const timer2 = testHelpers.getState().activePollTimers.get('draft-race-poll');
+		if (timer2) clearTimeout(timer2);
+		testHelpers.getState().activePollTimers.delete('draft-race-poll');
+		testHelpers.getState().activePollTasks.delete('draft-race-poll');
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});

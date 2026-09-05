@@ -802,7 +802,7 @@ async function publish(request: Request, env: Env, ctx: ExecutionContextLike) {
 		const commit = await putGithubFile(env, token, path, markdownFileFromDraft(draft), current?.sha);
 		const commitSha = commit.commit?.sha ?? null;
 		const blobSha = commit.content?.sha ?? current?.sha ?? null;
-		await env.DB.prepare("UPDATE drafts SET status='deploying', publish_commit_sha=?, source_blob_sha=COALESCE(?, source_blob_sha), updated_at=datetime('now') WHERE id=?").bind(commitSha, blobSha, input.id).run();
+		await env.DB.prepare("UPDATE drafts SET status='deploying', publish_commit_sha=?, source_blob_sha=COALESCE(?, source_blob_sha), updated_at=datetime('now') WHERE id=? AND status='publishing' AND version=?").bind(commitSha, blobSha, input.id, version).run();
 		ctx.waitUntil(markPublishedMedia(env, String(draft.body ?? '')));
 		ctx.waitUntil(reconcilePublishing(env));
 		return json({ id: input.id, status: 'deploying', commitSha, sourceBlobSha: blobSha }, 202);
@@ -859,13 +859,13 @@ async function checkLinks(env: Env) {
 async function reconcilePublishing(env: Env, targetDraftId?: string) {
 	const jobs = targetDraftId
 		? await env.DB.prepare(
-				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, status, error_code, updated_at FROM drafts WHERE id = ?"
+				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, version, status, error_code, updated_at FROM drafts WHERE id = ?"
 			)
 				.bind(targetDraftId)
-				.all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; status: string; error_code: string | null; updated_at: string }>()
+				.all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; version: number; status: string; error_code: string | null; updated_at: string }>()
 		: await env.DB.prepare(
-				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, status, error_code, updated_at FROM drafts WHERE status = 'deploying' OR (status = 'publish_failed' AND error_code = 'deployment_timeout')"
-			).all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; status: string; error_code: string | null; updated_at: string }>();
+				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, version, status, error_code, updated_at FROM drafts WHERE status = 'deploying' OR (status = 'publish_failed' AND error_code = 'deployment_timeout')"
+			).all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; version: number; status: string; error_code: string | null; updated_at: string }>();
 
 	if (!jobs.results.length) return;
 
@@ -887,8 +887,9 @@ async function reconcilePublishing(env: Env, targetDraftId?: string) {
 	if (!deployedSha) {
 		// Online is dirty: true, unreachable, or failed: do not confirm.
 		for (const job of jobs.results) {
+			if (!job.publish_commit_sha) continue;
 			if (job.status === 'deploying' && Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
-				await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND status='deploying'").bind(job.id).run();
+				await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND version=? AND publish_commit_sha=? AND status='deploying'").bind(job.id, job.version, job.publish_commit_sha).run();
 			}
 		}
 		return;
@@ -900,7 +901,7 @@ async function reconcilePublishing(env: Env, targetDraftId?: string) {
 
 		// 1. Exact SHA match
 		if (deployedSha === job.publish_commit_sha) {
-			await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+			await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=? AND version=? AND publish_commit_sha=? AND status IN ('deploying', 'publish_failed')").bind(job.id, job.version, job.publish_commit_sha).run();
 			continue;
 		}
 
@@ -937,10 +938,10 @@ async function reconcilePublishing(env: Env, targetDraftId?: string) {
 							if (fileRes.ok) {
 								const fileData = (await fileRes.json()) as { sha?: string };
 								if (job.source_blob_sha && fileData.sha === job.source_blob_sha) {
-									await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+									await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=? AND version=? AND publish_commit_sha=? AND status IN ('deploying', 'publish_failed')").bind(job.id, job.version, job.publish_commit_sha).run();
 									matched = true;
 								} else {
-									await env.DB.prepare("UPDATE drafts SET status='published_superseded', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+									await env.DB.prepare("UPDATE drafts SET status='published_superseded', error_code=NULL, updated_at=datetime('now') WHERE id=? AND version=? AND publish_commit_sha=? AND status IN ('deploying', 'publish_failed')").bind(job.id, job.version, job.publish_commit_sha).run();
 									matched = true;
 								}
 							}
@@ -951,7 +952,7 @@ async function reconcilePublishing(env: Env, targetDraftId?: string) {
 		}
 
 		if (!matched && job.status === 'deploying' && Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
-			await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND status='deploying'").bind(job.id).run();
+			await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND version=? AND publish_commit_sha=? AND status='deploying'").bind(job.id, job.version, job.publish_commit_sha).run();
 		}
 	}
 }
