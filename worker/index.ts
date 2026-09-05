@@ -355,7 +355,6 @@ async function requireAdmin(request: Request, env: Env) {
 
 async function githubOAuthStart(request: Request, env: Env) {
 	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return error('GitHub 登录尚未配置。', 503, 'oauth_unavailable');
-	if (new URL(request.url).origin !== env.PUBLIC_ORIGIN) return error('登录入口只允许主站访问。', 404);
 	const state = toBase64Url(crypto.getRandomValues(new Uint8Array(24)));
 	const expires = Math.floor(Date.now() / 1000) + 600;
 	const signedState = `${state}.${expires}.${await hmac(`${state}.${expires}`, env.SESSION_SECRET)}`;
@@ -369,7 +368,6 @@ async function githubOAuthStart(request: Request, env: Env) {
 async function githubOAuthCallback(request: Request, env: Env) {
 	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return error('GitHub 登录尚未配置。', 503, 'oauth_unavailable');
 	const url = new URL(request.url);
-	if (url.origin !== env.PUBLIC_ORIGIN) return error('登录回调只允许主站访问。', 404);
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
 	const cookie = cookieValue(request, '__Host-xingx-oauth-state');

@@ -109,6 +109,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 		if (csrfToken) headers.set('X-CSRF-Token', csrfToken);
 		const response = await fetch(path, { ...init, headers });
 		const body = await response.json().catch(() => ({}));
+		if (response.status === 401 && path === '/api/admin/session') {
+			location.assign('/auth/github/start');
+			throw new Error('正在进入 GitHub 登录…');
+		}
 		if (!response.ok) throw new Error(body.error || `请求失败（${response.status}）`);
 		return body;
 	}
