@@ -8,11 +8,12 @@ import '../../styles/admin.css';
 
 <BaseLayout title="内容后台" description="Xin 的发布后台。" noindex>
 	<section class="shell admin-page" aria-labelledby="admin-heading">
+		<aside class="admin-env-banner" id="admin-env-banner" role="status" hidden></aside>
 		<div class="hero-eyebrow" style="color: var(--accent-contrast);">EDITORIAL CMS / 后台</div>
 		<div class="admin-heading-row">
 			<div>
 				<h1 id="admin-heading">发布工作台</h1>
-				<p>草稿先保存到 D1，发布时写入 GitHub；部署完成并核对 commit SHA 后才会显示已发布。</p>
+				<p>在这里撰写和管理文章。点击发布后，网站会自动更新；更新完成后即可查看。</p>
 			</div>
 			<div class="admin-session-actions">
 				<span class="admin-status" id="admin-status" role="status" aria-live="polite">正在连接…</span>
@@ -54,7 +55,10 @@ import '../../styles/admin.css';
 				<span class="admin-dock-indicator info" id="admin-dock-indicator"></span>
 				<span class="admin-dock-text" id="admin-dock-text">正在连接…</span>
 			</div>
-			<a class="admin-dock-link" id="admin-dock-link" hidden></a>
+			<div class="admin-dock-actions">
+				<a class="admin-dock-link" id="admin-dock-link" hidden></a>
+				<button type="button" class="admin-dock-btn" id="admin-dock-btn" hidden>重新检查</button>
+			</div>
 		</aside>
 	</section>
 </BaseLayout>

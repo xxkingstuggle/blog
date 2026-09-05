@@ -58,6 +58,7 @@ const CHINESE_STATUS_MAP: Record<string, string> = {
 	publishing: '提交中',
 	deploying: '部署中',
 	published: '已发布',
+	published_superseded: '已有更新版本',
 	conflict: '冲突',
 	publish_failed: '发布失败',
 };
@@ -72,6 +73,8 @@ let initialFormValuesJson = '';
 let isSubmitting = false;
 let activeLoadDraftSeq = 0;
 let currentCommentFilter = 'pending';
+let currentPublicOrigin = '';
+let currentEnvironment: 'staging' | 'production' = 'production';
 
 // Map of active polling timers per draft ID
 const activePollTimers = new Map<string, number>();
@@ -82,6 +85,8 @@ let headerStatus: HTMLElement | null = null;
 let dockIndicator: HTMLElement | null = null;
 let dockText: HTMLElement | null = null;
 let dockLink: HTMLAnchorElement | null = null;
+let dockBtn: HTMLButtonElement | null = null;
+let envBanner: HTMLElement | null = null;
 let draftList: HTMLElement | null = null;
 let previewFrame: HTMLIFrameElement | null = null;
 
@@ -108,6 +113,8 @@ function initDOMElements() {
 	dockIndicator = document.getElementById('admin-dock-indicator');
 	dockText = document.getElementById('admin-dock-text');
 	dockLink = document.getElementById('admin-dock-link') as HTMLAnchorElement | null;
+	dockBtn = document.getElementById('admin-dock-btn') as HTMLButtonElement | null;
+	envBanner = document.getElementById('admin-env-banner');
 	draftList = document.getElementById('draft-list');
 	previewFrame = document.getElementById('preview-frame') as HTMLIFrameElement | null;
 
@@ -130,11 +137,26 @@ if (typeof document !== 'undefined') {
 	initDOMElements();
 }
 
+// --- Button Label Helpers ---
+function getPublicOrigin(): string {
+	return currentPublicOrigin || (typeof window !== 'undefined' ? window.location?.origin || '' : '');
+}
+
+function isPreviouslyPublished(draft: Partial<DraftRecord> | null): boolean {
+	return Boolean(draft && (draft.source_blob_sha || draft.publish_commit_sha));
+}
+
+function updatePublishButtonLabel(draft: Partial<DraftRecord> | null) {
+	if (!publishDraftBtn) return;
+	publishDraftBtn.textContent = isPreviouslyPublished(draft) ? '更新文章' : '发布文章';
+}
+
 // --- Status Management ---
 function setStatus(
 	message: string,
 	type: 'info' | 'success' | 'warning' | 'error' | 'loading' = 'info',
 	link?: { href: string; label: string },
+	action?: { label: string; action: () => void },
 ) {
 	if (headerStatus) headerStatus.textContent = message;
 	if (dockText) dockText.textContent = message;
@@ -149,6 +171,19 @@ function setStatus(
 		} else {
 			dockLink.hidden = true;
 			dockLink.textContent = '';
+		}
+	}
+	if (dockBtn) {
+		if (action) {
+			dockBtn.textContent = action.label;
+			dockBtn.onclick = (e) => {
+				e.preventDefault();
+				action.action();
+			};
+			dockBtn.hidden = false;
+		} else {
+			dockBtn.hidden = true;
+			dockBtn.onclick = null;
 		}
 	}
 }
@@ -490,6 +525,9 @@ function fillDraft(draft: DraftRecord) {
 	// Record server state baseline
 	initialFormValuesJson = JSON.stringify(extractEditableValues());
 
+	// Update publish button label based on draft history
+	updatePublishButtonLabel(draft);
+
 	// Check local autosave
 	checkAndRestoreDraftAutosave(currentId, currentVersion);
 }
@@ -517,6 +555,7 @@ function resetForm({ restoreAutosave = false } = {}) {
 
 	// Baseline for blank form
 	initialFormValuesJson = JSON.stringify(extractEditableValues());
+	updatePublishButtonLabel(null);
 	draftList?.querySelectorAll('.admin-draft-item').forEach((el) => el.removeAttribute('aria-current'));
 
 	// Check autosave for new draft only if restoreAutosave is true
@@ -542,6 +581,10 @@ async function loadDrafts() {
 		}
 
 		for (const draft of result.drafts) {
+			if (draft.status === 'deploying' && !activePollTimers.has(draft.id)) {
+				startPublishPolling(draft.id, draft.publish_commit_sha ?? undefined);
+			}
+
 			const item = document.createElement('li');
 			const button = document.createElement('button');
 			button.type = 'button';
@@ -609,7 +652,24 @@ async function selectDraft(draft: DraftRecord, buttonEl?: HTMLButtonElement) {
 		fillDraft(detail.draft || draft);
 		draftList?.querySelectorAll('.admin-draft-item').forEach((cand) => cand.removeAttribute('aria-current'));
 		buttonEl?.setAttribute('aria-current', 'true');
-		setStatus(`已载入：${detail.draft.title || detail.draft.slug}`, 'info');
+
+		if (detail.draft.status === 'deploying') {
+			setStatus('正在发布，网站更新完成后会通知你', 'loading');
+			startPublishPolling(detail.draft.id, detail.draft.publish_commit_sha ?? undefined);
+		} else if (detail.draft.status === 'publish_failed' && detail.draft.error_code === 'deployment_timeout') {
+			setStatus('尚未确认上线，草稿已保留', 'warning', undefined, {
+				label: '重新检查',
+				action: () => recheckDeployment(detail.draft.id),
+			});
+		} else if (detail.draft.status === 'published_superseded') {
+			const origin = getPublicOrigin();
+			setStatus('已有更新版本上线', 'info', { href: `${origin}/posts/${detail.draft.slug}`, label: '查看文章' });
+		} else if (detail.draft.status === 'published') {
+			const origin = getPublicOrigin();
+			setStatus('已发布／已更新', 'success', { href: `${origin}/posts/${detail.draft.slug}`, label: '查看文章' });
+		} else {
+			setStatus(`已载入：${detail.draft.title || detail.draft.slug}`, 'info');
+		}
 	} catch (err) {
 		if (reqSeq === activeLoadDraftSeq) {
 			setEditorInputsDisabled(false);
@@ -634,7 +694,7 @@ async function saveCurrentDraft(silent = false) {
 	setControlsLocked(true);
 
 	try {
-		if (!silent) setStatus('保存中…', 'loading');
+		if (!silent) setStatus('正在保存', 'loading');
 
 		const isUpdate = Boolean(targetDraftId);
 		const url = isUpdate ? `/api/admin/drafts/${encodeURIComponent(targetDraftId)}` : '/api/admin/drafts';
@@ -662,6 +722,10 @@ async function saveCurrentDraft(silent = false) {
 			if (slugInput) slugInput.readOnly = true;
 			if (slugHelper) slugHelper.textContent = '已保存草稿已锁定 Slug，不可修改';
 			if (systemStatusTextInput) systemStatusTextInput.value = `草稿 (v${currentVersion})`;
+			updatePublishButtonLabel({
+				source_blob_sha: sourceBlobShaInput?.value,
+				publish_commit_sha: publishCommitShaInput?.value,
+			});
 		}
 
 		// Clear autosave for saved article
@@ -707,11 +771,13 @@ async function publishCurrentDraft() {
 	const editableSnapshot = extractEditableValues();
 	if (!editableSnapshot) return;
 
+	const wasPublished = Boolean(sourceBlobShaInput?.value || publishCommitShaInput?.value);
+
 	setControlsLocked(true);
 
 	try {
-		// Step 2: Save current draft content first (ensures latest content is in D1 & confirms version)
-		setStatus('保存中…', 'loading');
+		// Step 2: Save current draft content first
+		setStatus('正在保存', 'loading');
 		const isUpdate = Boolean(targetDraftId);
 		const saveUrl = isUpdate ? `/api/admin/drafts/${encodeURIComponent(targetDraftId)}` : '/api/admin/drafts';
 		const saveMethod = isUpdate ? 'PUT' : 'POST';
@@ -742,7 +808,7 @@ async function publishCurrentDraft() {
 		else clearAutosave(targetDraftId);
 
 		// Step 3: Commit to publish with atomic version check
-		setStatus('正在提交 GitHub…', 'loading');
+		setStatus('正在发布，网站更新完成后会通知你', 'loading');
 		const publishResult = await api<{ id: string; status: string; commitSha?: string; sourceBlobSha?: string }>(
 			'/api/admin/publish',
 			{
@@ -757,88 +823,202 @@ async function publishCurrentDraft() {
 			if (publishCommitShaInput && commitSha) publishCommitShaInput.value = commitSha;
 			if (sourceBlobShaInput && publishResult.sourceBlobSha) sourceBlobShaInput.value = publishResult.sourceBlobSha;
 			if (systemStatusTextInput) systemStatusTextInput.value = '部署中';
+			updatePublishButtonLabel({
+				source_blob_sha: publishResult.sourceBlobSha || sourceBlobShaInput?.value,
+				publish_commit_sha: commitSha,
+			});
 		}
 
-		setStatus(`正在部署 (commit: ${commitSha.slice(0, 7) || '等待中'})…`, 'loading');
+		setStatus('正在发布，网站更新完成后会通知你', 'loading');
 		await loadDrafts();
 
 		// Release edit controls so user can freely inspect or work on other drafts while deployment proceeds
 		setControlsLocked(false);
 
-		// Step 4: Start polling bound strictly to publishTargetId
-		startPublishPolling(publishTargetId);
+		// Step 4: Start chained polling bound strictly to publishTargetId
+		startPublishPolling(publishTargetId, commitSha, wasPublished);
 	} catch (cause: any) {
 		setControlsLocked(false);
-		if (cause.code === 'source_changed') {
-			setStatus('冲突：GitHub 仓库源文件已被外部修改，未覆盖任何内容', 'warning');
-		} else if (cause.code === 'draft_version_conflict') {
-			setStatus('版本冲突：草稿版本已变化，请先刷新草稿再发布', 'warning');
-		} else if (cause.code === 'publish_in_progress') {
-			setStatus('已有发布任务正在进行中，请等待部署完成', 'warning');
-		} else {
-			setStatus(cause instanceof Error ? cause.message : '发布失败', 'error');
-		}
+		setStatus('发布失败，草稿已保留', 'error');
 		await loadDrafts();
 	}
 }
 
-function startPublishPolling(draftId: string) {
+// --- Deployment Re-check (Does not create GitHub commits) ---
+async function recheckDeployment(draftId: string) {
+	try {
+		setStatus('正在重新检查上线状态…', 'loading');
+		const detail = await api<{ draft: DraftRecord }>(`/api/admin/drafts/${encodeURIComponent(draftId)}?recheck=1`);
+		const draft = detail.draft;
+		if (!draft) return;
+
+		const origin = getPublicOrigin();
+		const articleUrl = `${origin}/posts/${draft.slug}`;
+
+		if (draft.status === 'published') {
+			setStatus('已发布／已更新', 'success', { href: articleUrl, label: '查看文章' });
+			if (currentId === draftId) {
+				if (publishCommitShaInput) publishCommitShaInput.value = draft.publish_commit_sha || '';
+				if (sourceBlobShaInput) sourceBlobShaInput.value = draft.source_blob_sha || '';
+				if (systemStatusTextInput) systemStatusTextInput.value = `已发布 (v${draft.version || 1})`;
+				updatePublishButtonLabel(draft);
+			}
+			await loadDrafts();
+		} else if (draft.status === 'published_superseded') {
+			setStatus('已有更新版本上线', 'info', { href: articleUrl, label: '查看文章' });
+			if (currentId === draftId) {
+				if (publishCommitShaInput) publishCommitShaInput.value = draft.publish_commit_sha || '';
+				if (sourceBlobShaInput) sourceBlobShaInput.value = draft.source_blob_sha || '';
+				if (systemStatusTextInput) systemStatusTextInput.value = '已有更新版本上线';
+				updatePublishButtonLabel(draft);
+			}
+			await loadDrafts();
+		} else if (draft.status === 'deploying') {
+			setStatus('正在发布，网站更新完成后会通知你', 'loading');
+			startPublishPolling(draftId, draft.publish_commit_sha ?? undefined);
+		} else {
+			setStatus('尚未确认上线，草稿已保留', 'warning', undefined, {
+				label: '重新检查',
+				action: () => recheckDeployment(draftId),
+			});
+		}
+	} catch {
+		setStatus('检查失败，请稍后重试', 'error', undefined, {
+			label: '重新检查',
+			action: () => recheckDeployment(draftId),
+		});
+	}
+}
+
+function startPublishPolling(draftId: string, commitSha?: string, wasPublished = false) {
 	if (activePollTimers.has(draftId)) {
-		clearInterval(activePollTimers.get(draftId));
+		window.clearTimeout(activePollTimers.get(draftId));
 		activePollTimers.delete(draftId);
 	}
 
-	const timer = window.setInterval(async () => {
+	let isPolling = true;
+	let consecutiveNetworkErrors = 0;
+
+	async function poll() {
+		if (!isPolling) return;
 		try {
 			const detail = await api<{ draft: DraftRecord }>(`/api/admin/drafts/${encodeURIComponent(draftId)}`);
+			consecutiveNetworkErrors = 0;
 			const draft = detail.draft;
 			if (!draft) return;
 
+			// If another newer commit took over for this draft, stop this polling instance
+			if (commitSha && draft.publish_commit_sha && draft.publish_commit_sha !== commitSha && draft.status === 'deploying') {
+				isPolling = false;
+				activePollTimers.delete(draftId);
+				return;
+			}
+
 			if (draft.status === 'published') {
-				clearInterval(timer);
+				isPolling = false;
 				activePollTimers.delete(draftId);
 
-				const commitShort = (draft.publish_commit_sha || '').slice(0, 7);
-				const articleUrl = `/posts/${draft.slug}`;
+				const origin = getPublicOrigin();
+				const articleUrl = `${origin}/posts/${draft.slug}`;
+				const label = wasPublished || draft.source_blob_sha ? '已发布／已更新' : '已发布';
 				setStatus(
-					`已发布 · Commit ${commitShort}`,
+					label,
 					'success',
-					{ href: articleUrl, label: '查看公开文章 →' },
+					{ href: articleUrl, label: '查看文章' },
 				);
 
-				// Only update system status if user is currently viewing this draft; DO NOT overwrite editing body!
 				if (currentId === draftId) {
 					if (publishCommitShaInput) publishCommitShaInput.value = draft.publish_commit_sha || '';
 					if (sourceBlobShaInput) sourceBlobShaInput.value = draft.source_blob_sha || '';
 					if (systemStatusTextInput) systemStatusTextInput.value = `已发布 (v${draft.version || 1})`;
+					updatePublishButtonLabel(draft);
 				}
 				await loadDrafts();
-			} else if (draft.status === 'publish_failed') {
-				clearInterval(timer);
+				return;
+			} else if (draft.status === 'published_superseded') {
+				isPolling = false;
 				activePollTimers.delete(draftId);
-				setStatus(`发布失败：${draft.error_code || '构建部署超时'}`, 'error');
+
+				const origin = getPublicOrigin();
+				const articleUrl = `${origin}/posts/${draft.slug}`;
+				setStatus(
+					'已有更新版本上线',
+					'info',
+					{ href: articleUrl, label: '查看文章' },
+				);
+
+				if (currentId === draftId) {
+					if (publishCommitShaInput) publishCommitShaInput.value = draft.publish_commit_sha || '';
+					if (sourceBlobShaInput) sourceBlobShaInput.value = draft.source_blob_sha || '';
+					if (systemStatusTextInput) systemStatusTextInput.value = '已有更新版本上线';
+					updatePublishButtonLabel(draft);
+				}
+				await loadDrafts();
+				return;
+			} else if (draft.status === 'publish_failed') {
+				isPolling = false;
+				activePollTimers.delete(draftId);
+
+				if (draft.error_code === 'deployment_timeout') {
+					setStatus(
+						'尚未确认上线，草稿已保留',
+						'warning',
+						undefined,
+						{
+							label: '重新检查',
+							action: () => recheckDeployment(draftId),
+						},
+					);
+				} else {
+					setStatus('发布失败，草稿已保留', 'error');
+				}
+
 				if (currentId === draftId && systemStatusTextInput) {
 					systemStatusTextInput.value = `发布失败 (${draft.error_code || ''})`;
 				}
 				await loadDrafts();
+				return;
 			} else if (draft.status === 'conflict') {
-				clearInterval(timer);
+				isPolling = false;
 				activePollTimers.delete(draftId);
-				setStatus('冲突：发布被拦截，请检查版本冲突', 'warning');
+				setStatus('发布失败，草稿已保留', 'warning');
 				await loadDrafts();
+				return;
 			} else {
 				// Still deploying
 				if (currentId === draftId) {
-					const commitShort = (draft.publish_commit_sha || '').slice(0, 7);
-					setStatus(`正在部署 (${commitShort || '等待中'})…`, 'loading');
+					setStatus('正在发布，网站更新完成后会通知你', 'loading');
 				}
 			}
-		} catch {
-			// Keep polling on transient network glitches
+		} catch (err: any) {
+			if (err?.code === 'unauthorized' || err?.status === 401) {
+				isPolling = false;
+				activePollTimers.delete(draftId);
+				setStatus('会话已失效，请重新登录', 'error');
+				return;
+			}
+			consecutiveNetworkErrors++;
+			if (consecutiveNetworkErrors >= 6) {
+				// Pausing after persistent network errors
+				isPolling = false;
+				activePollTimers.delete(draftId);
+				setStatus('尚未确认上线，草稿已保留', 'warning', undefined, {
+					label: '重新检查',
+					action: () => recheckDeployment(draftId),
+				});
+				return;
+			}
 		}
-	}, 5000);
 
-	activePollTimers.set(draftId, timer);
+		// Wait 5 seconds AFTER previous request completes before sending the next one
+		if (isPolling) {
+			const timerId = window.setTimeout(poll, 5000);
+			activePollTimers.set(draftId, timerId);
+		}
+	}
+
+	const timerId = window.setTimeout(poll, 5000);
+	activePollTimers.set(draftId, timerId);
 }
 
 // --- Preview Workflow ---
@@ -1420,8 +1600,22 @@ async function start() {
 	try {
 		initDOMElements();
 		setStatus('正在建立安全连接…', 'loading');
-		const session = await api<{ email: string; csrfToken: string }>('/api/admin/session');
+		const session = await api<{ email: string; csrfToken: string; environment?: 'staging' | 'production'; publicOrigin?: string }>('/api/admin/session');
 		csrfToken = session.csrfToken;
+		currentPublicOrigin = session.publicOrigin || getPublicOrigin();
+		currentEnvironment = session.environment || (getPublicOrigin().includes('staging') ? 'staging' : 'production');
+
+		if (envBanner) {
+			if (currentEnvironment === 'staging') {
+				envBanner.textContent = '预览环境：发布仅更新预览站，不影响正式网站。';
+				envBanner.className = 'admin-env-banner staging';
+				envBanner.hidden = false;
+			} else if (currentEnvironment === 'production') {
+				envBanner.textContent = '正式环境：发布后会更新 xingx.cc.cd。';
+				envBanner.className = 'admin-env-banner production';
+				envBanner.hidden = false;
+			}
+		}
 
 		setupTabs();
 		initEventListeners();
@@ -1453,6 +1647,9 @@ export const testHelpers = {
 	fillDraft,
 	saveCurrentDraft,
 	publishCurrentDraft,
+	recheckDeployment,
+	updatePublishButtonLabel,
+	isPreviouslyPublished,
 	selectDraft,
 	checkAndRestoreDraftAutosave,
 	checkAndRestoreNewDraftAutosave,
@@ -1472,6 +1669,10 @@ export const testHelpers = {
 		set isSubmitting(v: boolean) { isSubmitting = v; },
 		get csrfToken() { return csrfToken; },
 		set csrfToken(v: string) { csrfToken = v; },
+		get currentPublicOrigin() { return currentPublicOrigin; },
+		set currentPublicOrigin(v: string) { currentPublicOrigin = v; },
+		get currentEnvironment() { return currentEnvironment; },
+		set currentEnvironment(v: 'staging' | 'production') { currentEnvironment = v; },
 		get activePollTimers() { return activePollTimers; },
 	}),
 };

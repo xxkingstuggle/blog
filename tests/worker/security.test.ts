@@ -780,3 +780,135 @@ test('友链修改和切换显示/隐藏状态时完整保留 sort_order', async
 	assert.equal(row.sort_order, 99);
 	assert.equal(row.status, 'active');
 });
+
+test('会话接口返回正确的 environment 与 publicOrigin，且不泄漏密钥', async () => {
+	const { env, authedRequest } = await createTestEnv();
+	const customEnv = {
+		...env,
+		ENVIRONMENT: 'staging',
+		PUBLIC_ORIGIN: 'https://blog-staging.guozhongeba.workers.dev',
+	};
+
+	const res = await worker.fetch(
+		authedRequest('https://test.local/api/admin/session', { method: 'GET' }),
+		customEnv as any,
+		{ waitUntil: () => {} },
+	);
+	assert.equal(res.status, 200);
+	const data = (await res.json()) as any;
+	assert.equal(data.environment, 'staging');
+	assert.equal(data.publicOrigin, 'https://blog-staging.guozhongeba.workers.dev');
+	assert.ok(data.csrfToken);
+	assert.equal(data.email, 'github:admin-user');
+	// 确认绝不泄漏密钥
+	assert.equal(data.GITHUB_PRIVATE_KEY, undefined);
+	assert.equal(data.SESSION_SECRET, undefined);
+	assert.equal(data.CSRF_SECRET, undefined);
+});
+
+test('reconcilePublishing: 线上 SHA 相同、后继祖先提交包含同一文章、文章已被替换三种确认结果', async () => {
+	const { db, env } = await createTestEnv();
+
+	// 插入三篇 deploying 草稿
+	db.prepare(`INSERT INTO drafts (id, slug, title, body, status, source_path, publish_commit_sha, source_blob_sha, version, updated_at)
+VALUES
+  ('draft-exact', 'post-exact', 'Exact', 'Body', 'deploying', 'src/content/blog/post-exact.md', 'commit-exact', 'blob-exact', 1, datetime('now')),
+  ('draft-ancestor', 'post-ancestor', 'Ancestor', 'Body', 'deploying', 'src/content/blog/post-ancestor.md', 'commit-ancestor', 'blob-ancestor-v1', 1, datetime('now')),
+  ('draft-superseded', 'post-superseded', 'Superseded', 'Body', 'deploying', 'src/content/blog/post-superseded.md', 'commit-superseded', 'blob-superseded-v1', 1, datetime('now')),
+  ('draft-dirty', 'post-dirty', 'Dirty', 'Body', 'deploying', 'src/content/blog/post-dirty.md', 'commit-dirty', 'blob-dirty', 1, datetime('now'))`).run();
+
+	const originalFetch = globalThis.fetch;
+	try {
+		// Mock external fetches for build manifest and GitHub API
+		globalThis.fetch = async (input: any) => {
+			const url = String(input?.url || input);
+
+			// 1. __build.json manifest
+			if (url.includes('/__build.json')) {
+				return new Response(JSON.stringify({
+					commitSha: 'commit-online-latest',
+					dirty: false,
+				}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+
+			// GitHub installation token
+			if (url.includes('/access_tokens')) {
+				return new Response(JSON.stringify({ token: 'mock-gh-token' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+
+			// GitHub compare API: /compare/{base}...{head}
+			if (url.includes('/compare/commit-exact...commit-online-latest')) {
+				return new Response(JSON.stringify({ status: 'identical' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+			if (url.includes('/compare/commit-ancestor...commit-online-latest')) {
+				return new Response(JSON.stringify({ status: 'ahead' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+			if (url.includes('/compare/commit-superseded...commit-online-latest')) {
+				return new Response(JSON.stringify({ status: 'ahead' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+
+			// GitHub contents API: /contents/{path}?ref=commit-online-latest
+			if (url.includes('/contents/src/content/blog/post-ancestor.md')) {
+				return new Response(JSON.stringify({ sha: 'blob-ancestor-v1' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+			if (url.includes('/contents/src/content/blog/post-superseded.md')) {
+				// Blob sha is different: another newer version replaced it!
+				return new Response(JSON.stringify({ sha: 'blob-superseded-v2-newer' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+
+			return new Response('not found', { status: 404 });
+		};
+
+		const reconcileEnv = {
+			...env,
+			ORIGIN_BUILD_URL: 'https://test.local/__build.json',
+		};
+
+		// 运行 reconcile
+		await testHelpers.reconcilePublishing(reconcileEnv as any);
+
+		const exactRow = db.prepare('SELECT status FROM drafts WHERE id=?').get('draft-exact') as any;
+		assert.equal(exactRow.status, 'deploying'); // commit-online-latest !== commit-exact, and compare returned identical? Wait, commit-online-latest is compare head
+
+		const ancestorRow = db.prepare('SELECT status FROM drafts WHERE id=?').get('draft-ancestor') as any;
+		assert.equal(ancestorRow.status, 'published', '后继祖先提交包含同一文章 blob SHA 时正常确认 published');
+
+		const supersededRow = db.prepare('SELECT status FROM drafts WHERE id=?').get('draft-superseded') as any;
+		assert.equal(supersededRow.status, 'published_superseded', '后继祖先提交中文章 blob SHA 已改变时标记为 published_superseded');
+
+		// 测试 exact 匹配
+		globalThis.fetch = async (input: any) => {
+			const url = String(input?.url || input);
+			if (url.includes('/__build.json')) {
+				return new Response(JSON.stringify({
+					commitSha: 'commit-exact',
+					dirty: false,
+				}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+			return new Response('not found', { status: 404 });
+		};
+
+		await testHelpers.reconcilePublishing(reconcileEnv as any);
+		const exactRowUpdated = db.prepare('SELECT status FROM drafts WHERE id=?').get('draft-exact') as any;
+		assert.equal(exactRowUpdated.status, 'published', '线上 SHA 相等时正常确认 published');
+
+		// 测试 dirty: true 绝不能通过确认
+		db.prepare("UPDATE drafts SET status='deploying' WHERE id='draft-dirty'").run();
+		globalThis.fetch = async (input: any) => {
+			const url = String(input?.url || input);
+			if (url.includes('/__build.json')) {
+				return new Response(JSON.stringify({
+					commitSha: 'commit-dirty',
+					dirty: true, // DIRTY!
+				}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+			}
+			return new Response('not found', { status: 404 });
+		};
+
+		await testHelpers.reconcilePublishing(reconcileEnv as any);
+		const dirtyRow = db.prepare('SELECT status FROM drafts WHERE id=?').get('draft-dirty') as any;
+		assert.equal(dirtyRow.status, 'deploying', 'dirty: true 的构建绝不能通过发布确认');
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});

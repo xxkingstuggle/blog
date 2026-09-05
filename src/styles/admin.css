@@ -772,12 +772,72 @@ select.admin-control {
 	white-space: nowrap;
 }
 
+.admin-dock-actions {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-shrink: 0;
+}
+
 .admin-dock-link {
 	font-size: 12px;
 	font-family: var(--font-mono);
 	color: var(--accent-contrast);
 	text-decoration: underline;
 	white-space: nowrap;
+}
+
+.admin-dock-btn {
+	background: var(--surface-2);
+	border: 1px solid var(--line);
+	color: var(--text);
+	font-size: 12px;
+	padding: 4px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: all var(--duration-fast) ease;
+}
+
+.admin-dock-btn:hover {
+	background: var(--surface);
+	border-color: var(--accent-contrast);
+}
+
+/* --- Environment Banner --- */
+.admin-env-banner {
+	margin-bottom: 20px;
+	padding: 10px 16px;
+	border-radius: 8px;
+	font-size: 13px;
+	line-height: 1.5;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.admin-env-banner.staging {
+	background: rgba(245, 158, 11, 0.12);
+	border: 1px solid rgba(245, 158, 11, 0.35);
+	color: #d97706;
+}
+
+:root[data-color-mode='dark'] .admin-env-banner.staging {
+	background: rgba(245, 158, 11, 0.15);
+	border: 1px solid rgba(245, 158, 11, 0.4);
+	color: #fbbf24;
+}
+
+.admin-env-banner.production {
+	background: rgba(16, 185, 129, 0.1);
+	border: 1px solid rgba(16, 185, 129, 0.3);
+	color: #059669;
+}
+
+:root[data-color-mode='dark'] .admin-env-banner.production {
+	background: rgba(16, 185, 129, 0.15);
+	border: 1px solid rgba(16, 185, 129, 0.4);
+	color: #34d399;
 }
 
 /* --- Responsive Layout & Media Queries --- */

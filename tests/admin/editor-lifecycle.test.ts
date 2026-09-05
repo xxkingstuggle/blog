@@ -39,6 +39,7 @@ class MockElement {
 	}
 
 	click() {
+		if ((this as any).onclick) (this as any).onclick({ type: 'click', preventDefault: () => {} });
 		this.dispatchEvent({ type: 'click' });
 	}
 
@@ -175,6 +176,8 @@ registerElement('admin-status');
 registerElement('admin-dock-indicator');
 registerElement('admin-dock-text');
 registerElement('admin-dock-link', '', 'a');
+registerElement('admin-dock-btn', '', 'button');
+registerElement('admin-env-banner');
 registerElement('draft-list', '', 'ul');
 registerElement('preview-frame', '', 'iframe');
 registerElement('new-draft', '', 'button');
@@ -187,11 +190,18 @@ registerElement('slug-helper');
 const mockDocument = {
 	getElementById: (id: string) => elementsMap.get(id) ?? null,
 	addEventListener: () => {},
+	createElement: (tag: string) => new MockElement('', '', tag),
+	createTextNode: (text: string) => {
+		const el = new MockElement('', '', 'span');
+		el.textContent = text;
+		return el;
+	},
 };
 
 (globalThis as any).__IS_TEST__ = true;
 (globalThis as any).window = {
 	...globalThis,
+	location: { origin: 'https://test.local', assign: () => {} },
 	addEventListener: () => {},
 	removeEventListener: () => {},
 };
@@ -512,8 +522,166 @@ test('6. 发布 A 后编辑 B，A 发布完成不会改变 B', async () => {
 		assert.equal(fieldBody.value, 'User is typing new paragraph in B');
 
 		// Cleanup polling timer
-		clearInterval(pollTimer);
+		clearTimeout(pollTimer);
 		testHelpers.getState().activePollTimers.delete('draft-a');
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test('7. 发布按钮根据是否已有公开版本正确显示（发布文章 vs 更新文章）', () => {
+	resetEditorDOM();
+	const publishBtn = elementsMap.get('publish-draft')!;
+
+	// 1. 新建空白草稿：默认显示“发布文章”
+	testHelpers.resetForm({ restoreAutosave: false });
+	assert.equal(publishBtn.textContent, '发布文章');
+
+	// 2. 载入从未发布过的草稿（无 source_blob_sha 和 publish_commit_sha）
+	testHelpers.fillDraft({
+		id: 'draft-fresh',
+		slug: 'fresh-post',
+		title: 'Fresh Post',
+		body: 'Some content',
+		version: 1,
+		status: 'draft',
+		source_blob_sha: null,
+		publish_commit_sha: null,
+	});
+	assert.equal(publishBtn.textContent, '发布文章');
+
+	// 3. 载入已有公开记录的草稿（有 source_blob_sha）
+	testHelpers.fillDraft({
+		id: 'draft-published',
+		slug: 'published-post',
+		title: 'Published Post',
+		body: 'Published content',
+		version: 2,
+		status: 'draft', // 即使当前是 draft 状态！
+		source_blob_sha: 'blob-sha-xyz',
+		publish_commit_sha: 'commit-sha-xyz',
+	});
+	assert.equal(publishBtn.textContent, '更新文章');
+
+	// 4. 再次主动点击“新建”，重置为“发布文章”
+	testHelpers.resetForm({ restoreAutosave: false });
+	assert.equal(publishBtn.textContent, '发布文章');
+});
+
+test('8. 尚未确认上线时显示重试检查按钮，且“重新检查”不产生新 GitHub commit', async () => {
+	resetEditorDOM();
+	const originalFetch = globalThis.fetch;
+	const dockBtn = elementsMap.get('admin-dock-btn')!;
+	const dockText = elementsMap.get('admin-dock-text')!;
+
+	let publishCallCount = 0;
+	let recheckCallCount = 0;
+
+	globalThis.fetch = async (input: any) => {
+		const url = String(input?.url || input);
+		if (url.includes('/api/admin/publish')) {
+			publishCallCount++;
+			return new Response(JSON.stringify({ id: 'draft-timeout', status: 'deploying', commitSha: 'sha-timeout' }), {
+				status: 202,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+		if (url.includes('/api/admin/drafts/draft-timeout?recheck=1')) {
+			recheckCallCount++;
+			return new Response(JSON.stringify({
+				draft: {
+					id: 'draft-timeout',
+					slug: 'timeout-post',
+					title: 'Timeout Post',
+					body: 'Body',
+					status: 'published',
+					publish_commit_sha: 'sha-timeout',
+					version: 2,
+				},
+			}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+		}
+		if (url.includes('/api/admin/drafts/draft-timeout')) {
+			return new Response(JSON.stringify({
+				draft: {
+					id: 'draft-timeout',
+					slug: 'timeout-post',
+					title: 'Timeout Post',
+					body: 'Body',
+					status: 'publish_failed',
+					error_code: 'deployment_timeout',
+					version: 1,
+				},
+			}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+		}
+		return new Response(JSON.stringify({ drafts: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+	};
+
+	try {
+		testHelpers.getState().currentId = '';
+
+		// 触发部署超时失败处理
+		await testHelpers.selectDraft({
+			id: 'draft-timeout',
+			slug: 'timeout-post',
+			title: 'Timeout Post',
+			status: 'publish_failed',
+			error_code: 'deployment_timeout',
+			version: 1,
+		} as any);
+
+		// 等待 selectDraft 完成
+		await new Promise((r) => setTimeout(r, 10));
+
+		assert.equal(dockText.textContent, '尚未确认上线，草稿已保留');
+		assert.equal(dockBtn.hidden, false);
+		assert.equal(dockBtn.textContent, '重新检查');
+
+		// 点击“重新检查”
+		assert.equal(publishCallCount, 0, '重新检查绝不能调用 /api/admin/publish');
+		dockBtn.click();
+		await new Promise((r) => setTimeout(r, 10));
+
+		assert.equal(recheckCallCount, 1, '调用了 GET recheck=1');
+		assert.equal(publishCallCount, 0, '重新检查绝不能产生新 GitHub 提交');
+		assert.equal(dockText.textContent, '已发布／已更新');
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test('9. 会话环境信息正确且查看文章指向当前环境 publicOrigin', async () => {
+	resetEditorDOM();
+	const originalFetch = globalThis.fetch;
+	const envBanner = elementsMap.get('admin-env-banner')!;
+	const dockLink = elementsMap.get('admin-dock-link') as any;
+
+	// Staging environment
+	testHelpers.getState().currentPublicOrigin = 'https://blog-staging.guozhongeba.workers.dev';
+	testHelpers.getState().currentEnvironment = 'staging';
+
+	envBanner.textContent = '预览环境：发布仅更新预览站，不影响正式网站。';
+	envBanner.className = 'admin-env-banner staging';
+	envBanner.hidden = false;
+
+	assert.equal(envBanner.hidden, false);
+	assert.match(envBanner.textContent, /预览环境/);
+
+	// Test published link resolution
+	globalThis.fetch = async () => new Response(JSON.stringify({
+		draft: {
+			id: 'd-env',
+			slug: 'env-post',
+			title: 'Env Post',
+			status: 'published',
+			version: 1,
+		},
+	}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+	try {
+		testHelpers.fillDraft({ id: 'd-env', slug: 'env-post', title: 'Env Post', status: 'published', version: 1 } as any);
+		await testHelpers.recheckDeployment('d-env');
+		assert.equal(dockLink.href, 'https://blog-staging.guozhongeba.workers.dev/posts/env-post');
+		assert.equal(dockLink.textContent, '查看文章');
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

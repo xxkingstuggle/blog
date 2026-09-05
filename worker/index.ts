@@ -58,6 +58,7 @@ interface Env {
 	DB: D1DatabaseLike;
 	MEDIA?: R2BucketLike;
 	COMMENTS_RATE_LIMIT?: RateLimitLike;
+	ENVIRONMENT?: 'staging' | 'production' | string;
 	PUBLIC_ORIGIN: string;
 	CN_ORIGIN?: string;
 	ACCESS_ISSUER: string;
@@ -608,7 +609,14 @@ async function putGithubFile(env: Env, token: string, path: string, body: string
 async function adminSession(request: Request, env: Env) {
 	const auth = await requireAdmin(request, env);
 	if (auth.response) return auth.response;
-	return json({ email: auth.subject, csrfToken: await issueCsrf(auth.subject ?? '', env), expiresIn: 3600 });
+	const environment = env.ENVIRONMENT || (env.PUBLIC_ORIGIN?.includes('staging') ? 'staging' : 'production');
+	return json({
+		email: auth.subject,
+		csrfToken: await issueCsrf(auth.subject ?? '', env),
+		expiresIn: 3600,
+		environment,
+		publicOrigin: env.PUBLIC_ORIGIN,
+	});
 }
 
 async function listDrafts(env: Env) {
@@ -616,11 +624,13 @@ async function listDrafts(env: Env) {
 	return json({ drafts: result.results });
 }
 
-async function getDraft(env: Env, id: string) {
+async function getDraft(request: Request, env: Env, id: string) {
+	const url = new URL(request.url);
+	const recheck = url.searchParams.get('recheck') === '1';
 	let draft = await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<JsonRecord>();
 	if (!draft) return error('草稿不存在。', 404);
-	if (draft.status === 'deploying') {
-		await reconcilePublishing(env);
+	if (draft.status === 'deploying' || (recheck && draft.status === 'publish_failed' && draft.error_code === 'deployment_timeout')) {
+		await reconcilePublishing(env, id);
 		draft = (await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<JsonRecord>()) ?? draft;
 	}
 	try { draft.aliases = JSON.parse(String(draft.aliases_json ?? '[]')); } catch { draft.aliases = []; }
@@ -846,20 +856,102 @@ async function checkLinks(env: Env) {
 	}
 }
 
-async function reconcilePublishing(env: Env) {
-	const jobs = await env.DB.prepare("SELECT id, publish_commit_sha, updated_at FROM drafts WHERE status='deploying'").all<{ id: string; publish_commit_sha: string | null; updated_at: string }>();
-	const deployedSha = env.ORIGIN_BUILD_URL
-		? await fetch(`${env.ORIGIN_BUILD_URL}${env.ORIGIN_BUILD_URL.includes('?') ? '&' : '?'}verify=${Date.now()}`, { headers: { 'Cache-Control': 'no-cache' } }).then(async (response) => {
-			if (!response.ok) return null;
-			const manifest = (await response.json()) as { commitSha?: string; dirty?: boolean };
-			return manifest.dirty === false ? manifest.commitSha ?? null : null;
-		}).catch(() => null)
-		: null;
+async function reconcilePublishing(env: Env, targetDraftId?: string) {
+	const jobs = targetDraftId
+		? await env.DB.prepare(
+				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, status, error_code, updated_at FROM drafts WHERE id = ?"
+			)
+				.bind(targetDraftId)
+				.all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; status: string; error_code: string | null; updated_at: string }>()
+		: await env.DB.prepare(
+				"SELECT id, slug, source_path, source_blob_sha, publish_commit_sha, status, error_code, updated_at FROM drafts WHERE status = 'deploying' OR (status = 'publish_failed' AND error_code = 'deployment_timeout')"
+			).all<{ id: string; slug: string; source_path: string | null; source_blob_sha: string | null; publish_commit_sha: string | null; status: string; error_code: string | null; updated_at: string }>();
+
+	if (!jobs.results.length) return;
+
+	let deployedSha: string | null = null;
+	if (env.ORIGIN_BUILD_URL) {
+		try {
+			const res = await fetch(`${env.ORIGIN_BUILD_URL}${env.ORIGIN_BUILD_URL.includes('?') ? '&' : '?'}verify=${Date.now()}`, {
+				headers: { 'Cache-Control': 'no-cache' },
+			});
+			if (res.ok) {
+				const manifest = (await res.json()) as { commitSha?: string; dirty?: boolean };
+				if (manifest.dirty === false && typeof manifest.commitSha === 'string' && manifest.commitSha.trim()) {
+					deployedSha = manifest.commitSha.trim();
+				}
+			}
+		} catch {}
+	}
+
+	if (!deployedSha) {
+		// Online is dirty: true, unreachable, or failed: do not confirm.
+		for (const job of jobs.results) {
+			if (job.status === 'deploying' && Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
+				await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND status='deploying'").bind(job.id).run();
+			}
+		}
+		return;
+	}
+
+	let gitHubToken: string | null = null;
 	for (const job of jobs.results) {
-		if (job.publish_commit_sha && deployedSha === job.publish_commit_sha) {
-			await env.DB.prepare("UPDATE drafts SET status='published', updated_at=datetime('now') WHERE id=?").bind(job.id).run();
-		} else if (Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
-			await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+		if (!job.publish_commit_sha) continue;
+
+		// 1. Exact SHA match
+		if (deployedSha === job.publish_commit_sha) {
+			await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+			continue;
+		}
+
+		// 2. Continuous publish / ancestor check
+		let matched = false;
+		if (env.GITHUB_OWNER && env.GITHUB_REPO) {
+			try {
+				if (!gitHubToken) gitHubToken = await githubAppToken(env);
+				const compareRes = await fetch(
+					`https://api.github.com/repos/${encodeURIComponent(env.GITHUB_OWNER)}/${encodeURIComponent(env.GITHUB_REPO)}/compare/${encodeURIComponent(job.publish_commit_sha)}...${encodeURIComponent(deployedSha)}`,
+					{
+						headers: {
+							Accept: 'application/vnd.github+json',
+							Authorization: `Bearer ${gitHubToken}`,
+							'User-Agent': 'xingx-blog-worker',
+						},
+					}
+				);
+				if (compareRes.ok) {
+					const compareData = (await compareRes.json()) as { status?: string };
+					if (compareData.status === 'ahead' || compareData.status === 'identical') {
+						const filePath = sourcePathForSlug(job.slug, job.source_path ?? undefined);
+						if (filePath) {
+							const fileRes = await fetch(
+								`https://api.github.com/repos/${encodeURIComponent(env.GITHUB_OWNER)}/${encodeURIComponent(env.GITHUB_REPO)}/contents/${githubPath(filePath)}?ref=${encodeURIComponent(deployedSha)}`,
+								{
+									headers: {
+										Accept: 'application/vnd.github+json',
+										Authorization: `Bearer ${gitHubToken}`,
+										'User-Agent': 'xingx-blog-worker',
+									},
+								}
+							);
+							if (fileRes.ok) {
+								const fileData = (await fileRes.json()) as { sha?: string };
+								if (job.source_blob_sha && fileData.sha === job.source_blob_sha) {
+									await env.DB.prepare("UPDATE drafts SET status='published', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+									matched = true;
+								} else {
+									await env.DB.prepare("UPDATE drafts SET status='published_superseded', error_code=NULL, updated_at=datetime('now') WHERE id=?").bind(job.id).run();
+									matched = true;
+								}
+							}
+						}
+					}
+				}
+			} catch {}
+		}
+
+		if (!matched && job.status === 'deploying' && Date.now() - Date.parse(`${job.updated_at.replace(' ', 'T')}Z`) > 10 * 60 * 1000) {
+			await env.DB.prepare("UPDATE drafts SET status='publish_failed', error_code='deployment_timeout', updated_at=datetime('now') WHERE id=? AND status='deploying'").bind(job.id).run();
 		}
 	}
 }
@@ -1060,7 +1152,7 @@ async function api(request: Request, env: Env, ctx: ExecutionContextLike) {
 	const draftMatch = url.pathname.match(/^\/api\/admin\/drafts\/([^/]+)$/);
 	if (draftMatch && request.method === 'GET') {
 		const auth = await requireAdmin(request, env);
-		return auth.response ?? getDraft(env, decodeURIComponent(draftMatch[1]));
+		return auth.response ?? getDraft(request, env, decodeURIComponent(draftMatch[1]));
 	}
 	if (draftMatch && request.method === 'PUT') {
 		const auth = await requireAdmin(request, env);
@@ -1123,6 +1215,8 @@ export const testHelpers = {
 	issueCsrf,
 	issueAdminSession,
 	secureCookie,
+	adminSession,
+	reconcilePublishing,
 	saveDraft,
 	publish,
 	getDraft,
