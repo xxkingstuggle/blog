@@ -7,6 +7,7 @@ tags:
   - 编程实践
   - 架构设计
   - 工作流
+kicker: 多 Agent 工程 · WORKFLOW
 draft: false
 kind: project
 presentation: article

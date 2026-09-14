@@ -1,0 +1,118 @@
+---
+title: USBLinkMic：让 Android 手机变成 Mac 的麦克风和网卡
+pubDate: 2026-09-14
+description: 一个 macOS + Android 双向工具：手机麦克风变 Mac 输入设备、手机网络通过 USB CDC-NCM 共享给 Mac、Mac 网络再反向共享回手机。记录我如何把一条「需要开终端敲 ADB」的流程做成零配置的图形应用，以及排查 DHCP 时序问题的完整过程。
+tags:
+  - 独立开发
+  - macOS
+  - Android
+  - 音频
+  - 网络
+kicker: macOS + Android 工具 · USBLINKMIC
+draft: false
+kind: project
+presentation: article
+cover: ../../assets/demo/tension-macro.png
+---
+
+import ArticleMedia from '../../components/article/ArticleMedia.astro';
+
+开线上会议时我遇到过一个很具体的问题：MacBook 自带麦克风在稍微空一点的房间里录出来全是回声，而我手边的 Android 手机麦克风明显更好用。
+
+现有方案其实存在，但都有一个共同的前提——**你得先是一个会开终端的人**。要装 Homebrew、装 Android SDK、把 `adb` 加进 PATH、手动跑 `adb reverse`、再在音频路由软件之间做跳线。这套流程对我来说不是问题，但它决定了这个东西**不可能被第二个人用起来**。
+
+所以这个项目真正要解决的不是「怎么传音频」，而是：**怎么把一条依赖命令行和多个第三方组件的技术链路，压缩成一个打开就能用的图形应用。**
+
+<ArticleMedia
+	src={frontmatter.cover}
+	alt="USBLinkMic Mac 端主界面"
+	caption="Mac 端主界面：统一的音频链路视图、实时电平表与连接状态。"
+	width="wide"
+/>
+
+## 1. 我定义的范围
+
+USBLinkMic 最终包含三条互相独立的能力：
+
+- **手机麦克风 → Mac**：通过 ADB 或局域网把 Android 麦克风音频送到 Mac，并输出到选定的 Mac 输出设备。
+- **手机网络 → Mac**：通过 ADB 启动 USB CDC-NCM，把手机的移动网络共享给 Mac。
+- **Mac 网络 → 手机**：通过 ADB 反向中继加 Android VPN Service，把 Mac 的网络反向共享回手机。
+
+第三条来自 3.1.0 版本集成的 gnirehtet v2.5.1 Rust relay，它让「反向共享」这件事不再需要用户在 Android 上装额外的软件。
+
+但这个项目里真正花时间的不是这三个功能本身，而是下面这件事。
+
+## 2. 零配置：从「依赖一堆东西」到「一个 DMG」
+
+早期版本的一个隐性门槛是：`adb` 从哪来。它不在系统里，装它要装 Homebrew 或者整套 Android SDK。这意味着任何一个想用这个工具的人，第一步就是去学另一套工具链。
+
+3.2.0 的做法是**把依赖直接内建**：Mac 端打包一个独立的 Universal 架构 `adb`（37.0.1）和配套的 Android APK，同时提供一个三步图形化首次使用向导——检测手机连接、检查调试授权、一键安装并拉起手机端 App、选择用途预设、最后做一次声音测试。
+
+结果是**完全脱离 Homebrew、Android SDK 和终端命令**。用户拿到 DMG，装完就能用。
+
+<ArticleMedia
+	src="../../assets/demo/signal-formation.png"
+	alt="配置向导与实时音量电平"
+	caption="配置向导：三步完成连接检测、授权检查与声音测试，并显示实时输入电平。"
+	width="wide"
+/>
+
+同时做的还有几件「让产品像个产品」的事：
+
+- **音频路由可视化与防啸叫提示**：界面上直接画出「手机 → 会议软件」的链路，并给出 BlackHole 2ch 的安装指引与防啸叫安全提示。啸叫是这个品类最容易让用户以为「软件坏了」的问题，与其事后解释，不如事前说清楚。
+- **隐私脱敏日志导出**：一键复制的日志会自动抹掉设备序列号、敏感 IP 和主机用户名。用户要给我发日志排障时，不该被迫交出这些。
+- **设置草稿保护**：明确区分「立即生效」与「需重启生效」的参数，并支持放弃未保存的修改。
+
+## 3. 一个真实的排查：DHCP 到底要等多久
+
+这是我认为最值得写下来的一个 bug，因为它展示了**时序类问题**的典型排查路径。
+
+现象是：Android 侧 Tethering 已经明确成功（`start-ethernet` 回调成功、`tethered` 接口里能看见 `usb0`），但 Mac 端仍然报「USB 网卡未拿到 IP」。
+
+关键点在于：**手机侧是成功的，失败发生在 Mac 侧的网络接口读取。** 这个区分是排查的起点——如果一开始就怀疑 Tethering 没开起来，会浪费大量时间在错误方向上。
+
+顺着代码追下去：
+
+```text
+startNcmTethering  (AppModel.swift:469)
+  └─ 判断 network.ip != "-" → 为 false 则失败
+       └─ network.ip 由 refreshNetworkWithRetry 更新
+            └─ 3 轮 × 2s = 6s，每轮调用 networksetup -getinfo
+```
+
+定位到的根因是：**等待窗口只有 6 秒，而且每一轮都不会重新触发 `detectnewhardware` 或重新启用网络服务。** 当 DHCP 的实际完成时间晚于 6 秒时，App 早已判定失败——尽管网络其实马上就要通了。
+
+我用实验脚本验证了这个假设：改成 **25 秒轮询 + 每轮重新 enable**，问题消失。
+
+```text
+修复前：3 × 2s，每轮只读 IP
+修复后：25s 轮询，每轮重新触发 detectnewhardware + enable
+```
+
+这个 bug 的值得记住之处不在于修复本身，而在于它是一类问题的样本：**跨设备、跨进程的功能，几乎不要假设同步完成。** 成功回调返回 `true` 只代表对端接受了请求，不代表本机状态已经就绪。事后我给这条链路补了完整的诊断信息与超时受限的清理逻辑，退出 App 时的 ADB reverse、VPN 和网络配置残留也都改成了有超时上限的安全清理。
+
+## 4. 我怎么和 AI Agent 协作
+
+这个项目跨两个平台、涉及音频热路径和系统网络配置，代码量已经大到无法凭记忆维护。我用 Agent 的方式，是把它当作**可以做穷举审查的结对工程师**。
+
+**用于只读审查，而不是直接改代码。** 上面那个 DHCP 排查就是典型：我让 Agent 对「从 Android Tethering 成功到 Mac 拿到 IP」这一段做**只读审查**，输出一份带文件名、方法名和行号的报告——`AppModel.swift:469` 的判定、行 677 的 `refreshNetworkWithRetry`、行 703 的 `networksetup -getinfo` 调用，都来自这份报告。我明确要求「未修改任何代码」，因为排查阶段最重要的是**先把因果链理清楚**，而不是急着打补丁。
+
+**用于穷举式的横切检查。** 项目里有几份长达数十页的审查报告，覆盖能耗、构建配置、代码质量，以及 Android Shell 与 Mac 实现之间的能力对齐。这类工作需要把整套代码在脑子里过一遍，是人的短板、Agent 的强项。
+
+**产出必须可验证。** 音频相关的修复我会要求同时给出可执行的验证方式——比如 3.1.0 修掉的「整数 PCM 未归一化导致波形饱和成色块」，就是靠实际观察波形与性能追踪数据确认的，而不是看代码觉得对。
+
+同样要诚实说明局限：**Agent 对 ADB/Android 版本差异与 macOS 网络栈行为的了解经常是过时的**。它给的某些 `networksetup` 用法在较新版本的 macOS 上行为已经不同，最终以我在本机实测为准。它的价值是缩小搜索范围，不是给出终审结论。
+
+## 5. 成品与代码
+
+- macOS 原生应用 + Android 客户端，DMG / APK 双产物
+- 内建 `adb` 与 APK，零配置启动
+- 三条网络/音频链路：麦克风上行、USB NCM 共享、Mac 网络反向共享
+- 实时电平表、音频路由可视化、脱敏日志导出
+- 单元测试、音频性能追踪、双端诊断信息
+
+> 源码：[github.com/xxkingstuggle/USBLinkMic](https://github.com/xxkingstuggle/USBLinkMic)
+
+---
+
+回头看，这个项目最有价值的部分不是「手机当麦克风」这个功能本身——那件事别人做过。真正花掉我时间的是**把一条只有极客愿意折腾的链路，做成我妈也能打开就用的东西**。这个「最后一公里」的工程质量，我认为比功能点更能说明一个人的工程能力。
