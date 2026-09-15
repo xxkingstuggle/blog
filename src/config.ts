@@ -4,7 +4,7 @@ export const siteConfig = {
 	author: 'Xin',
 	url: 'https://xingx.cc.cd',
 	social: {
-		github: '',
+		github: 'https://github.com/xxkingstuggle',
 		weibo: '',
 	},
 } as const;

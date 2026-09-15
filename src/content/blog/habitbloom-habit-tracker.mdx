@@ -11,20 +11,21 @@ kicker: iOS/macOS 应用 · HABITBLOOM
 draft: false
 kind: project
 presentation: article
-cover: ../../assets/demo/signal-formation.png
+cover: ../../assets/projects/habitbloom-icon.png
 ---
 
 import ArticleMedia from '../../components/article/ArticleMedia.astro';
+import habitImg from '../../assets/projects/habitbloom-icon.png';
 
 市面上的习惯打卡应用大多走向了两个极端：要么做成带社区、排行榜和账号体系的重型产品，要么是功能单薄到用两天就腻的清单。我用过的几款都在同一个地方劝退我——打开应用本身这件事，比我今天要打卡的那个习惯还要费劲。
 
 我想做的东西非常收敛：**让「今天该做的事」在手机桌面上就长得像一个你愿意伸手去点的东西，点完即走。**
 
 <ArticleMedia
-	src={frontmatter.cover}
-	alt="HabitBloom 首页的贴纸式习惯卡片"
-	caption="首页卡片：自定义图标、颜色、连续天数与今日完成状态，点击即完成打卡。"
-	width="wide"
+	src={habitImg}
+	alt="HabitBloom 应用图标"
+	caption="HabitBloom：iOS / iPadOS / macOS 同一套 SwiftUI 代码。"
+	width="content"
 />
 
 ## 1. 我定义的边界
@@ -37,13 +38,6 @@ import ArticleMedia from '../../components/article/ArticleMedia.astro';
 - **隐私边界清晰**：云端只同步文字字段，自定义图片永远不上传。
 
 这几条约束直接砍掉了一大批「看起来很合理」的功能：iCloud/CloudKit 同步、推送式服务端提醒、Live Activities、灵动岛提醒，全部不做。它们要么需要付费账号，要么让签名的复杂度超出个人项目的承受范围。
-
-<ArticleMedia
-	src="../../assets/demo/liquid-glass-cover.png"
-	alt="统计页面与月度热力图"
-	caption="统计页：连续天数、总打卡天数、月完成率与月度热力图。"
-	width="content"
-/>
 
 最终落地的范围是：自定义习惯（名称、图标、颜色、卡片样式、目标周几、提醒、排序）、贴纸式首页卡片、内置 emoji 与 SF Symbols 的图标选择器、打卡音效与动画、本地通知、以及三类 WidgetKit 桌面小组件。数据层用 SwiftData，Mac Catalyst 版本可以直接在 Mac 上跑同一套逻辑调试。
 
@@ -61,16 +55,9 @@ import ArticleMedia from '../../components/article/ArticleMedia.astro';
 
 这样小组件拿到的永远是「已经算好的结果」，而不是需要它自己去 SwiftData 里重新查询和聚合。顺带解决了一个性能问题：统计聚合不再在小组件的紧张时间预算里执行。
 
-<ArticleMedia
-	src="../../assets/demo/tension-macro.png"
-	alt="Cloudflare 远程快照同步路径"
-	caption="主 App 推送快照 → Cloudflare Durable Objects → 小组件只读渲染，绕开 App Group。"
-	width="wide"
-/>
-
 同一条思路也用在云端备份上：**只同步文字**。习惯的名称、配色、周期、打卡记录这些字段体积极小，几分钟就能同步完；而用户为大卡片挑的那张照片，裁剪压缩后就只存在本地。
 
-这里还有一层诚实的取舍要说明。整个云端路径**没有被设计成多端冲突解决的完整方案**——没有冲突合并 UI，也没有离线队列重放。它解决的是一个具体问题：「侧载环境下怎么让桌面小组件可靠地显示内容」。把它包装成「全平台实时同步」是不诚实的，我没有那样做。
+另外有一点得说清楚：整个云端路径**没有做成完整的冲突解决方案**——没有冲突合并 UI，也没有离线队列重放。它解决的是一个具体问题：「侧载环境下怎么让桌面小组件可靠地显示内容」。把它包装成「全平台实时同步」是不诚实的，我没有那样做。
 
 ## 3. 我怎么和 AI Agent 协作
 
@@ -82,9 +69,9 @@ import ArticleMedia from '../../components/article/ArticleMedia.astro';
 
 **让它做我做不到的事：穷举。** 这个项目里有一份 `PERMISSIONS.md`，逐项列出 App Groups、CloudKit、Push、Live Activities 等能力的使用状态，及每一项对免费签名的风险。这类「把所有可能踩到的坑一次列全」的工作，是我自己最容易遗漏、而 Agent 特别擅长的。我用它来做交叉检查，而不是让它凭空想象——所有结论我都会回到 Apple 文档和真机构建上去验证。
 
-**不信任自述，只信任 Diff 与构建。** Agent 说「已完成」从来不算完成。我要求每个改动落成可被 Git 审查的差异，并跑通 `xcodebuild` 与项目里的 smoke/stress 测试。项目里有一份 Buildoles 环境的踩坑记录就来自这里：某个 iOS Runtime 缺失导致 `actool` 报错、打包直接失败——这类问题只有在真实执行构建命令时才会暴露，读代码是读不出来的。
+**不信任自述，只信任 Diff 与构建。** Agent 说「已完成」从来不算完成。我要求每个改动落成可被 Git 审查的差异，并跑通 `xcodebuild` 与项目里的 smoke/stress 测试。之前就真踩过一次：系统里缺 iOS 运行库时 `actool` 直接报错、打包整个失败——这种问题只有真的去跑一次构建才会暴露，光读代码是看不出来的。
 
-这也带来一个我需要诚实承认的局限：**AI 生成的代码在 SwiftUI 这类框架的版本差异上并不可靠**。它给过的某些 WidgetKit 写法在当前 SDK 下已经变更，最终正确版本是靠编译器的报错一条条修正出来的。所以我把它的产出当作「高质量的起点」而非终点。
+不过它也有明显靠不住的地方：**AI 生成的代码在 SwiftUI 这类框架的版本差异上并不可靠**。它给过的某些 WidgetKit 写法在当前 SDK 下已经变更，最终正确版本是靠编译器的报错一条条修正出来的。所以我把它的产出当作「高质量的起点」而非终点。
 
 ## 4. 成品与代码
 

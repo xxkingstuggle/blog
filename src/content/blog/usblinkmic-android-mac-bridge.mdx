@@ -12,10 +12,11 @@ kicker: macOS + Android 工具 · USBLINKMIC
 draft: false
 kind: project
 presentation: article
-cover: ../../assets/demo/tension-macro.png
+cover: ../../assets/projects/usblinkmic-mac.png
 ---
 
 import ArticleMedia from '../../components/article/ArticleMedia.astro';
+import usblinkmicImg from '../../assets/projects/usblinkmic-mac.png';
 
 开线上会议时我遇到过一个很具体的问题：MacBook 自带麦克风在稍微空一点的房间里录出来全是回声，而我手边的 Android 手机麦克风明显更好用。
 
@@ -24,9 +25,9 @@ import ArticleMedia from '../../components/article/ArticleMedia.astro';
 所以这个项目真正要解决的不是「怎么传音频」，而是：**怎么把一条依赖命令行和多个第三方组件的技术链路，压缩成一个打开就能用的图形应用。**
 
 <ArticleMedia
-	src={frontmatter.cover}
+	src={usblinkmicImg}
 	alt="USBLinkMic Mac 端主界面"
-	caption="Mac 端主界面：统一的音频链路视图、实时电平表与连接状态。"
+	caption="Mac 端主界面：左边是三条功能链路，右边把音频链路每一步的状态都标了出来。"
 	width="wide"
 />
 
@@ -50,13 +51,6 @@ USBLinkMic 最终包含三条互相独立的能力：
 
 结果是**完全脱离 Homebrew、Android SDK 和终端命令**。用户拿到 DMG，装完就能用。
 
-<ArticleMedia
-	src="../../assets/demo/signal-formation.png"
-	alt="配置向导与实时音量电平"
-	caption="配置向导：三步完成连接检测、授权检查与声音测试，并显示实时输入电平。"
-	width="wide"
-/>
-
 同时做的还有几件「让产品像个产品」的事：
 
 - **音频路由可视化与防啸叫提示**：界面上直接画出「手机 → 会议软件」的链路，并给出 BlackHole 2ch 的安装指引与防啸叫安全提示。啸叫是这个品类最容易让用户以为「软件坏了」的问题，与其事后解释，不如事前说清楚。
@@ -65,7 +59,7 @@ USBLinkMic 最终包含三条互相独立的能力：
 
 ## 3. 一个真实的排查：DHCP 到底要等多久
 
-这是我认为最值得写下来的一个 bug，因为它展示了**时序类问题**的典型排查路径。
+这是我最想记下来的一个 bug——它太典型了，跨设备功能里的时序问题基本都是这个形状。
 
 现象是：Android 侧 Tethering 已经明确成功（`start-ethernet` 回调成功、`tethered` 接口里能看见 `usb0`），但 Mac 端仍然报「USB 网卡未拿到 IP」。
 
@@ -89,7 +83,7 @@ startNcmTethering  (AppModel.swift:469)
 修复后：25s 轮询，每轮重新触发 detectnewhardware + enable
 ```
 
-这个 bug 的值得记住之处不在于修复本身，而在于它是一类问题的样本：**跨设备、跨进程的功能，几乎不要假设同步完成。** 成功回调返回 `true` 只代表对端接受了请求，不代表本机状态已经就绪。事后我给这条链路补了完整的诊断信息与超时受限的清理逻辑，退出 App 时的 ADB reverse、VPN 和网络配置残留也都改成了有超时上限的安全清理。
+这个 bug 真正的价值不在修复本身，而在于它代表了一类问题：**跨设备、跨进程的功能，别假设一切都会同步完成。** 成功回调返回 `true` 只代表对端接受了请求，不代表本机状态已经就绪。事后我给这条链路补了完整的诊断信息与超时受限的清理逻辑，退出 App 时的 ADB reverse、VPN 和网络配置残留也都改成了有超时上限的安全清理。
 
 ## 4. 我怎么和 AI Agent 协作
 
@@ -101,7 +95,7 @@ startNcmTethering  (AppModel.swift:469)
 
 **产出必须可验证。** 音频相关的修复我会要求同时给出可执行的验证方式——比如 3.1.0 修掉的「整数 PCM 未归一化导致波形饱和成色块」，就是靠实际观察波形与性能追踪数据确认的，而不是看代码觉得对。
 
-同样要诚实说明局限：**Agent 对 ADB/Android 版本差异与 macOS 网络栈行为的了解经常是过时的**。它给的某些 `networksetup` 用法在较新版本的 macOS 上行为已经不同，最终以我在本机实测为准。它的价值是缩小搜索范围，不是给出终审结论。
+它靠不住的地方也得说清楚：**Agent 对 ADB/Android 版本差异与 macOS 网络栈行为的了解经常是过时的**。它给的某些 `networksetup` 用法在较新版本的 macOS 上行为已经不同，最终以我在本机实测为准。它的价值是缩小搜索范围，不是给出终审结论。
 
 ## 5. 成品与代码
 
