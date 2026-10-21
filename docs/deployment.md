@@ -62,8 +62,10 @@ GitHub Actions 仓库 Secrets 只需要：
 
 ## 主域名迁移（2026-10-21）
 
-迁移目标主域名为 `https://myzjx.com`，继续由 Vercel 提供页面、production Worker 提供后台和评论。Vercel 绑定根域及 `www.myzjx.com`，后者永久跳转到根域；旧域 `xingx.cc.cd` 及其 www 在新域功能验证通过后永久跳转，保留路径和查询参数。
+正式站主域名为 `https://myzjx.com`，继续由 Vercel 提供页面、production Worker 提供后台和评论。Vercel 绑定根域及 `www.myzjx.com`，后者永久跳转到根域；旧域 `xingx.cc.cd` 及其 www 在新域功能验证通过后永久跳转，保留路径和查询参数。
 
 Squarespace 仅替换网站默认解析，保留 Google Workspace 的 MX、SPF、DKIM 和其他邮箱/验证记录。DNS 目标值以 Vercel 项目 Domains 页面为准。GitHub App 需要保留 staging 回调并添加 `https://myzjx.com/auth/github/callback`；Worker 的 `PUBLIC_ORIGIN` 和 `ORIGIN_BUILD_URL` 跟随新域名。
 
 旧 `cn` / `origin` 和 staging 配置不在此次迁移中启用；大陆分流仍关闭。验证首页、文章、RSS、sitemap、后台登录、评论和发布状态后再设置旧域跳转。
+
+迁移配置已部署：根域 A 为 `216.198.79.1`，www CNAME 为 `624a4273777affa2.vercel-dns-017.com`，旧域及两个 www 均 308 到 `myzjx.com`。Google 公共 DNS 和 Vercel 均确认解析；MX/SPF/DKIM 保留。直接验证 Vercel 源站的页面、RSS、sitemap、robots、评论读取与来源校验，以及 GitHub OAuth 发起回调均通过。真实浏览器登录后的编辑/发布尚待验收；部分客户端仍缓存原 Squarespace 停放页。

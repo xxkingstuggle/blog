@@ -1,4 +1,6 @@
 ---
+import { siteConfig } from '../../config';
+
 interface Props {
 	featuredPostSlug?: string;
 }
@@ -14,7 +16,7 @@ const { featuredPostSlug = 'allow-discomfort' } = Astro.props;
 	<div class="hero-canvas-fallback" aria-hidden="true"></div>
 
 	<div class="shell hero-content">
-		<div class="hero-eyebrow">XINGX.CC.CD / PERSONAL RELEASES</div>
+		<div class="hero-eyebrow">{siteConfig.name.toUpperCase()} / PERSONAL RELEASES</div>
 		<h1 class="hero-title">把想法，<br />做成可以被看见的东西。</h1>
 		<p class="hero-lead">这里发布我的思考、项目和近况，也记录它们如何从想法变成作品。</p>
 		<div class="hero-actions">
