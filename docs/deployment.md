@@ -36,7 +36,7 @@ GitHub Actions 仓库 Secrets 只需要：
 - `CLOUDFLARE_API_TOKEN`：单一 Cloudflare 账户范围，仅 `D1:编辑` 和 `Workers 脚本:编辑`。
 - `CLOUDFLARE_ACCOUNT_ID`：Cloudflare 账户 ID。
 
-推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产公开页面继续由 Vercel 自动部署 `main`；`/api/*`、`/auth/*`、`/admin/*` 和 `/media/*` 通过 `vercel.json` 代理到 production Worker，发布状态以 `https://xingx.cc.cd/__build.json` 的 commit SHA 为准。
+推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产公开页面继续由 Vercel 自动部署 `main`；`/api/*`、`/auth/*`、`/admin/*` 和 `/media/*` 通过 `vercel.json` 代理到 production Worker，发布状态以 `https://myzjx.com/__build.json` 的 commit SHA 为准。
 
 ## 3. 大陆访客备用境外加速线路
 
@@ -59,3 +59,11 @@ GitHub Actions 仓库 Secrets 只需要：
 - staging 已建立独立 D1；R2 未开通，因此媒体上传会明确返回 `media_storage_unavailable`，不会产生费用。
 - production 已使用独立 D1；Access/自定义域名和线路规则配置完成前，大陆备用线路仍不得启用。
 - 大陆分流规则保持 `enabled:false`，直到备用线路、origin 保护和三网故障切换验收全部通过。
+
+## 主域名迁移（2026-10-21）
+
+迁移目标主域名为 `https://myzjx.com`，继续由 Vercel 提供页面、production Worker 提供后台和评论。Vercel 绑定根域及 `www.myzjx.com`，后者永久跳转到根域；旧域 `xingx.cc.cd` 及其 www 在新域功能验证通过后永久跳转，保留路径和查询参数。
+
+Squarespace 仅替换网站默认解析，保留 Google Workspace 的 MX、SPF、DKIM 和其他邮箱/验证记录。DNS 目标值以 Vercel 项目 Domains 页面为准。GitHub App 需要保留 staging 回调并添加 `https://myzjx.com/auth/github/callback`；Worker 的 `PUBLIC_ORIGIN` 和 `ORIGIN_BUILD_URL` 跟随新域名。
+
+旧 `cn` / `origin` 和 staging 配置不在此次迁移中启用；大陆分流仍关闭。验证首页、文章、RSS、sitemap、后台登录、评论和发布状态后再设置旧域跳转。

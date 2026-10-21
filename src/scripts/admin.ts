@@ -1650,7 +1650,7 @@ async function start() {
 				envBanner.className = 'admin-env-banner staging';
 				envBanner.hidden = false;
 			} else if (currentEnvironment === 'production') {
-				envBanner.textContent = '正式环境：发布后会更新 xingx.cc.cd。';
+				envBanner.textContent = '正式环境：发布后会更新 myzjx.com。';
 				envBanner.className = 'admin-env-banner production';
 				envBanner.hidden = false;
 			}

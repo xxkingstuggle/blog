@@ -23,7 +23,7 @@ const manifest = {
 	commitSha: sha,
 	dirty,
 	generatedAt: new Date().toISOString(),
-	app: 'xingx.cc.cd',
+	app: 'myzjx.com',
 };
 
 await mkdir(dist, { recursive: true });

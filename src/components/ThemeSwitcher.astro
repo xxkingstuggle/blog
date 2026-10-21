@@ -41,8 +41,8 @@
 
 	function setMode(mode: ColorMode) {
 		root.dataset.colorMode = mode;
-		const sharedDomain = location.hostname === 'xingx.cc.cd' || location.hostname.endsWith('.xingx.cc.cd')
-			? ' Domain=xingx.cc.cd;'
+		const sharedDomain = location.hostname === 'myzjx.com' || location.hostname.endsWith('.myzjx.com')
+			? ' Domain=myzjx.com;'
 			: '';
 		document.cookie = `${cookieName}=${mode}; Path=/;${sharedDomain} Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
 		try { localStorage.setItem(cookieName, mode); } catch { /* storage can be disabled */ }
