@@ -4,7 +4,7 @@ import mdx from '@astrojs/mdx';
 
 export default defineConfig({
 	output: 'static',
-	site: 'https://xingx.cc.cd',
+	site: 'https://myzjx.com',
 	trailingSlash: 'ignore',
 	integrations: [mdx()],
 });

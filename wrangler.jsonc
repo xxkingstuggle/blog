@@ -35,7 +35,7 @@
 	],
 	"vars": {
 		"ENVIRONMENT": "production",
-		"PUBLIC_ORIGIN": "https://xingx.cc.cd",
+		"PUBLIC_ORIGIN": "https://myzjx.com",
 		"CN_ORIGIN": "https://cn.xingx.cc.cd",
 		"ACCESS_ISSUER": "https://xingx.cloudflareaccess.com",
 		"ACCESS_AUDIENCE": "REPLACE_WITH_PRODUCTION_ACCESS_AUD",
@@ -47,7 +47,7 @@
 		"GITHUB_OWNER": "xxkingstuggle",
 		"GITHUB_REPO": "blog",
 		"GITHUB_BRANCH": "main",
-		"ORIGIN_BUILD_URL": "https://xingx.cc.cd/__build.json",
+		"ORIGIN_BUILD_URL": "https://myzjx.com/__build.json",
 		"CN_HEALTH_URL": "https://cn.xingx.cc.cd/__health",
 		"CF_RULE_API_URL": "REPLACE_WITH_SINGLE_REDIRECT_RULE_API_URL"
 	},
