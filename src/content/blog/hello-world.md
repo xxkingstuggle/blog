@@ -1,7 +1,7 @@
 ---
 title: Hello World
 pubDate: 2026-09-04
-description: 这个博客已经成功部署。
+description: 网站上线的一条小记录。
 kind: update
 presentation: article
 tags:
@@ -9,6 +9,6 @@ tags:
   - 近况
 ---
 
-这个博客已经成功部署。
+网站现在能打开了。
 
-这里会记录正在学习、实践和思考的事情。文章使用 Markdown 编写，保持简单，也方便持续更新。
+以后我会把正在学的、正在做的，还有暂时想不明白的事写在这里。文章用 Markdown 编写，尽量简单，方便继续更新。
