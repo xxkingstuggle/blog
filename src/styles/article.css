@@ -55,9 +55,10 @@
 }
 
 .article-page-title {
-	font-size: clamp(2.2rem, 5.2vw, 3.8rem);
+	font-family: var(--font-serif);
+	font-size: clamp(2rem, 4.2vw, 3.15rem);
 	font-weight: 800;
-	line-height: 1.14;
+	line-height: 1.45;
 	letter-spacing: -0.035em;
 	margin-bottom: 24px;
 	color: var(--text);
@@ -102,8 +103,8 @@
 	max-width: var(--content-width);
 	margin-inline: auto;
 	font-family: var(--font-serif);
-	font-size: 1.15rem;
-	line-height: 1.85;
+	font-size: 1.1rem;
+	line-height: 1.95;
 	color: var(--text);
 }
 

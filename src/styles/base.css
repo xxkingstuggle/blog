@@ -23,8 +23,8 @@ body {
 }
 
 ::selection {
-	background: var(--accent);
-	color: #080A08;
+	background: var(--accent-soft);
+	color: var(--text);
 }
 
 a {
@@ -100,7 +100,7 @@ p {
 
 /* Focus styles */
 :focus-visible {
-	outline: 2px solid var(--accent);
+	outline: 2px solid var(--accent-contrast);
 	outline-offset: 3px;
 }
 

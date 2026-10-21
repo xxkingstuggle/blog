@@ -1,54 +1,16 @@
 ---
-import { siteConfig } from '../config';
 import ThemeSwitcher from './ThemeSwitcher.astro';
-
-interface Props {
-	isHeroPage?: boolean;
-}
-
-const { isHeroPage = false } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
-
-<header class="site-header" id="site-header" data-header-tone={isHeroPage ? 'dark-hero' : 'default'}>
-	<div class="shell header-inner">
-		<a class="brand" href="/" aria-label={`${siteConfig.name} 首页`}>
-			<span class="brand-mark" aria-hidden="true">✳</span>
-			<span>{siteConfig.name}</span>
-		</a>
-		<nav class="site-nav" aria-label="主导航">
-			<a href="/posts/" aria-current={currentPath.startsWith('/posts') ? 'page' : undefined}>发布</a>
-			<a href="/#projects">项目</a>
-			<a href="/about/" aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>关于</a>
-		</nav>
-		<ThemeSwitcher />
-	</div>
+<header class="site-header" id="site-header">
+  <div class="shell header-inner">
+    <a class="brand" href="/" aria-label="Xin 首页"><span class="brand-mark" aria-hidden="true">x.</span><span class="brand-name">Xin<span class="brand-divider"> / </span><span class="brand-caption">随手记</span></span></a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="/" aria-current={currentPath === '/' ? 'page' : undefined}>首页</a>
+      <a href="/posts/" aria-current={currentPath.startsWith('/posts') ? 'page' : undefined}>文章</a>
+      <a href="/#projects">作品</a>
+      <a href="/about/" aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>关于</a>
+    </nav>
+    <ThemeSwitcher />
+  </div>
 </header>
-
-{isHeroPage && (
-	<script>
-		// Adapt header theme when scrolling past dark hero
-		const header = document.getElementById('site-header');
-		const hero = document.getElementById('hero');
-
-		if (header && hero) {
-			const setTone = (isHeroVisible: boolean) => {
-				if (isHeroVisible) header.setAttribute('data-header-tone', 'dark-hero');
-				else header.setAttribute('data-header-tone', 'default');
-			};
-
-			const canObserve = typeof (window as Window & { IntersectionObserver?: typeof IntersectionObserver }).IntersectionObserver === 'function';
-			if (canObserve) {
-				const observer = new IntersectionObserver(
-					([entry]) => setTone(entry.isIntersecting),
-					{ threshold: 0.1 }
-				);
-				observer.observe(hero);
-			} else {
-				const updateFromScroll = () => setTone(hero.getBoundingClientRect().bottom > 72);
-				window.addEventListener('scroll', updateFromScroll, { passive: true });
-				updateFromScroll();
-			}
-		}
-	</script>
-)}

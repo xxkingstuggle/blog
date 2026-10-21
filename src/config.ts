@@ -1,6 +1,6 @@
 export const siteConfig = {
 	name: 'myzjx.com',
-	description: '发布我的想法、项目与近况',
+	description: '个人项目、技术实践和一些想法',
 	author: 'Xin',
 	url: 'https://myzjx.com',
 	social: {

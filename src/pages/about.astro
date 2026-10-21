@@ -2,60 +2,29 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config';
 ---
-
-<BaseLayout title="关于" description={`关于 ${siteConfig.name} 与我的个人记录。`}>
-	<section class="shell" style="padding: clamp(60px, 8vw, 96px) 0 40px;">
-		<div class="hero-eyebrow" style="color: var(--accent-contrast);">ABOUT / 关于</div>
-		<h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -0.035em; margin-bottom: 24px;">
-			关于这个站点与我
-		</h1>
-		<p style="font-size: 1.25rem; color: var(--text-muted); max-width: 58ch; line-height: 1.6; margin: 0;">
-			把想法做成可以被看见的东西。这里是我的个人发布站，用来长期收纳思考、项目与近况。
-		</p>
-	</section>
-
-	<section class="shell" style="max-width: 760px; margin-inline: auto; padding-bottom: 110px;">
-		<div class="article-prose">
-			<p>
-				你好，我是 <strong>Xin</strong>。
-			</p>
-			<p>
-				<strong>{siteConfig.name}</strong> 是我的个人发布记录站。在日常的工程开发与创作中，许多想法往往开始于零散的灵感或突发的困惑。我希望建立一个稳定的空间，将这些感知通过长文、工程实践或交互演示的形式完整记录下来。
-			</p>
-
-			<h2>为什么做成发布站</h2>
-			<p>
-				相比于传统博客千篇一律的列表与模板，我更倾向于像发布产品一样对待自己的创作：每一项重要的输出——无论是一篇长文、一个开源工具还是一次实验——都应当拥有适合其叙事节奏的展示方式。
-			</p>
-			<p>
-				因此，站点的信息架构统一收纳不同类型的内容（思考、项目、近况），但具体内容可以自由采用通用长文或独立专属发布页。
-			</p>
-
-			<h2>技术与选型</h2>
-			<p>
-				网站基于 <strong>Astro 7</strong> 静态架构驱动，保留静态 HTML 的轻快与高性能；首屏光场采用原生 HTML5 Canvas 2D，并针对滚动离开视口与减少动画偏好进行了性能调优；富媒体与交互内容采用 MDX 实现。
-			</p>
-
-			<h2>联系与连接</h2>
-			<p>
-				如果你对这里的内容感兴趣，或有想法想要交流，欢迎通过以下方式找到我：
-			</p>
-
-			<div class="tag-list" style="margin-top: 24px;">
-				<a class="tag-item" href="https://github.com/xxkingstuggle/blog" target="_blank" rel="noopener noreferrer">
-					GitHub (本站开源仓库) ↗
-				</a>
-				{siteConfig.social.github && (
-					<a class="tag-item" href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">
-						GitHub Profile ↗
-					</a>
-				)}
-				{siteConfig.social.weibo && (
-					<a class="tag-item" href={siteConfig.social.weibo} target="_blank" rel="noopener noreferrer">
-						微博 ↗
-					</a>
-				)}
-			</div>
-		</div>
-	</section>
+<BaseLayout title="关于 Xin" description="做个人软件和工具，记录真实的开发过程。">
+  <header class="shell page-heading"><p class="eyebrow">ABOUT / 关于我</p><h1>你好，我是 Xin<span class="heading-dot">.</span></h1><p>做个人软件和工具，也写一点技术和生活里的想法。</p></header>
+  <section class="shell about-content">
+    <div class="article-prose">
+      <h2>最近在做什么</h2>
+      <p>我会从自己遇到的小问题开始做东西：想让习惯打卡更轻便，就做了 HabitBloom；想把手机的麦克风和网络用到 Mac 上，就做了 USBLinkMic。</p>
+      <p>我也在尝试用 AI 辅助开发。这里会记录它在哪些地方帮上了忙、哪些地方出了错，以及我怎么验证最后的结果。</p>
+      <h2>这里写什么</h2>
+      <p>项目记录里有做法、取舍和踩过的坑。文章里也会放一些还没想明白的事。不追求每篇都有结论，先把过程留下来。</p>
+      <p>这个站点用 Astro 构建。文章和项目会继续更新，你可以通过 RSS 订阅。</p>
+      <h2>找到我</h2>
+      <div class="about-links"><a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="/rss.xml">RSS 订阅 ↗</a><a href="https://github.com/xxkingstuggle/blog" target="_blank" rel="noopener noreferrer">本站源码 ↗</a></div>
+    </div>
+    <aside class="about-aside"><span class="eyebrow">在这里</span><a href="/#projects">我的作品 <span>↗</span></a><a href="/posts/">全部文章 <span>↗</span></a><a href="/links/">朋友们的网站 <span>↗</span></a><span class="about-signature" aria-hidden="true">Xin.</span></aside>
+  </section>
 </BaseLayout>
+<style>
+.about-content { display: grid; grid-template-columns: minmax(0,720px) 220px; gap: 80px; padding-bottom: 30px; }
+.about-content .article-prose { margin: 0; }
+.about-content h2:first-child { margin-top: 0; }
+.about-links { display: flex; flex-wrap: wrap; gap: 24px; font-family: var(--font-sans); font-size: 14px; }
+.about-aside { border-top: 1px solid var(--line); padding-top: 24px; display: flex; flex-direction: column; gap: 18px; font-size: 13px; align-self: start; }
+.about-aside > a { display: flex; justify-content: space-between; }
+.about-signature { font: italic 60px Georgia,serif; color: var(--accent); padding-top: 24px; }
+@media(max-width:900px) { .about-content { grid-template-columns: 1fr; gap: 48px; } .about-aside { max-width: 360px; } }
+</style>
