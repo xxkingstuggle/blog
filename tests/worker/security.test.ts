@@ -818,6 +818,22 @@ test('未登录后台进入固定的品牌登录页，不接受外部跳转地�
 	assert.equal(await login.text(), 'ok');
 });
 
+test('登录后后台页面由 Worker 鉴权后加载独立的静态界面资源', async () => {
+	const { env, ctx, authedRequest } = await createTestEnv();
+	let assetPath = '';
+	(env as any).ASSETS = {
+		fetch: async (request: Request) => {
+			assetPath = new URL(request.url).pathname;
+			return new Response('admin shell');
+		},
+	};
+
+	const response = await worker.fetch(authedRequest('https://test.local/admin/?next=https://attacker.example'), env as any, ctx);
+	assert.equal(response.status, 200);
+	assert.equal(await response.text(), 'admin shell');
+	assert.equal(assetPath, '/admin-shell/');
+});
+
 test('总览 API 只向已登录管理员提供真实汇总与内容元数据', async () => {
 	const { db, env, ctx, authedRequest } = await createTestEnv();
 	db.prepare("INSERT INTO drafts (id, slug, title, body, status, source_path) VALUES ('draft-overview', 'overview-note', 'Overview note', 'private body', 'draft', 'src/content/blog/overview-note.md')").run();

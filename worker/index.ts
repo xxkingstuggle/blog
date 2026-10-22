@@ -1259,6 +1259,10 @@ async function handle(request: Request, env: Env, ctx: ExecutionContextLike) {
 	if (/^\/admin(?:\/|$)/.test(url.pathname)) {
 		const subject = await authenticateAdmin(request, env);
 		if (!subject) return loginRedirect('signin');
+		const assetUrl = new URL(request.url);
+		assetUrl.pathname = url.pathname.replace(/^\/admin(?:\/|$)/, '/admin-shell/');
+		assetUrl.search = '';
+		return env.ASSETS.fetch(new Request(assetUrl, request));
 	}
 	return env.ASSETS.fetch(request);
 }

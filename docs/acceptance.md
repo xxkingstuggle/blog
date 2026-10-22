@@ -4,7 +4,8 @@
 
 - `npm run check`、`npm test`、`npm run build` 和 `git diff --check` 全部通过。
 - 推送 `cms-staging` 后 GitHub Actions 成功；`/__build.json` 的 `commitSha` 等于该次提交 SHA，且 `dirty` 为 `false`。
-- 未登录访问 `/admin/` 跳转 GitHub OAuth；只允许 `xxkingstuggle`，退出后旧会话失效。
+- 未登录访问 `/admin/` 由 Worker 返回固定品牌登录页；登录按钮再发起 GitHub OAuth。只允许 `xxkingstuggle`，退出后旧会话失效。
+- Astro 管理界面静态壳位于 `/admin-shell/`，不得恢复 `/admin/index.html`，否则 Vercel 文件优先级会绕过 `/admin/` Worker 重写；所有后台数据和操作仍由 Worker 会话/CSRF 校验。
 - 草稿并发版本冲突返回 409；GitHub 源文件 SHA 冲突不覆盖内容；部署未确认时不显示 `published`。
 - 评论拒绝超大 body、错误 Content-Type、错误 Origin、非法 slug 和超限请求；预览 HTML 经过清洗并放入 sandbox iframe。
 - `listed:false` 的文章 URL 可访问，但不出现在首页、文章列表、归档、标签、Featured、下一篇、RSS 和 Sitemap。

@@ -8,11 +8,12 @@ interface Props {
 	title: string;
 	description: string;
 	context?: string;
+	canonicalPath?: string;
 }
 
-const { title, description, context = '内容后台' } = Astro.props;
+const { title, description, context = '内容后台', canonicalPath = Astro.url.pathname } = Astro.props;
 const pageTitle = `${title} · ${siteConfig.name}`;
-const canonical = new URL(Astro.url.pathname, siteConfig.url).toString();
+const canonical = new URL(canonicalPath, siteConfig.url).toString();
 ---
 
 <!doctype html>
