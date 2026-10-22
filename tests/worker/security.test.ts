@@ -806,6 +806,40 @@ test('会话接口返回正确的 environment 与 publicOrigin，且不泄漏密
 	assert.equal(data.CSRF_SECRET, undefined);
 });
 
+test('未登录后台进入固定的品牌登录页，不接受外部跳转地址', async () => {
+	const { env, ctx } = await createTestEnv();
+	const response = await worker.fetch(new Request('https://test.local/admin/?next=https://attacker.example'), env as any, ctx);
+	assert.equal(response.status, 302);
+	assert.equal(response.headers.get('Location'), '/login/?reason=signin');
+	assert.match(response.headers.get('Cache-Control') || '', /no-store/);
+
+	const login = await worker.fetch(new Request('https://test.local/login/?next=https://attacker.example'), env as any, ctx);
+	assert.equal(login.status, 200);
+	assert.equal(await login.text(), 'ok');
+});
+
+test('总览 API 只向已登录管理员提供真实汇总与内容元数据', async () => {
+	const { db, env, ctx, authedRequest } = await createTestEnv();
+	db.prepare("INSERT INTO drafts (id, slug, title, body, status, source_path) VALUES ('draft-overview', 'overview-note', 'Overview note', 'private body', 'draft', 'src/content/blog/overview-note.md')").run();
+	db.prepare("INSERT INTO comments (id, slug, author_name, body, status) VALUES ('comment-overview', 'overview-note', 'Reader', 'A pending note', 'pending')").run();
+	db.prepare("INSERT INTO links (id, name, url, status) VALUES ('link-overview', 'Friend', 'https://example.com', 'active')").run();
+
+	const unauthorized = await worker.fetch(new Request('https://test.local/api/admin/overview'), env as any, ctx);
+	assert.equal(unauthorized.status, 401);
+
+	const response = await worker.fetch(authedRequest('https://test.local/api/admin/overview'), env as any, ctx);
+	assert.equal(response.status, 200);
+	const result = await response.json() as any;
+	assert.equal(result.drafts.draft, 1);
+	assert.equal(result.comments.pending, 1);
+	assert.equal(result.links.active, 1);
+	assert.equal(result.recent[0].slug, 'overview-note');
+	assert.equal(result.recent[0].body, undefined);
+	assert.equal(result.SESSION_SECRET, undefined);
+	assert.equal(result.CSRF_SECRET, undefined);
+	assert.ok(result.checkedAt);
+});
+
 test('reconcilePublishing: 线上 SHA 相同、后继祖先提交包含同一文章、文章已被替换三种确认结果', async () => {
 	const { db, env } = await createTestEnv();
 

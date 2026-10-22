@@ -47,6 +47,15 @@ interface LinkRecord {
 	checked_at?: string | null;
 }
 
+interface AdminOverview {
+	drafts: Record<string, number>;
+	comments: Record<string, number>;
+	links: Record<string, number>;
+	recent: Array<{ id: string; slug: string; title: string; status: string; updated_at: string; publish_commit_sha?: string | null }>;
+	commitSha?: string | null;
+	checkedAt: string;
+}
+
 interface AutosaveRecord {
 	baseVersion: number;
 	values: NonNullable<ReturnType<typeof extractEditableValues>>;
@@ -74,7 +83,7 @@ let isSubmitting = false;
 let activeLoadDraftSeq = 0;
 let currentCommentFilter = 'pending';
 let currentPublicOrigin = '';
-let currentEnvironment: 'staging' | 'production' = 'production';
+let currentEnvironment: 'local' | 'staging' | 'production' = 'production';
 
 // Map of active polling timers and task generations per draft ID
 const activePollTimers = new Map<string, number>();
@@ -88,6 +97,8 @@ let dockIndicator: HTMLElement | null = null;
 let dockText: HTMLElement | null = null;
 let dockLink: HTMLAnchorElement | null = null;
 let dockBtn: HTMLButtonElement | null = null;
+let dockElement: HTMLElement | null = null;
+let dockTimer: number | null = null;
 let envBanner: HTMLElement | null = null;
 let draftList: HTMLElement | null = null;
 let previewFrame: HTMLIFrameElement | null = null;
@@ -116,6 +127,7 @@ function initDOMElements() {
 	dockText = document.getElementById('admin-dock-text');
 	dockLink = document.getElementById('admin-dock-link') as HTMLAnchorElement | null;
 	dockBtn = document.getElementById('admin-dock-btn') as HTMLButtonElement | null;
+	dockElement = document.getElementById('admin-bottom-dock');
 	envBanner = document.getElementById('admin-env-banner');
 	draftList = document.getElementById('draft-list');
 	previewFrame = document.getElementById('preview-frame') as HTMLIFrameElement | null;
@@ -161,6 +173,7 @@ function setStatus(
 	action?: { label: string; action: () => void },
 ) {
 	if (headerStatus) headerStatus.textContent = message;
+	if (dockElement) dockElement.hidden = type === 'info' && !link && !action;
 	if (dockText) dockText.textContent = message;
 	if (dockIndicator) dockIndicator.className = `admin-dock-indicator ${type}`;
 	if (dockLink) {
@@ -188,6 +201,12 @@ function setStatus(
 			dockBtn.onclick = null;
 		}
 	}
+	if (dockTimer !== null) window.clearTimeout(dockTimer);
+	if (type === 'success' && !link && !action && dockElement) {
+		dockTimer = window.setTimeout(() => {
+			if (dockText?.textContent === message && dockElement) dockElement.hidden = true;
+		}, 4200);
+	}
 }
 
 // --- API Request Wrapper with CSRF Auto-Refresh ---
@@ -198,9 +217,9 @@ async function api<T = any>(path: string, init: RequestInit = {}, isRetry = fals
 	const response = await fetch(path, { ...init, headers });
 	const body = await response.json().catch(() => ({}));
 
-	if (response.status === 401 && path === '/api/admin/session') {
-		location.assign('/auth/github/start');
-		throw new Error('正在进入 GitHub 登录…');
+	if (response.status === 401) {
+		location.assign(path === '/api/admin/session' ? '/login/?reason=signin' : '/login/?reason=expired');
+		throw new Error('登录状态已过期，正在前往登录页…');
 	}
 
 	// Automatic CSRF token refresh and retry
@@ -1446,9 +1465,126 @@ async function loadLinks() {
 	}
 }
 
+function formatOverviewDate(value: string | undefined) {
+	if (!value) return '时间未知';
+	const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+	const date = new Date(normalized);
+	return Number.isNaN(date.getTime())
+		? value
+		: date.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function setOverviewRelease(state: 'loading' | 'success' | 'warning' | 'error', title: string, detail: string, time?: string) {
+	const release = document.getElementById('overview-release');
+	const titleEl = document.getElementById('overview-release-title');
+	const detailEl = document.getElementById('overview-release-detail');
+	const timeEl = document.getElementById('overview-release-time');
+	if (release) release.dataset.state = state;
+	if (titleEl) titleEl.textContent = title;
+	if (detailEl) detailEl.textContent = detail;
+	if (timeEl) timeEl.textContent = time ? `检查于 ${time}` : '';
+}
+
+async function loadOverview() {
+	const recentEl = document.getElementById('overview-recent-list');
+	if (!recentEl) return;
+	setOverviewRelease('loading', '正在读取发布状态…', '核对静态页面与后台 Worker 的构建版本。');
+	const loading = document.createElement('p');
+	loading.className = 'overview-empty';
+	loading.textContent = '正在加载内容记录…';
+	recentEl.replaceChildren(loading);
+
+	try {
+		const overview = await api<AdminOverview>('/api/admin/overview');
+		const count = (records: Record<string, number>, keys: string[]) => keys.reduce((total, key) => total + Number(records[key] || 0), 0);
+		const metricDrafts = document.getElementById('metric-drafts');
+		const metricComments = document.getElementById('metric-comments');
+		const metricLinks = document.getElementById('metric-links');
+		const metricPublished = document.getElementById('metric-published');
+		if (metricDrafts) metricDrafts.textContent = String(count(overview.drafts, ['draft', 'publishing', 'deploying', 'conflict', 'publish_failed']));
+		if (metricComments) metricComments.textContent = String(overview.comments.pending || 0);
+		if (metricLinks) metricLinks.textContent = String(overview.links.active || 0);
+		if (metricPublished) metricPublished.textContent = String(count(overview.drafts, ['published', 'published_superseded']));
+
+		const pendingBadge = document.getElementById('nav-pending-comments');
+		if (pendingBadge) {
+			const pending = Number(overview.comments.pending || 0);
+			pendingBadge.textContent = String(pending);
+			pendingBadge.hidden = pending === 0;
+		}
+
+		recentEl.replaceChildren();
+		if (!overview.recent?.length) {
+			const empty = document.createElement('p');
+			empty.className = 'overview-empty';
+			empty.textContent = '还没有内容记录。新建一篇草稿开始发布。';
+			recentEl.append(empty);
+		} else {
+			for (const entry of overview.recent) {
+				const row = document.createElement('button');
+				row.type = 'button';
+				row.className = 'overview-recent-item';
+				const copy = document.createElement('span');
+				copy.className = 'overview-recent-copy';
+				const title = document.createElement('strong');
+				title.textContent = entry.title || entry.slug || '未命名文章';
+				const slug = document.createElement('small');
+				slug.textContent = `/${entry.slug}`;
+				copy.append(title, slug);
+				const meta = document.createElement('span');
+				meta.className = 'overview-recent-meta';
+				const status = document.createElement('span');
+				status.className = `admin-status-badge status-${entry.status}`;
+				status.textContent = CHINESE_STATUS_MAP[entry.status] || entry.status || '内容';
+				const date = document.createElement('time');
+				date.textContent = formatOverviewDate(entry.updated_at);
+				meta.append(status, date);
+				row.append(copy, meta);
+				row.addEventListener('click', async () => {
+					document.querySelector<HTMLButtonElement>('.admin-nav-button[data-tab="posts"]')?.click();
+					await loadDrafts();
+					draftList?.querySelector<HTMLButtonElement>(`[data-id="${CSS.escape(entry.id)}"]`)?.click();
+				});
+				recentEl.append(row);
+			}
+		}
+
+		const checkedTime = formatOverviewDate(overview.checkedAt);
+		try {
+			const [healthResponse, assetResponse] = await Promise.all([
+				fetch('/api/health', { cache: 'no-store' }),
+				fetch('/__build.json', { cache: 'no-store' }),
+			]);
+			if (!healthResponse.ok || !assetResponse.ok) throw new Error('无法读取线上构建清单');
+			const health = await healthResponse.json() as { ok?: boolean; commitSha?: string | null };
+			const assets = await assetResponse.json() as { commitSha?: string | null; dirty?: boolean };
+			const workerSha = health.commitSha || overview.commitSha || null;
+			const frontendSha = assets.dirty === false ? assets.commitSha || null : null;
+			if (health.ok === true && workerSha && frontendSha && workerSha === frontendSha) {
+				setOverviewRelease('success', '页面与后台版本一致', `构建 ${workerSha.slice(0, 12)} · 内容服务可用`, checkedTime);
+			} else if (workerSha && frontendSha) {
+				setOverviewRelease('warning', '检测到发布版本不同', `页面 ${frontendSha.slice(0, 8)} · 后台 ${workerSha.slice(0, 8)}。可以重新检查发布状态。`, checkedTime);
+			} else {
+				setOverviewRelease('warning', '内容服务可用，构建版本待确认', '当前请求可读取内容数据，但静态页面与后台版本未能同时确认。', checkedTime);
+			}
+		} catch {
+			setOverviewRelease('warning', '版本检查暂不可用', '内容数据已更新，但暂时无法核对静态页面和后台版本。', checkedTime);
+		}
+		setStatus('总览已更新', 'success');
+	} catch (err) {
+		const message = err instanceof Error ? err.message : '无法读取后台状态';
+		setOverviewRelease('error', '暂时无法读取后台状态', `${message}。可以重试，现有内容不会受影响。`, formatOverviewDate(new Date().toISOString()));
+		const errorItem = document.createElement('p');
+		errorItem.className = 'overview-empty';
+		errorItem.textContent = '内容记录暂时无法读取，请检查后台连接后重试。';
+		recentEl.replaceChildren(errorItem);
+		setStatus(message, 'error');
+	}
+}
+
 // --- Tabs Management with Keyboard Navigation ---
 function setupTabs() {
-	const tabBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.admin-tab-btn'));
+	const tabBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.admin-nav-button'));
 	const panels = document.querySelectorAll<HTMLElement>('.admin-tab-panel');
 
 	function switchTab(targetTab: string, focus = false) {
@@ -1464,7 +1600,9 @@ function setupTabs() {
 			panel.hidden = !isMatch;
 		});
 
-		if (targetTab === 'comments') {
+		if (targetTab === 'overview') {
+			void loadOverview();
+		} else if (targetTab === 'comments') {
 			loadComments(currentCommentFilter);
 		} else if (targetTab === 'links') {
 			loadLinks();
@@ -1476,6 +1614,13 @@ function setupTabs() {
 			// Ignore
 		}
 	}
+
+	document.querySelectorAll<HTMLButtonElement>('[data-open-tab]').forEach((button) => {
+		button.addEventListener('click', () => {
+			const targetTab = button.dataset.openTab;
+			if (targetTab) document.querySelector<HTMLButtonElement>(`.admin-nav-button[data-tab="${CSS.escape(targetTab)}"]`)?.click();
+		});
+	});
 
 	tabBtns.forEach((btn, index) => {
 		btn.addEventListener('click', () => {
@@ -1506,7 +1651,7 @@ function setupTabs() {
 	});
 
 	const hash = location.hash.replace(/^#/, '');
-	if (['posts', 'comments', 'links'].includes(hash)) {
+	if (['overview', 'posts', 'comments', 'links'].includes(hash)) {
 		switchTab(hash);
 	}
 }
@@ -1556,7 +1701,7 @@ function initEventListeners() {
 	logoutBtn?.addEventListener('click', async () => {
 		try {
 			await api('/auth/logout', { method: 'POST' });
-			location.assign('/');
+			location.assign('/login/?reason=signed-out');
 		} catch (err) {
 			setStatus(err instanceof Error ? err.message : '退出失败', 'error');
 		}
@@ -1578,6 +1723,7 @@ function initEventListeners() {
 		loadComments(currentCommentFilter);
 		setStatus('评论列表已刷新', 'info');
 	});
+	document.getElementById('refresh-overview')?.addEventListener('click', () => { void loadOverview(); });
 
 	// Links UI
 	btnAddLink?.addEventListener('click', () => showLinkForm());
@@ -1639,13 +1785,19 @@ async function start() {
 	try {
 		initDOMElements();
 		setStatus('正在建立安全连接…', 'loading');
-		const session = await api<{ email: string; csrfToken: string; environment?: 'staging' | 'production'; publicOrigin?: string }>('/api/admin/session');
+		const session = await api<{ email: string; csrfToken: string; environment?: 'local' | 'staging' | 'production'; publicOrigin?: string }>('/api/admin/session');
 		csrfToken = session.csrfToken;
 		currentPublicOrigin = session.publicOrigin || getPublicOrigin();
 		currentEnvironment = session.environment || (getPublicOrigin().includes('staging') ? 'staging' : 'production');
+		const identity = document.getElementById('admin-identity');
+		if (identity) identity.textContent = session.email?.replace(/^github:/, '@') || '管理员';
 
 		if (envBanner) {
-			if (currentEnvironment === 'staging') {
+			if (currentEnvironment === 'local') {
+				envBanner.textContent = '本地预览环境：此页面只用于界面检查，不代表正式站状态。';
+				envBanner.className = 'admin-env-banner local';
+				envBanner.hidden = false;
+			} else if (currentEnvironment === 'staging') {
 				envBanner.textContent = '预览环境：发布仅更新预览站，不影响正式网站。';
 				envBanner.className = 'admin-env-banner staging';
 				envBanner.hidden = false;
@@ -1662,8 +1814,8 @@ async function start() {
 		// Page initialization restores local autosave for 'new' if present
 		resetForm({ restoreAutosave: true });
 
-		await loadDrafts();
-		setStatus(`已就绪 · ${session.email}`, 'info');
+		await Promise.all([loadDrafts(), loadOverview()]);
+		setStatus('已就绪', 'info');
 	} catch (cause) {
 		setStatus(cause instanceof Error ? cause.message : '后台连接失败', 'error');
 	}
@@ -1711,7 +1863,7 @@ export const testHelpers = {
 		get currentPublicOrigin() { return currentPublicOrigin; },
 		set currentPublicOrigin(v: string) { currentPublicOrigin = v; },
 		get currentEnvironment() { return currentEnvironment; },
-		set currentEnvironment(v: 'staging' | 'production') { currentEnvironment = v; },
+		set currentEnvironment(v: 'local' | 'staging' | 'production') { currentEnvironment = v; },
 		get activePollTimers() { return activePollTimers; },
 		get activePollTasks() { return activePollTasks; },
 	}),

@@ -35,6 +35,6 @@ npm run build
 
 ## 部署
 
-Vercel 自动部署 `main` 的静态页面，通过 `vercel.json` 将 API、登录、后台与媒体请求代理到独立的 production Worker。Worker 由 GitHub Actions 部署；需要让静态页面与 Worker 构建版本一致时手动运行 production 工作流。测试环境 `cms-staging` 使用独立资源。
+Vercel 自动部署 `main` 的静态页面，通过 `vercel.json` 将 API、登录、后台与媒体请求代理到独立的 production Worker。影响页面或 Worker 的 `main` 提交会触发 production 工作流，构建并部署同一提交的 Worker 静态资源，并等待 Vercel 与 Worker 的构建 SHA 一致后通过。测试环境 `cms-staging` 使用独立资源。
 
 文章保留 `thought` / `project` / `update` 分类和 `article` / `feature` 模板，隐藏文章不进入公开索引。旧域名仅作跳转，不作为网站副本。域名、邮箱记录、回滚与资源隔离见 [部署文档](docs/deployment.md)；上线验收见 [验收清单](docs/acceptance.md)。

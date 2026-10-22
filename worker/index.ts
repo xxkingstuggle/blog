@@ -355,7 +355,7 @@ async function requireAdmin(request: Request, env: Env) {
 }
 
 async function githubOAuthStart(_request: Request, env: Env) {
-	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return error('GitHub 登录尚未配置。', 503, 'oauth_unavailable');
+	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return loginRedirect('unavailable');
 	const state = toBase64Url(crypto.getRandomValues(new Uint8Array(24)));
 	const expires = Math.floor(Date.now() / 1000) + 600;
 	const signedState = `${state}.${expires}.${await hmac(`${state}.${expires}`, env.SESSION_SECRET)}`;
@@ -366,39 +366,73 @@ async function githubOAuthStart(_request: Request, env: Env) {
 	return new Response(null, { status: 302, headers: { Location: authorize.toString(), 'Set-Cookie': secureCookie('__Host-xingx-oauth-state', signedState, 600), 'Cache-Control': 'no-store' } });
 }
 
+function loginRedirect(reason: 'signin' | 'cancelled' | 'invalid' | 'provider-error' | 'not-authorized' | 'unavailable') {
+	return new Response(null, {
+		status: 302,
+		headers: {
+			Location: `/login/?reason=${reason}`,
+			'Cache-Control': 'no-store',
+		},
+	});
+}
+
 async function githubOAuthCallback(request: Request, env: Env) {
-	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return error('GitHub 登录尚未配置。', 503, 'oauth_unavailable');
+	if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.SESSION_SECRET) return loginRedirect('unavailable');
 	const url = new URL(request.url);
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
+	const providerError = url.searchParams.get('error');
 	const cookie = cookieValue(request, '__Host-xingx-oauth-state');
 	const [cookieState, expiresText, signature] = cookie?.split('.') ?? [];
 	const expires = Number(expiresText);
-	if (!code || !state || !cookieState || state !== cookieState || !signature || !Number.isFinite(expires) || expires < Math.floor(Date.now() / 1000) || !safeEqual(signature, await hmac(`${cookieState}.${expires}`, env.SESSION_SECRET))) return error('GitHub 登录状态无效或已过期。', 400, 'oauth_state');
+	if (!state || !cookieState || state !== cookieState || !signature || !Number.isFinite(expires) || expires < Math.floor(Date.now() / 1000) || !safeEqual(signature, await hmac(`${cookieState}.${expires}`, env.SESSION_SECRET))) {
+		const response = loginRedirect('invalid');
+		response.headers.append('Set-Cookie', secureCookie('__Host-xingx-oauth-state', '', 0));
+		return response;
+	}
+	if (providerError || !code) {
+		const response = loginRedirect(providerError === 'access_denied' ? 'cancelled' : 'provider-error');
+		response.headers.append('Set-Cookie', secureCookie('__Host-xingx-oauth-state', '', 0));
+		return response;
+	}
 
-	const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-		method: 'POST',
-		headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'User-Agent': 'xingx-blog-worker' },
-		body: JSON.stringify({ client_id: env.GITHUB_CLIENT_ID, client_secret: env.GITHUB_CLIENT_SECRET, code, redirect_uri: `${env.PUBLIC_ORIGIN}/auth/github/callback` }),
-	});
-	const tokenBody = (await tokenResponse.json()) as { access_token?: string; error?: string };
-	if (!tokenResponse.ok || !tokenBody.access_token) return error('GitHub 登录凭据交换失败。', 502, tokenBody.error ?? 'oauth_exchange');
-	const userResponse = await fetch('https://api.github.com/user', { headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${tokenBody.access_token}`, 'User-Agent': 'xingx-blog-worker' } });
-	const user = (await userResponse.json()) as { login?: string };
-	const allowed = (env.ADMIN_GITHUB_LOGINS ?? '').split(',').map((login) => login.trim().toLowerCase()).filter(Boolean);
-	if (!userResponse.ok || typeof user.login !== 'string' || !allowed.includes(user.login.toLowerCase())) return error('该 GitHub 账号没有后台权限。', 403, 'oauth_forbidden');
+	try {
+		const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+			method: 'POST',
+			headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'User-Agent': 'xingx-blog-worker' },
+			body: JSON.stringify({ client_id: env.GITHUB_CLIENT_ID, client_secret: env.GITHUB_CLIENT_SECRET, code, redirect_uri: `${env.PUBLIC_ORIGIN}/auth/github/callback` }),
+		});
+		const tokenBody = (await tokenResponse.json()) as { access_token?: string };
+		if (!tokenResponse.ok || !tokenBody.access_token) {
+			const response = loginRedirect('provider-error');
+			response.headers.append('Set-Cookie', secureCookie('__Host-xingx-oauth-state', '', 0));
+			return response;
+		}
+		const userResponse = await fetch('https://api.github.com/user', { headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${tokenBody.access_token}`, 'User-Agent': 'xingx-blog-worker' } });
+		const user = (await userResponse.json()) as { login?: string };
+		const allowed = (env.ADMIN_GITHUB_LOGINS ?? '').split(',').map((login) => login.trim().toLowerCase()).filter(Boolean);
+		if (!userResponse.ok || typeof user.login !== 'string' || !allowed.includes(user.login.toLowerCase())) {
+			const response = loginRedirect('not-authorized');
+			response.headers.append('Set-Cookie', secureCookie('__Host-xingx-oauth-state', '', 0));
+			return response;
+		}
 
-	const basic = btoa(`${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`);
-	await fetch(`https://api.github.com/applications/${encodeURIComponent(env.GITHUB_CLIENT_ID)}/token`, {
-		method: 'DELETE',
-		headers: { Accept: 'application/vnd.github+json', Authorization: `Basic ${basic}`, 'Content-Type': 'application/json', 'User-Agent': 'xingx-blog-worker' },
-		body: JSON.stringify({ access_token: tokenBody.access_token }),
-	}).catch(() => undefined);
-	const session = await issueAdminSession(user.login, env);
-	const headers = new Headers({ Location: '/admin/', 'Cache-Control': 'no-store' });
-	headers.append('Set-Cookie', secureCookie('__Host-xingx-admin', session, 8 * 60 * 60));
-	headers.append('Set-Cookie', secureCookie('__Host-xingx-oauth-state', '', 0));
-	return new Response(null, { status: 302, headers });
+		const basic = btoa(`${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`);
+		await fetch(`https://api.github.com/applications/${encodeURIComponent(env.GITHUB_CLIENT_ID)}/token`, {
+			method: 'DELETE',
+			headers: { Accept: 'application/vnd.github+json', Authorization: `Basic ${basic}`, 'Content-Type': 'application/json', 'User-Agent': 'xingx-blog-worker' },
+			body: JSON.stringify({ access_token: tokenBody.access_token }),
+		}).catch(() => undefined);
+		const session = await issueAdminSession(user.login, env);
+		const headers = new Headers({ Location: '/admin/', 'Cache-Control': 'no-store' });
+		headers.append('Set-Cookie', secureCookie('__Host-xingx-admin', session, 8 * 60 * 60));
+		headers.append('Set-Cookie', secureCookie('__Host-xingx-oauth-state', '', 0));
+		return new Response(null, { status: 302, headers });
+	} catch {
+		const response = loginRedirect('provider-error');
+		response.headers.append('Set-Cookie', secureCookie('__Host-xingx-oauth-state', '', 0));
+		return response;
+	}
 }
 
 async function githubOAuthLogout(request: Request, env: Env) {
@@ -616,6 +650,26 @@ async function adminSession(request: Request, env: Env) {
 		expiresIn: 3600,
 		environment,
 		publicOrigin: env.PUBLIC_ORIGIN,
+	});
+}
+
+async function adminOverview(env: Env) {
+	const [draftRows, commentRows, linkRows, recentDrafts, commitSha] = await Promise.all([
+		env.DB.prepare('SELECT status, COUNT(*) AS count FROM drafts GROUP BY status').all<{ status: string; count: number }>(),
+		env.DB.prepare('SELECT status, COUNT(*) AS count FROM comments GROUP BY status').all<{ status: string; count: number }>(),
+		env.DB.prepare('SELECT status, COUNT(*) AS count FROM links GROUP BY status').all<{ status: string; count: number }>(),
+		env.DB.prepare("SELECT id, slug, title, status, updated_at, publish_commit_sha FROM drafts ORDER BY updated_at DESC LIMIT 6").all(),
+		buildSha(env),
+	]);
+	const countByStatus = (rows: { results: Array<{ status: string; count: number }> }) =>
+		Object.fromEntries(rows.results.map((row) => [row.status, Number(row.count)]));
+	return json({
+		drafts: countByStatus(draftRows),
+		comments: countByStatus(commentRows),
+		links: countByStatus(linkRows),
+		recent: recentDrafts.results,
+		commitSha,
+		checkedAt: new Date().toISOString(),
 	});
 }
 
@@ -1116,6 +1170,10 @@ async function api(request: Request, env: Env, ctx: ExecutionContextLike) {
 	if (url.pathname === '/api/comments') return comments(request, env, ctx);
 	if (url.pathname === '/api/links' && request.method === 'GET') return publicLinks(env);
 	if (url.pathname === '/api/admin/session' && request.method === 'GET') return adminSession(request, env);
+	if (url.pathname === '/api/admin/overview' && request.method === 'GET') {
+		const auth = await requireAdmin(request, env);
+		return auth.response ?? adminOverview(env);
+	}
 	if (url.pathname === '/api/admin/preview' && request.method === 'POST') return preview(request, env);
 	if (url.pathname === '/api/admin/comments' && request.method === 'GET') {
 		const auth = await requireAdmin(request, env);
@@ -1200,7 +1258,7 @@ async function handle(request: Request, env: Env, ctx: ExecutionContextLike) {
 		}
 	if (/^\/admin(?:\/|$)/.test(url.pathname)) {
 		const subject = await authenticateAdmin(request, env);
-		if (!subject) return new Response(null, { status: 302, headers: { Location: '/auth/github/start', 'Cache-Control': 'no-store' } });
+		if (!subject) return loginRedirect('signin');
 	}
 	return env.ASSETS.fetch(request);
 }

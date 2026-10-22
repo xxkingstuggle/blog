@@ -1,0 +1,82 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro';
+import '../styles/login.css';
+---
+
+<AdminLayout title="管理员登录" description="使用已授权的 GitHub 账号登录 Xin 的个人博客管理后台。" context="管理员入口">
+	<main class="login-page" id="main-content">
+		<div class="login-layout">
+			<section class="login-story" aria-label="个人博客后台">
+				<div class="login-kicker"><span class="login-kicker-dot"></span> PRIVATE EDITORIAL DESK</div>
+				<p class="login-story-title">把想法写下来，<br /><em>慢慢整理成文章。</em></p>
+				<p class="login-story-copy">这是 myzjx.com 的内容工作台。文章、评论与友链都在这里管理，公开页面继续保持简洁。</p>
+				<div class="login-story-rule"><span>01</span><span>WRITE · REVIEW · PUBLISH</span></div>
+			</section>
+
+			<section class="login-card" aria-labelledby="login-heading">
+				<div class="login-card-heading">
+					<div class="login-card-label">管理员账户</div>
+					<h1 id="login-heading">登录内容后台</h1>
+					<p>使用已授权的 GitHub 账号继续。本站只开放给管理员，不提供公开注册。</p>
+				</div>
+
+				<div class="login-notice" id="login-notice" data-state="loading" role="status" aria-live="polite">
+					<span class="login-notice-mark" aria-hidden="true"></span>
+					<span id="login-notice-text">正在检查登录状态…</span>
+				</div>
+
+				<a class="github-login-button" id="github-login" href="/auth/github/start">
+					<span class="github-mark" aria-hidden="true">GH</span>
+					<span>继续使用 GitHub 登录</span>
+					<span class="github-login-arrow" aria-hidden="true">↗</span>
+				</a>
+
+				<div class="login-security-note">
+					<span class="login-lock" aria-hidden="true">⌑</span>
+					<span>GitHub 完成身份验证后，后台仍会检查管理员名单。登录状态会在一段时间后过期。</span>
+				</div>
+				<a class="login-back-link" href="/">← 返回 myzjx.com</a>
+			</section>
+		</div>
+	</main>
+</AdminLayout>
+
+<script>
+	const notice = document.querySelector<HTMLElement>('#login-notice');
+	const noticeText = document.querySelector<HTMLElement>('#login-notice-text');
+	const loginButton = document.querySelector<HTMLAnchorElement>('#github-login');
+	const reason = new URLSearchParams(location.search).get('reason');
+	const messages: Record<string, string> = {
+		signin: '后台只对指定管理员开放，请使用已授权的 GitHub 账号。',
+		'expired': '登录状态已过期，请重新验证身份。',
+		'signed-out': '你已安全退出。需要时可以再次登录。',
+		'not-authorized': '这个 GitHub 账号没有后台权限。请切换到已授权的管理员账号。',
+		'cancelled': '你取消了 GitHub 授权。准备好后可以重新登录。',
+		'invalid': '这次登录请求已失效，请从此页面重新开始。',
+		'provider-error': 'GitHub 暂时没有完成验证，请稍后重试。',
+		'unavailable': '登录服务暂时不可用，请稍后再试。',
+	};
+
+	if (noticeText && reason && messages[reason]) noticeText.textContent = messages[reason];
+	loginButton?.addEventListener('click', () => {
+		if (noticeText) noticeText.textContent = '正在前往 GitHub 完成身份验证…';
+		notice?.setAttribute('data-state', 'loading');
+	});
+
+	fetch('/api/admin/session', { cache: 'no-store', credentials: 'same-origin' })
+		.then((response) => {
+			if (response.ok) {
+				location.replace('/admin/');
+				return;
+			}
+			if (response.status === 401 || response.status === 403) {
+				if (noticeText && !messages[reason ?? '']) noticeText.textContent = '请使用已授权的 GitHub 账号继续。';
+				return;
+			}
+			throw new Error('service');
+		})
+		.catch(() => {
+			if (noticeText) noticeText.textContent = '暂时无法连接登录服务。你可以稍后重试，或先返回网站。';
+			notice?.setAttribute('data-state', 'error');
+		});
+</script>

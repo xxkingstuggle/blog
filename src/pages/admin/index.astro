@@ -1,66 +1,117 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import AdminEditor from '../../components/admin/AdminEditor.astro';
 import AdminComments from '../../components/admin/AdminComments.astro';
 import AdminLinks from '../../components/admin/AdminLinks.astro';
-import '../../styles/admin.css';
 ---
 
-<BaseLayout title="内容后台" description="Xin 的发布后台。" noindex>
-	<section class="shell admin-page" aria-labelledby="admin-heading">
-		<aside class="admin-env-banner" id="admin-env-banner" role="status" hidden></aside>
-		<div class="hero-eyebrow" style="color: var(--accent-contrast);">EDITORIAL CMS / 后台</div>
-		<div class="admin-heading-row">
-			<div>
-				<h1 id="admin-heading">发布工作台</h1>
-				<p>在这里撰写和管理文章。点击发布后，网站会自动更新；更新完成后即可查看。</p>
+<AdminLayout title="内容后台" description="管理文章、评论与友链。" context="内容工作台">
+	<div class="admin-app" id="main-content">
+		<aside class="admin-rail" aria-label="后台工作区">
+			<div class="admin-rail-heading">
+				<span>工作区</span>
+				<small>EDITORIAL DESK</small>
 			</div>
-			<div class="admin-session-actions">
-				<span class="admin-status" id="admin-status" role="status" aria-live="polite">正在连接…</span>
-				<button type="button" class="admin-small-button" id="logout">退出</button>
+			<div class="admin-tabs admin-nav-tabs" role="tablist" aria-label="后台管理导航" aria-orientation="vertical">
+				<button type="button" class="admin-nav-button admin-tab-btn" id="tab-btn-overview" data-tab="overview" role="tab" aria-selected="true" aria-controls="tab-panel-overview" tabindex="0">
+					<span class="admin-nav-icon" aria-hidden="true">⌂</span><span>总览</span>
+				</button>
+				<button type="button" class="admin-nav-button admin-tab-btn" id="tab-btn-posts" data-tab="posts" role="tab" aria-selected="false" aria-controls="tab-panel-posts" tabindex="-1">
+					<span class="admin-nav-icon" aria-hidden="true">▤</span><span>文章</span>
+				</button>
+				<button type="button" class="admin-nav-button admin-tab-btn" id="tab-btn-comments" data-tab="comments" role="tab" aria-selected="false" aria-controls="tab-panel-comments" tabindex="-1">
+					<span class="admin-nav-icon" aria-hidden="true">◌</span><span>评论</span><span class="admin-nav-badge" id="nav-pending-comments" hidden>0</span>
+				</button>
+				<button type="button" class="admin-nav-button admin-tab-btn" id="tab-btn-links" data-tab="links" role="tab" aria-selected="false" aria-controls="tab-panel-links" tabindex="-1">
+					<span class="admin-nav-icon" aria-hidden="true">↔</span><span>友链</span>
+				</button>
 			</div>
-		</div>
-
-		<!-- 栏目切换标签 -->
-		<div class="admin-tabs" role="tablist" aria-label="后台管理导航">
-			<button type="button" class="admin-tab-btn" id="tab-btn-posts" data-tab="posts" role="tab" aria-selected="true" aria-controls="tab-panel-posts" tabindex="0">
-				文章
-			</button>
-			<button type="button" class="admin-tab-btn" id="tab-btn-comments" data-tab="comments" role="tab" aria-selected="false" aria-controls="tab-panel-comments" tabindex="-1">
-				评论
-			</button>
-			<button type="button" class="admin-tab-btn" id="tab-btn-links" data-tab="links" role="tab" aria-selected="false" aria-controls="tab-panel-links" tabindex="-1">
-				友链
-			</button>
-		</div>
-
-		<!-- 1. 文章编辑器面板 -->
-		<div class="admin-tab-panel" id="tab-panel-posts" role="tabpanel" aria-labelledby="tab-btn-posts">
-			<AdminEditor />
-		</div>
-
-		<!-- 2. 评论管理面板 -->
-		<div class="admin-tab-panel" id="tab-panel-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden>
-			<AdminComments />
-		</div>
-
-		<!-- 3. 友链管理面板 -->
-		<div class="admin-tab-panel" id="tab-panel-links" role="tabpanel" aria-labelledby="tab-btn-links" hidden>
-			<AdminLinks />
-		</div>
-
-		<!-- 页面底部可见状态提示浮动栏 -->
-		<aside class="admin-bottom-dock" id="admin-bottom-dock" aria-live="polite">
-			<div class="admin-dock-main">
-				<span class="admin-dock-indicator info" id="admin-dock-indicator"></span>
-				<span class="admin-dock-text" id="admin-dock-text">正在连接…</span>
-			</div>
-			<div class="admin-dock-actions">
-				<a class="admin-dock-link" id="admin-dock-link" hidden></a>
-				<button type="button" class="admin-dock-btn" id="admin-dock-btn" hidden>重新检查</button>
+			<div class="admin-rail-note">
+				<span class="admin-rail-note-dot" aria-hidden="true"></span>
+				<span>内容储存在博客后台，发布记录写入 GitHub。</span>
 			</div>
 		</aside>
-	</section>
-</BaseLayout>
+
+		<main class="admin-main">
+			<div class="admin-env-banner" id="admin-env-banner" role="status" hidden></div>
+			<header class="admin-heading-row">
+				<div>
+					<div class="admin-eyebrow">YOUR SITE / CONTENT</div>
+					<h1 id="admin-heading">内容工作台</h1>
+					<p id="admin-subheading">查看内容状态，继续写作或处理读者留言。</p>
+				</div>
+				<div class="admin-account-tools">
+					<span class="admin-status" id="admin-status" role="status" aria-live="polite">正在连接…</span>
+					<div class="admin-account-chip"><span class="admin-account-avatar" aria-hidden="true">X</span><span id="admin-identity">管理员</span></div>
+					<button type="button" class="admin-small-button" id="logout">退出</button>
+				</div>
+			</header>
+
+			<section class="admin-tab-panel overview-panel" id="tab-panel-overview" role="tabpanel" aria-labelledby="tab-btn-overview">
+				<div class="overview-lead">
+					<div><span class="overview-section-label">SITE STATUS</span><h2>站点总览</h2><p>内容和发布状态来自当前后台数据库与构建清单。</p></div>
+					<button type="button" class="admin-small-button" id="refresh-overview">重新检查</button>
+				</div>
+
+				<div class="overview-release" id="overview-release" data-state="loading" role="status" aria-live="polite">
+					<span class="overview-release-indicator" aria-hidden="true"></span>
+					<div class="overview-release-copy"><strong id="overview-release-title">正在读取发布状态…</strong><span id="overview-release-detail">核对静态页面与后台 Worker 的构建版本。</span></div>
+					<time id="overview-release-time"></time>
+				</div>
+
+				<div class="overview-metrics" aria-label="内容统计">
+					<button type="button" class="overview-metric" data-open-tab="posts">
+						<span>待处理文章</span><strong id="metric-drafts">—</strong><small>草稿、冲突或发布失败</small>
+					</button>
+					<button type="button" class="overview-metric" data-open-tab="comments">
+						<span>待审核评论</span><strong id="metric-comments">—</strong><small>读者提交后需人工审核</small>
+					</button>
+					<button type="button" class="overview-metric" data-open-tab="links">
+						<span>公开友链</span><strong id="metric-links">—</strong><small>当前设置为正常展示</small>
+					</button>
+					<div class="overview-metric overview-metric-static">
+						<span>已发布文章</span><strong id="metric-published">—</strong><small>后台记录的发布状态</small>
+					</div>
+				</div>
+
+				<div class="overview-grid">
+					<section class="overview-section overview-recent" aria-labelledby="overview-recent-title">
+						<div class="overview-section-heading"><div><span class="overview-section-label">RECENT ACTIVITY</span><h3 id="overview-recent-title">最近内容</h3></div><button type="button" class="text-action" data-open-tab="posts">打开文章 <span aria-hidden="true">→</span></button></div>
+						<div class="overview-recent-list" id="overview-recent-list" aria-live="polite"><p class="overview-empty">正在加载内容记录…</p></div>
+					</section>
+					<aside class="overview-section overview-publish-flow" aria-labelledby="overview-flow-title">
+						<div class="overview-section-heading"><div><span class="overview-section-label">PUBLISH FLOW</span><h3 id="overview-flow-title">发布流程</h3></div></div>
+						<ol class="publish-steps">
+							<li><span>01</span><div><strong>保存草稿</strong><small>自动保存当前编辑内容</small></div></li>
+							<li><span>02</span><div><strong>提交到 GitHub</strong><small>发布时写入博客文章源文件</small></div></li>
+							<li><span>03</span><div><strong>部署并确认</strong><small>页面与后台按同一提交发布</small></div></li>
+						</ol>
+						<p class="overview-flow-note">发布过程会显示在文章状态里；若部署仍在进行，可以稍后重新检查。</p>
+					</aside>
+				</div>
+			</section>
+
+			<section class="admin-tab-panel" id="tab-panel-posts" role="tabpanel" aria-labelledby="tab-btn-posts" hidden>
+				<div class="admin-panel-intro"><span class="overview-section-label">WRITE & PUBLISH</span><h2>文章</h2><p>草稿保存在后台，发布后会写入文章源文件并等待部署。</p></div>
+				<AdminEditor />
+			</section>
+
+			<section class="admin-tab-panel" id="tab-panel-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden>
+				<div class="admin-panel-intro"><span class="overview-section-label">READER RESPONSES</span><h2>评论</h2><p>读者可以匿名留言；新评论通过审核后才会公开。</p></div>
+				<AdminComments />
+			</section>
+
+			<section class="admin-tab-panel" id="tab-panel-links" role="tabpanel" aria-labelledby="tab-btn-links" hidden>
+				<div class="admin-panel-intro"><span class="overview-section-label">FRIENDS & LINKS</span><h2>友链</h2><p>管理公开展示的站点链接及其状态。</p></div>
+				<AdminLinks />
+			</section>
+
+			<aside class="admin-bottom-dock" id="admin-bottom-dock" aria-live="polite" hidden>
+				<div class="admin-dock-main"><span class="admin-dock-indicator info" id="admin-dock-indicator"></span><span class="admin-dock-text" id="admin-dock-text">正在连接…</span></div>
+				<div class="admin-dock-actions"><a class="admin-dock-link" id="admin-dock-link" hidden></a><button type="button" class="admin-dock-btn" id="admin-dock-btn" hidden>重新检查</button></div>
+			</aside>
+		</main>
+	</div>
+</AdminLayout>
 
 <script src="../../scripts/admin.ts"></script>

@@ -6,6 +6,11 @@ on:
     paths:
       - 'worker/**'
       - 'migrations/**'
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'astro.config.mjs'
+      - 'vercel.json'
       - 'wrangler.jsonc'
       - 'package.json'
       - 'package-lock.json'
@@ -43,3 +48,5 @@ jobs:
       - run: npx wrangler d1 migrations apply blog-production --remote
       - run: npx wrangler deploy
       - run: node scripts/verify-release.mjs https://blog-production.guozhongeba.workers.dev/__build.json "$GITHUB_SHA"
+      - name: Verify Vercel and Worker serve the same commit
+        run: node scripts/verify-release.mjs https://myzjx.com/__build.json "$GITHUB_SHA" 36

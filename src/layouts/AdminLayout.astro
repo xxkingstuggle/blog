@@ -1,0 +1,53 @@
+---
+import { siteConfig } from '../config';
+import ThemeSwitcher from '../components/ThemeSwitcher.astro';
+import '../styles/global.css';
+import '../styles/admin.css';
+
+interface Props {
+	title: string;
+	description: string;
+	context?: string;
+}
+
+const { title, description, context = '内容后台' } = Astro.props;
+const pageTitle = `${title} · ${siteConfig.name}`;
+const canonical = new URL(Astro.url.pathname, siteConfig.url).toString();
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script is:inline>
+			(() => {
+				const match = document.cookie.match(/(?:^|; )xingx-color-mode=(system|light|dark)/);
+				document.documentElement.dataset.colorMode = match?.[1] ?? 'system';
+			})();
+		</script>
+		<meta name="generator" content={Astro.generator} />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical} />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>{pageTitle}</title>
+	</head>
+	<body class="admin-body">
+		<a class="skip-link" href="#main-content">跳到主要内容</a>
+		<header class="admin-topbar">
+			<a class="admin-brand" href="/" aria-label="Xin 首页">
+				<span class="admin-brand-mark" aria-hidden="true">X.</span>
+				<span class="admin-brand-name">Xin</span>
+				<span class="admin-brand-divider" aria-hidden="true"></span>
+				<span class="admin-brand-context">随手记</span>
+			</a>
+			<div class="admin-topbar-center"><span class="admin-topbar-context">{context}</span></div>
+			<div class="admin-topbar-actions">
+				<a class="admin-front-link" href="/">返回网站 <span aria-hidden="true">↗</span></a>
+				<ThemeSwitcher />
+			</div>
+		</header>
+		<slot />
+	</body>
+</html>

@@ -1,10 +1,12 @@
-const [url, expectedSha] = process.argv.slice(2);
+const [url, expectedSha, attemptInput] = process.argv.slice(2);
 if (!url || !/^[a-f0-9]{40}$/.test(expectedSha ?? '')) {
-	throw new Error('Usage: node scripts/verify-release.mjs <build-manifest-url> <40-char-commit-sha>');
+	throw new Error('Usage: node scripts/verify-release.mjs <build-manifest-url> <40-char-commit-sha> [attempts]');
 }
 
+const maxAttempts = Number.isInteger(Number(attemptInput)) && Number(attemptInput) > 0 ? Number(attemptInput) : 12;
+
 let lastError = 'deployment not visible';
-for (let attempt = 1; attempt <= 12; attempt += 1) {
+for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
 	try {
 		const target = new URL(url);
 		target.searchParams.set('verify', `${Date.now()}-${attempt}`);
@@ -19,7 +21,7 @@ for (let attempt = 1; attempt <= 12; attempt += 1) {
 	} catch (error) {
 		lastError = error instanceof Error ? error.message : String(error);
 	}
-	if (attempt < 12) await new Promise((resolve) => setTimeout(resolve, 5000));
+	if (attempt < maxAttempts) await new Promise((resolve) => setTimeout(resolve, 5000));
 }
 
 throw new Error(`Deployment verification failed: ${lastError}`);

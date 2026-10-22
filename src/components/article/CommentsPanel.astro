@@ -8,22 +8,29 @@ const { post } = Astro.props;
 <section class="comments-panel" data-comments-panel data-slug={post.id} aria-labelledby="comments-heading">
 	<div class="comments-heading-row">
 		<div>
-			<div class="section-label">RESPONSES / 留言</div>
-			<h2 id="comments-heading">留下你的回应</h2>
+			<div class="section-label">READER NOTES / 读者回应</div>
+			<h2 id="comments-heading">聊聊这篇文章</h2>
+			<p class="comments-intro">无需登录即可留言。新留言会先经过审核，再显示在这里。</p>
 		</div>
-		<span class="comments-note">提交后等待审核</span>
+		<span class="comments-note">欢迎补充你的想法</span>
 	</div>
-	<div class="comments-list" data-comments-list aria-live="polite">
-		<p class="comments-empty">正在加载回应…</p>
+
+	<div class="comments-list" data-comments-list aria-live="polite" aria-busy="true">
+		<p class="comments-empty">正在加载留言…</p>
 	</div>
+
 	<form class="comments-form" data-comments-form>
+		<div class="comments-form-heading"><strong>写下回应</strong><span>称呼和个人链接均可不填</span></div>
 		<div class="comments-form-grid">
-			<label>称呼<input name="authorName" maxlength="80" placeholder="你的名字" /></label>
-			<label>链接（可选）<input name="authorUrl" type="url" maxlength="300" placeholder="https://" /></label>
+			<label>称呼<input name="authorName" maxlength="80" autocomplete="name" placeholder="匿名访客" /></label>
+			<label>个人链接 <span>可选</span><input name="authorUrl" type="url" maxlength="300" inputmode="url" placeholder="https://" /></label>
 		</div>
-		<label>回应<textarea name="body" required minlength="2" maxlength="2000" rows="4" placeholder="分享一个想法…"></textarea></label>
+		<label>回应<textarea name="body" required minlength="2" maxlength="2000" rows="4" placeholder="对这篇文章有什么想法？"></textarea></label>
 		<input class="comments-honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
-		<div class="comments-submit-row"><button type="submit">提交回应 →</button><span data-comments-status role="status" aria-live="polite"></span></div>
+		<div class="comments-submit-row">
+			<button type="submit"><span data-submit-label>提交留言</span><span aria-hidden="true">→</span></button>
+			<span class="comments-submit-note" data-comments-status role="status" aria-live="polite"></span>
+		</div>
 	</form>
 </section>
 
@@ -32,17 +39,44 @@ const { post } = Astro.props;
 	const list = panel?.querySelector<HTMLElement>('[data-comments-list]');
 	const form = panel?.querySelector<HTMLFormElement>('[data-comments-form]');
 	const status = panel?.querySelector<HTMLElement>('[data-comments-status]');
+	const submitLabel = panel?.querySelector<HTMLElement>('[data-submit-label]');
+	const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
 	const slug = panel?.dataset.slug;
+
+	function showListMessage(message: string, retry = false) {
+		if (!list) return;
+		const wrapper = document.createElement('div');
+		wrapper.className = 'comments-list-message';
+		const text = document.createElement('p');
+		text.className = 'comments-empty';
+		text.textContent = message;
+		wrapper.append(text);
+		if (retry) {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'comments-retry';
+			button.textContent = '重新加载';
+			button.addEventListener('click', () => { void loadComments(); });
+			wrapper.append(button);
+		}
+		list.replaceChildren(wrapper);
+	}
 
 	function renderComments(comments: Array<{ author_name?: string; body?: string; created_at?: string }>) {
 		if (!list) return;
 		list.replaceChildren();
-		if (!comments.length) { const empty = document.createElement('p'); empty.className = 'comments-empty'; empty.textContent = '还没有回应，欢迎留下第一条。'; list.append(empty); return; }
+		list.setAttribute('aria-busy', 'false');
+		if (!comments.length) { showListMessage('还没有留言，欢迎开启这段交流。'); return; }
 		for (const comment of comments) {
 			const item = document.createElement('article'); item.className = 'comment-item';
 			const meta = document.createElement('div'); meta.className = 'comment-meta';
 			const author = document.createElement('strong'); author.textContent = comment.author_name || '匿名访客';
-			const date = document.createElement('time'); date.textContent = comment.created_at ? new Date(`${comment.created_at.replace(' ', 'T')}Z`).toLocaleDateString('zh-CN') : '';
+			const date = document.createElement('time');
+			if (comment.created_at) {
+				const value = new Date(`${comment.created_at.replace(' ', 'T')}Z`);
+				if (!Number.isNaN(value.getTime())) date.dateTime = value.toISOString();
+				date.textContent = Number.isNaN(value.getTime()) ? comment.created_at : value.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+			}
 			meta.append(author, date);
 			const body = document.createElement('p'); body.textContent = comment.body || '';
 			item.append(meta, body); list.append(item);
@@ -50,26 +84,49 @@ const { post } = Astro.props;
 	}
 
 	async function loadComments() {
-		if (!slug) return;
-		try { const response = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`); if (!response.ok) throw new Error(); renderComments((await response.json()).comments || []); }
-		catch {
-			if (!list) return;
-			const empty = document.createElement('p');
-			empty.className = 'comments-empty';
-			empty.textContent = '回应功能将在后台上线后开放。';
-			list.replaceChildren(empty);
+		if (!slug || !list) return;
+		list.setAttribute('aria-busy', 'true');
+		list.dataset.state = 'loading';
+		showListMessage('正在加载公开留言…');
+		try {
+			const response = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`, { cache: 'no-store' });
+			if (!response.ok) throw new Error('留言暂时无法读取。请稍后重试。');
+			const result = await response.json() as { comments?: Array<{ author_name?: string; body?: string; created_at?: string }> };
+			list.dataset.state = 'ready';
+			renderComments(Array.isArray(result.comments) ? result.comments : []);
+		} catch (cause) {
+			list.setAttribute('aria-busy', 'false');
+			list.dataset.state = 'error';
+			showListMessage(cause instanceof Error ? cause.message : '留言暂时无法读取。请稍后重试。', true);
 		}
 	}
 
 	form?.addEventListener('submit', async (event) => {
 		event.preventDefault();
-		const data = new FormData(form); if (status) status.textContent = '正在提交…';
+		if (!slug || !form || !submitButton) return;
+		const data = new FormData(form);
+		submitButton.disabled = true;
+		submitButton.setAttribute('aria-busy', 'true');
+		if (submitLabel) submitLabel.textContent = '正在提交';
+		if (status) { status.textContent = '正在提交留言…'; status.dataset.state = 'loading'; }
 		try {
-			const response = await fetch('/api/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, authorName: data.get('authorName'), authorUrl: data.get('authorUrl'), body: data.get('body'), website: data.get('website') }) });
-			const body = await response.json(); if (!response.ok) throw new Error(body.error || '提交失败');
-			form.reset(); if (status) status.textContent = '已提交，审核通过后会显示。';
-		} catch (cause) { if (status) status.textContent = cause instanceof Error ? cause.message : '提交失败'; }
+			const response = await fetch('/api/comments', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slug, authorName: data.get('authorName'), authorUrl: data.get('authorUrl'), body: data.get('body'), website: data.get('website') }),
+			});
+			const result = await response.json().catch(() => ({})) as { error?: string; status?: string };
+			if (!response.ok || result.status !== 'pending') throw new Error(result.error || '留言没有提交成功，请检查网络后重试。');
+			form.reset();
+			if (status) { status.textContent = '留言已收到。审核通过后会显示在这里。'; status.dataset.state = 'success'; }
+		} catch (cause) {
+			if (status) { status.textContent = cause instanceof Error ? `${cause.message} 已保留你填写的内容。` : '提交失败，已保留你填写的内容。'; status.dataset.state = 'error'; }
+		} finally {
+			submitButton.disabled = false;
+			submitButton.removeAttribute('aria-busy');
+			if (submitLabel) submitLabel.textContent = '提交留言';
+		}
 	});
 
-	loadComments();
+	void loadComments();
 </script>
