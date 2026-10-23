@@ -1,105 +1,19 @@
 ---
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SOFTWARE_PRODUCTS } from '../../lib/software';
+import { SOFTWARE_PRODUCTS, WORKBENCH_PROJECTS } from '../../lib/software';
+import ProductVisual from '../../components/ProductVisual.astro';
+const usb = SOFTWARE_PRODUCTS[0];
+const habit = SOFTWARE_PRODUCTS[1];
 ---
-
-<BaseLayout
-	title="软件与工具"
-	description="Xin 独立设计与维护的原生软件与跨设备工具：USBLinkMic v4.0.8（macOS · Android）与 HabitBloom（iOS · iPadOS · macOS）。"
->
-	<header class="shell page-heading">
-		<div class="section-kicker">
-			<span class="kicker-dot" aria-hidden="true"></span>
-			<span>SOFTWARE STUDIO / 软件与工具官网</span>
-		</div>
-		<h1>为真实桌面与移动场景构建的工具</h1>
-		<p>
-			这里汇总我独立设计、开发并在日常高频使用的软件产品。我们清楚区分「已提供公开安装包」与「个人自用源码演进」状态，所有下载链接均指向经过 SHA-256 校验的真实发行版。
-		</p>
-	</header>
-
-	<section class="shell home-software-section" aria-label="软件产品目录">
-		<div class="software-showcase-stack">
-			{SOFTWARE_PRODUCTS.map((product) => (
-				<article class="software-flagship-card" id={product.slug} aria-labelledby={`hub-title-${product.slug}`}>
-					<div class="software-flagship-info">
-						<div class="software-card-top">
-							<div class="software-card-icon">
-								<Image src={product.icon} alt={`${product.name} 图标`} width={112} height={112} />
-							</div>
-							<div class="software-card-titles">
-								<h2 id={`hub-title-${product.slug}`} style="font-size: clamp(1.5rem, 2.5vw, 1.95rem); margin: 0 0 4px;">
-									<a href={`/software/${product.slug}/`}>{product.name}</a>
-								</h2>
-								<span>{product.category} · 更新于 {product.releaseDate}</span>
-							</div>
-							<div class="software-card-badges">
-								<span class="status-pill" data-tone={product.statusTone}>{product.statusBadge}</span>
-								<span class="platform-pill">{product.platformsLabel}</span>
-							</div>
-						</div>
-
-						<p class="software-card-headline">{product.headline}</p>
-						<p class="software-card-summary">{product.summary}</p>
-
-						<div class="acquisition-notice" style="margin: 4px 0;">
-							<strong>获取方式与当前状态：</strong>{product.availabilitySummary}
-						</div>
-
-						<ul class="software-feature-bullets">
-							{product.highlights.map((item) => (
-								<li>
-									<strong>{item.title}：</strong>
-									<span>{item.body}</span>
-								</li>
-							))}
-						</ul>
-
-						<div class="software-card-actions">
-							<a class="btn-primary" href={`/software/${product.slug}/`}>
-								<span>进入 {product.name} 完整产品页</span>
-							</a>
-							{product.downloads.map((dl) =>
-								dl.primary ? (
-									<a class="btn-secondary" href={dl.url} target="_blank" rel="noopener noreferrer">
-										<span>{dl.label} ({dl.size})</span>
-									</a>
-								) : null
-							)}
-							<a class="btn-secondary" href={`/posts/${product.articleSlug}/`}>
-								<span>阅读工程手记</span>
-							</a>
-						</div>
-					</div>
-
-					<div class="software-flagship-visual">
-						<a class="software-visual-frame" href={`/software/${product.slug}/`} aria-label={`查看 ${product.name} 产品详情`}>
-							<Image
-								src={product.screenshot}
-								alt={product.screenshotAlt}
-								width={960}
-								height={640}
-							/>
-						</a>
-						<p class="software-visual-caption">{product.screenshotCaption}</p>
-					</div>
-				</article>
-			))}
-		</div>
-	</section>
-
-	<section class="shell software-section" style="border-bottom: 0;" aria-labelledby="matrix-heading">
-		<div class="section-header-bar">
-			<div>
-				<div class="section-kicker">
-					<span class="kicker-dot" aria-hidden="true"></span>
-					<span>工程自动化与研发工作流</span>
-				</div>
-				<h2 id="matrix-heading">配套的研发实践：轻量多 Agent 编码回路</h2>
-				<p>除了终端用户软件，我也将日常使用 Claude、Codex 与 Gemini 构建和审查这些软件的工程约束整理成了可复用的最小闭环。</p>
-			</div>
-			<a class="btn-secondary" href="/posts/lightweight-multi-agent-coding-loop/">阅读完整实践笔记</a>
-		</div>
-	</section>
+<BaseLayout title="作品与工具" description="Xin 的软件作品与工程实践。USBLinkMic 提供公开双端安装包，HabitBloom 与浏览器工具以开发案例展示。">
+  <header class="shell page-heading"><div class="section-kicker">WORK / 作品与工具</div><h1>做出来，也说明白。</h1><p>有些工具已经可以下载，有些还在自己的工作台上。这里保留它们解决的问题、真实界面，以及目前做到哪一步。</p></header>
+  <section class="shell maker-section" style="padding-top:32px" aria-labelledby="public-work">
+    <div class="folio-label"><span id="public-work">01 / 公开作品</span><span>可下载 · 可查看源码</span></div>
+    <article class="flagship"><div class="flagship-copy"><div class="app-identity"><Image src={usb.icon} alt="" width={56} height={56}/><h2>{usb.name}</h2></div><h3>{usb.headline}</h3><p>{usb.tagline}。把散落的连接命令、依赖检查和状态提示收进原生面板。</p><div class="release-line"><span class="status-pill" data-tone="release">{usb.statusBadge}</span><span>{usb.platformsLabel}</span></div><a class="btn-primary" href="/software/usblinkmic/">作品、下载与使用边界 ↗</a></div><div class="flagship-art"><ProductVisual product={usb}/><p class="visual-provenance">4.0.10 开发版真实界面 · 公开下载为 v4.0.8</p></div></article>
+  </section>
+  <section class="shell maker-section" style="padding-top:0" aria-labelledby="private-work"><div class="folio-heading"><div><span class="small-label">02 / 工作台</span><h2 id="private-work">正在生长的尝试</h2></div></div>
+    <article class="bloom-preview"><div class="bloom-mark"><Image src={habit.icon} alt="HabitBloom 项目图标" width={150} height={150}/></div><div><span class="small-label">{habit.statusBadge}</span><h3>HabitBloom</h3><p>{habit.summary}</p><a class="text-link" href="/software/habitbloom/">看设计与限制 →</a></div></article>
+    <div class="work-grid">{WORKBENCH_PROJECTS.map(p=><article class="work-card"><span class="small-label">{p.status}</span><h3>{p.name}</h3><p>{p.summary}</p><a class="text-link" href={p.href}>阅读实践记录 ↗</a></article>)}</div>
+  </section>
 </BaseLayout>

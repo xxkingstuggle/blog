@@ -1,0 +1,10 @@
+---
+import { Image } from 'astro:assets';
+import type { SoftwareProduct } from '../lib/software';
+interface Props { product: SoftwareProduct; priority?: boolean; }
+const { product, priority = false } = Astro.props;
+---
+<div class:list={['product-visual', { 'has-phone': !!product.secondaryScreenshot }]}>
+  <Image class="product-desktop" src={product.screenshot} alt={product.screenshotAlt} widths={[640, 960, 1600]} sizes="(max-width: 760px) 94vw, 800px" loading={priority ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : 'auto'} />
+  {product.secondaryScreenshot && <Image class="product-phone" src={product.secondaryScreenshot} alt="USBLinkMic Android 4.0.10 开发版真实界面，连接信息已遮盖" width={300} loading={priority ? 'eager' : 'lazy'} />}
+</div>

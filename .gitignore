@@ -24,3 +24,10 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# local task evidence (never public)
+/output/
+/PROGRESS.md
+/BLOCKED.md
+
+/.playwright-cli/

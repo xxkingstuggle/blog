@@ -2,232 +2,52 @@
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleRow from '../components/ArticleRow.astro';
-import { getListedPosts, formatDate, getReadingTime, KIND_LABELS } from '../lib/posts';
-import { SOFTWARE_PRODUCTS } from '../lib/software';
+import { getListedPosts } from '../lib/posts';
+import { SOFTWARE_PRODUCTS, WORKBENCH_PROJECTS } from '../lib/software';
+import ProductVisual from '../components/ProductVisual.astro';
 import { siteConfig } from '../config';
-
-const posts = await getListedPosts();
-const featuredEssays = posts.slice(0, 3);
-const usbLinkMic = SOFTWARE_PRODUCTS[0];
+const usb = SOFTWARE_PRODUCTS[0];
+const habit = SOFTWARE_PRODUCTS[1];
+const posts = (await getListedPosts()).filter(p => p.data.kind === 'project').slice(0,3);
 ---
+<BaseLayout title="Xin 的个人工作台" description={siteConfig.description} image={usb.screenshot}>
+  <section class="shell maker-intro" aria-labelledby="intro-title">
+    <div class="maker-eyebrow"><span>MYZJX / Xin 的个人工作台</span><span>软件 · 设计 · 工程手记</span></div>
+    <div class="maker-intro-grid">
+      <h1 id="intro-title">把日常的麻烦，<br />做成<span>顺手的工具。</span></h1>
+      <div class="maker-intro-note">
+        <p>你好，我是 Xin。我借助 AI 做原生软件和浏览器工具，负责需求取舍、集成与验收，也把过程中想明白的事写下来。</p>
+        <div class="maker-links"><a href="#selected-work">看代表作品 <span aria-hidden="true">↘</span></a><a href="/about/">认识我 <span aria-hidden="true">↗</span></a></div>
+      </div>
+    </div>
+  </section>
 
-<BaseLayout
-	title={siteConfig.name}
-	description={siteConfig.description}
->
-	<!-- 1. Brand & Studio Hero -->
-	<section class="brand-hero" aria-labelledby="home-hero-heading">
-		<div class="shell brand-hero-grid">
-			<div class="brand-hero-copy">
-				<div class="section-kicker">
-					<span class="kicker-dot" aria-hidden="true"></span>
-					<span>Xin · 个人品牌与原生软件工作台</span>
-				</div>
-				<h1 id="home-hero-heading">
-					做真正解决具体问题的软件，也把工程取舍诚实写下来。
-				</h1>
-				<p class="brand-hero-lead">
-					你好，我是 Xin。我习惯从自己日常工作台上的真实摩擦出发——无论是让 Android 手机直接充当 Mac 的低延迟麦克风与双向网卡，还是在免费签名环境下跑通多端同步的习惯卡片应用。这里提供我的软件下载、架构拆解与思考手记。
-				</p>
-				<div class="brand-hero-actions">
-					<a class="btn-primary" href="/software/">
-						<span>浏览软件与获取方式</span>
-					</a>
-					<a class="btn-secondary" href="/posts/">
-						<span>阅读工程与思考手记</span>
-					</a>
-				</div>
-				<div class="brand-hero-facts" aria-label="工作台核心信息">
-					<div class="hero-fact-item">
-						<strong>原生与跨端工具</strong>
-						<span>专注 macOS、iOS 与 Android 之间的低摩擦协同。</span>
-					</div>
-					<div class="hero-fact-item">
-						<strong>真实版本可验证</strong>
-						<span>USBLinkMic v4.0.8 提供 DMG 与 APK 公开下载及校验。</span>
-					</div>
-					<div class="hero-fact-item">
-						<strong>完整工程复盘</strong>
-						<span>每款软件均配有从踩坑、协议设计到验证的深度长文。</span>
-					</div>
-				</div>
-			</div>
+  <section class="shell selected-work" id="selected-work" aria-labelledby="selected-title">
+    <div class="folio-label"><span id="selected-title">01 / 代表作品</span><span>从一个具体问题开始</span></div>
+    <article class="flagship">
+      <div class="flagship-copy">
+        <div class="app-identity"><Image src={usb.icon} alt="" width={56} height={56} /><div><span class="small-label">macOS + Android</span><h2>USBLinkMic</h2></div></div>
+        <h3>手机放在手边，<br />麦克风接进 Mac。</h3>
+        <p>把 Android 拾音、USB 网络共享和反向网络中继，收进一个 Mac 面板。少记几条命令，多看一眼连接状态。</p>
+        <div class="release-line"><span class="status-pill" data-tone="release">{usb.latestVersion} 公开版</span><span>另有 4.0.10 开发界面预览</span></div>
+        <div class="brand-hero-actions"><a class="btn-primary" href="/software/usblinkmic/">查看作品与下载 <span aria-hidden="true">↗</span></a><a class="text-link" href={`/posts/${usb.articleSlug}/`}>读工程取舍 →</a></div>
+        <p class="flagship-footnote">依赖 BlackHole 与 ADB。设备兼容、长时间运行仍需实机验证。</p>
+      </div>
+      <div class="flagship-art"><ProductVisual product={usb} priority /><p class="visual-provenance">真实运行截图 · 本机开发版 4.0.10 · 设备标识已遮盖</p></div>
+    </article>
+    <div class="case-insights"><div><span>问题</span><p>手机有麦克风，Mac 软件需要一个可选的音频输入。</p></div><div><span>取舍</span><p>复用虚拟声卡与 USB 工具，把精力留给连接和状态提示。</p></div><div><span>交付</span><p>公开双端安装包、源码与安装说明；开发进展单独标注。</p></div></div>
+  </section>
 
-			<aside class="workbench-stage" aria-label="当前代表软件一览">
-				<div class="workbench-stage-header">
-					<div class="workbench-stage-title">
-						<span class="kicker-dot" aria-hidden="true"></span>
-						<span>代表软件作品</span>
-					</div>
-					<span class="workbench-stage-sub">myzjx.com/software</span>
-				</div>
+  <section class="shell maker-section" aria-labelledby="explorations-title">
+    <div class="folio-heading"><div><span class="small-label">02 / 继续动手</span><h2 id="explorations-title">不只有一种解法。</h2></div><a class="text-link" href="/software/">全部作品与状态 ↗</a></div>
+    <div class="exploration-grid">
+      <article class="bloom-preview"><div class="bloom-mark"><Image src={habit.icon} alt="HabitBloom 应用图标" width={150} height={150} /></div><div><span class="small-label">个人工具 / 暂无公开安装包</span><h3><a href="/software/habitbloom/">HabitBloom <span aria-hidden="true">↗</span></a></h3><p>一张今天愿意点开的习惯卡片。也记录免费签名条件下，Widget 获取快照的设计与限制。</p></div></article>
+      <div class="workbench-list">{WORKBENCH_PROJECTS.slice(0,3).map((p,i)=><a class="bench-row" href={p.href}><span class="bench-index">0{i+1}</span><div><span class="small-label">{p.status}</span><h3>{p.name}</h3><p>{p.summary}</p></div><span aria-hidden="true">↗</span></a>)}</div>
+    </div>
+  </section>
 
-				{SOFTWARE_PRODUCTS.map((product) => (
-					<div class="workbench-product-card">
-						<a class="workbench-app-icon" href={`/software/${product.slug}/`} aria-label={`查看 ${product.name} 详情`}>
-							<Image src={product.icon} alt={`${product.name} 图标`} width={112} height={112} />
-						</a>
-						<div class="workbench-product-body">
-							<div class="workbench-product-head">
-								<h2><a href={`/software/${product.slug}/`}>{product.name}</a></h2>
-								<span class="status-pill" data-tone={product.statusTone}>{product.statusBadge}</span>
-							</div>
-							<p>{product.tagline}</p>
-							<div class="workbench-product-foot">
-								<span class="platform-pill">{product.platformsLabel}</span>
-								<div class="workbench-inline-links">
-									<a href={`/software/${product.slug}/`}>产品详情</a>
-									<a href={`/posts/${product.articleSlug}/`}>工程手记</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				))}
-			</aside>
-		</div>
-	</section>
+  <section class="maker-method" aria-labelledby="method-title"><div class="shell method-inner"><span class="small-label">工作方式</span><h2 id="method-title">想清楚一点，<br />做出来，再核对。</h2><div><p>我感兴趣的是软件落到具体生活里的那一段。安装时少一个门槛，断线后多一句解释，功能边界写得清楚一些。</p><p>Codex、AGY 和其他模型参与实现与审查。我负责决定做什么，也为最终交付负责。公开版、开发版和还没验证的想法，各自说明。</p><a href="/about/" class="text-link">我的工作方式与联系入口 ↗</a></div></div></section>
 
-	<!-- 2. Software Showcase Section -->
-	<section class="home-software-section" id="projects" aria-labelledby="software-section-heading">
-		<div class="shell">
-			<div class="section-header-bar">
-				<div>
-					<div class="section-kicker">
-						<span class="kicker-dot" aria-hidden="true"></span>
-						<span>软件与工具官网</span>
-					</div>
-					<h2 id="software-section-heading">从具体场景长出来的个人软件</h2>
-					<p>不堆砌无关特性，每款软件只把一个高频痛点打磨到顺手可靠。点击进入产品页即可查看系统要求、工作流程与下载方式。</p>
-				</div>
-				<a class="btn-secondary" href="/software/">查看全部软件对比</a>
-			</div>
-
-			<div class="software-showcase-stack">
-				{SOFTWARE_PRODUCTS.map((product) => (
-					<article class="software-flagship-card" aria-labelledby={`product-title-${product.slug}`}>
-						<div class="software-flagship-info">
-							<div class="software-card-top">
-								<div class="software-card-icon">
-									<Image src={product.icon} alt={`${product.name} 应用图标`} width={112} height={112} />
-								</div>
-								<div class="software-card-titles">
-									<h3 id={`product-title-${product.slug}`}>
-										<a href={`/software/${product.slug}/`}>{product.name}</a>
-									</h3>
-									<span>{product.category}</span>
-								</div>
-								<div class="software-card-badges">
-									<span class="status-pill" data-tone={product.statusTone}>{product.statusBadge}</span>
-									<span class="platform-pill">{product.platformsLabel}</span>
-								</div>
-							</div>
-
-							<p class="software-card-headline">{product.headline}</p>
-							<p class="software-card-summary">{product.summary}</p>
-
-							<ul class="software-feature-bullets">
-								{product.highlights.slice(0, 3).map((item) => (
-									<li>
-										<strong>{item.title}：</strong>
-										<span>{item.body}</span>
-									</li>
-								))}
-							</ul>
-
-							<div class="software-card-actions">
-								<a class="btn-primary" href={`/software/${product.slug}/`}>
-									<span>{product.downloads.length > 0 ? `进入 ${product.name} 产品页与下载` : `了解 ${product.name} 设计与架构`}</span>
-								</a>
-								{product.downloads[0] && (
-									<a class="btn-secondary" href={product.downloads[0].url} target="_blank" rel="noopener noreferrer">
-										<span>直接下载 {product.downloads[0].format} ({product.downloads[0].version})</span>
-									</a>
-								)}
-								<a class="btn-secondary" href={`/posts/${product.articleSlug}/`}>
-									<span>阅读开发复盘</span>
-								</a>
-							</div>
-						</div>
-
-						<div class="software-flagship-visual">
-							<a class="software-visual-frame" href={`/software/${product.slug}/`} aria-label={`查看 ${product.name} 界面与详情`}>
-								<Image
-									src={product.screenshot}
-									alt={product.screenshotAlt}
-									width={960}
-									height={640}
-									loading="lazy"
-								/>
-							</a>
-							<p class="software-visual-caption">{product.screenshotCaption}</p>
-						</div>
-					</article>
-				))}
-			</div>
-		</div>
-	</section>
-
-	<!-- 3. Featured Engineering & Thought Essays -->
-	<section class="home-journal-section" id="latest" aria-labelledby="journal-section-heading">
-		<div class="shell">
-			<div class="section-header-bar">
-				<div>
-					<div class="section-kicker">
-						<span class="kicker-dot" aria-hidden="true"></span>
-						<span>工程复盘与思考手记</span>
-					</div>
-					<h2 id="journal-section-heading">软件背后的架构取舍与日常思考</h2>
-					<p>不仅交付可用的工具，也记录真实开发过程中的音频缓冲计算、免费签名突围方案、多 Agent 协作闭环，以及工作之外的自省。</p>
-				</div>
-				<a class="btn-secondary" href="/posts/">浏览全部 {posts.length} 篇文章</a>
-			</div>
-
-			<div class="journal-featured-grid">
-				{featuredEssays.map((post) => (
-					<a class="journal-pillar-card" href={`/posts/${post.id}/`}>
-						<div>
-							<span class="article-row-kicker" data-kind={post.data.kind}>
-								{post.data.kicker || KIND_LABELS[post.data.kind]}
-							</span>
-							<h3>{post.data.title}</h3>
-							<p>{post.data.description}</p>
-						</div>
-						<div class="journal-pillar-meta">
-							<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-							<span>{getReadingTime(post.body)}</span>
-						</div>
-					</a>
-				))}
-			</div>
-
-			<div aria-label="全部近期文章列表">
-				{posts.map((post, index) => (
-					<ArticleRow post={post} index={index} />
-				))}
-			</div>
-		</div>
-	</section>
-
-	<!-- 4. Brand Closing & Direct Access -->
-	<section class="software-section" style="border-bottom: 0;" aria-labelledby="closing-heading">
-		<div class="shell">
-			<div class="related-article-banner">
-				<div>
-					<div class="section-kicker">
-						<span class="kicker-dot" aria-hidden="true"></span>
-						<span>获取软件与持续关注</span>
-					</div>
-					<h3 id="closing-heading">直接体验软件，或通过 RSS 订阅后续更新</h3>
-					<p>
-						{usbLinkMic.name} {usbLinkMic.latestVersion} 已提供 macOS DMG 与 Android APK 下载；新的工程实践与思考文章会同步更新在主站与 RSS 源中。
-					</p>
-				</div>
-				<div class="brand-hero-actions" style="margin-bottom: 0;">
-					<a class="btn-primary" href="/software/usblinkmic/">获取 USBLinkMic {usbLinkMic.latestVersion}</a>
-					<a class="btn-secondary" href="/rss.xml">订阅 RSS</a>
-					<a class="btn-secondary" href="/about/">关于 Xin</a>
-				</div>
-			</div>
-		</div>
-	</section>
+  <section class="shell maker-section" aria-labelledby="notes-title"><div class="folio-heading"><div><span class="small-label">03 / 留下判断过程</span><h2 id="notes-title">作品之外，写一点为什么。</h2></div><a class="text-link" href="/posts/">全部文章 ↗</a></div><div class="maker-articles">{posts.map((post,index)=><ArticleRow post={post} index={index} />)}</div></section>
+  <section class="shell maker-contact"><span class="small-label">保持连接</span><h2>有具体的问题，<br />就有值得聊的开始。</h2><div><p>原生工具、跨设备体验，或怎样把 AI 的产出变成可检查的交付。欢迎从一个项目或问题聊起。</p><a class="btn-primary" href="/about/#contact">联系与订阅 ↗</a></div></section>
 </BaseLayout>

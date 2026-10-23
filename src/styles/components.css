@@ -49,8 +49,8 @@
 }
 
 .brand:hover .brand-monogram {
-	background: var(--accent);
-	color: #FFFFFF;
+	background: var(--accent-contrast);
+	color: var(--bg);
 }
 
 .brand-identity {
@@ -123,9 +123,9 @@
 }
 
 .header-cta:hover {
-	background: var(--accent);
-	border-color: var(--accent);
-	color: #FFFFFF;
+	background: var(--accent-contrast);
+	border-color: var(--accent-contrast);
+	color: var(--bg);
 }
 
 .header-cta-badge {
@@ -344,9 +344,9 @@
 }
 
 .btn-primary:hover {
-	background: var(--accent);
-	border-color: var(--accent);
-	color: #FFFFFF;
+	background: var(--accent-contrast);
+	border-color: var(--accent-contrast);
+	color: var(--bg);
 	transform: translateY(-1px);
 }
 

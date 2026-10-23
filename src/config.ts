@@ -1,7 +1,7 @@
 export const siteConfig = {
-	name: 'myzjx.com',
+	name: 'MYZJX',
 	brandTitle: 'Xin · 个人软件与开发手记',
-	description: '我是 Xin，专注做真正解决具体问题的原生软件与工具，同时记录真实的工程取舍、排查过程与思考。',
+	description: 'Xin 的个人工作台：借助 AI 制作原生软件与浏览器工具，记录产品取舍、跨设备集成与工程实践。',
 	author: 'Xin',
 	url: 'https://myzjx.com',
 	social: {

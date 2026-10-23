@@ -4,318 +4,74 @@ import usblinkmicShot from '../assets/projects/usblinkmic-mac.png';
 import habitbloomIcon from '../assets/projects/habitbloom-icon.png';
 import habitbloomShot from '../assets/projects/habitbloom-cover.png';
 
-export interface SoftwareDownloadItem {
-	label: string;
-	platform: string;
-	version: string;
-	size: string;
-	format: string;
-	url: string;
-	primary?: boolean;
-	note?: string;
-}
-
-export interface SoftwareWorkflowStep {
-	step: string;
-	title: string;
-	description: string;
-	detail: string;
-}
-
-export interface SoftwareScenario {
-	scenario: string;
-	pain: string;
-	outcome: string;
-	mechanism: string;
-}
-
-export interface SoftwareSpecItem {
-	label: string;
-	value: string;
-}
-
+export interface SoftwareDownloadItem { label:string; platform:string; version:string; size:string; format:string; url:string; primary?:boolean; note?:string; }
 export interface SoftwareProduct {
-	slug: 'usblinkmic' | 'habitbloom';
-	name: string;
-	tagline: string;
-	headline: string;
-	summary: string;
-	category: string;
-	platforms: string[];
-	platformsLabel: string;
-	statusBadge: string;
-	statusTone: 'release' | 'source';
-	latestVersion: string;
-	releaseDate: string;
-	availabilitySummary: string;
-	availabilityNotice: string;
-	repoUrl: string;
-	repoVisibility: 'public' | 'private';
-	releasesUrl?: string;
-	checksumsUrl?: string;
-	articleSlug: string;
-	articleTitle: string;
-	icon: ImageMetadata;
-	screenshot: ImageMetadata;
-	screenshotAlt: string;
-	screenshotCaption: string;
-	downloads: SoftwareDownloadItem[];
-	highlights: Array<{ title: string; body: string }>;
-	scenarios: SoftwareScenario[];
-	workflow: SoftwareWorkflowStep[];
-	specs: SoftwareSpecItem[];
-	faq: Array<{ question: string; answer: string }>;
+  slug:'usblinkmic'|'habitbloom'; name:string; tagline:string; headline:string; summary:string; category:string;
+  platforms:string[]; platformsLabel:string; statusBadge:string; statusTone:'release'|'source'; latestVersion:string; releaseDate:string;
+  availabilitySummary:string; availabilityNotice:string; repoUrl:string; repoVisibility:'public'|'private'; releasesUrl?:string; checksumsUrl?:string;
+  articleSlug:string; articleTitle:string; icon:ImageMetadata; screenshot:ImageMetadata; screenshotAlt:string; screenshotCaption:string; secondaryScreenshot?:ImageMetadata;
+  verifiedAt:string; developmentVersion:string; installedVersion:string; contribution:string; limitations:string[]; sources:Array<{label:string;url:string}>;
+  downloads:SoftwareDownloadItem[]; highlights:Array<{title:string;body:string}>;
+  scenarios:Array<{scenario:string;pain:string;outcome:string;mechanism:string}>;
+  workflow:Array<{step:string;title:string;description:string;detail:string}>;
+  specs:Array<{label:string;value:string}>; faq:Array<{question:string;answer:string}>;
 }
-
-export const SOFTWARE_PRODUCTS: SoftwareProduct[] = [
-	{
-		slug: 'usblinkmic',
-		name: 'USBLinkMic',
-		tagline: '一根数据线或同一局域网，把 Android 手机变成 Mac 的低延迟麦克风与双向网络桥',
-		headline: '让手边的 Android 手机，直接接管 Mac 的拾音与应急网络。',
-		summary:
-			'USBLinkMic 是一套由 macOS 菜单栏状态机与 Android 原生端协同工作的跨设备桥接工具。它把「手机麦克风到 Mac 虚拟声卡」「手机 5G/热点网络通过 USB 共享给 Mac」「Mac 有线网络反向通过 USB 给手机」收敛进同一个面板，不依赖云端中转，并针对长时间通话、锁屏与插拔恢复做了自愈设计。',
-		category: '跨设备音频与网络工具',
-		platforms: ['macOS 26+ (Apple Silicon)', 'Android 8.0+'],
-		platformsLabel: 'macOS · Android',
-		statusBadge: 'v4.0.8 正式版可下载',
-		statusTone: 'release',
-		latestVersion: 'v4.0.8',
-		releaseDate: '2026-10-17',
-		availabilitySummary: '提供 macOS 安装包（DMG / ZIP）与配套 Android 客户端（APK）公开下载。',
-		availabilityNotice:
-			'当前公开版本为 v4.0.8。macOS 端需搭配 BlackHole 2ch 虚拟声卡以将手机音频注入系统输入设备；USB 链路需开启手机「USB 调试」，无线麦克风模式支持同一局域网下扫码或粘贴配对码直连。',
-		repoUrl: 'https://github.com/xxkingstuggle/usblinkmic',
-		repoVisibility: 'public',
-		releasesUrl: 'https://github.com/xxkingstuggle/usblinkmic/releases/tag/v4.0.8',
-		checksumsUrl: 'https://github.com/xxkingstuggle/usblinkmic/releases/download/v4.0.8/SHA256SUMS.txt',
-		articleSlug: 'usblinkmic-android-mac-bridge',
-		articleTitle: 'USBLinkMic：用一根数据线，把 Android 手机变成 Mac 的麦克风和网卡',
-		icon: usblinkmicIcon,
-		screenshot: usblinkmicShot,
-		screenshotAlt: 'USBLinkMic macOS 控制面板与设备就绪检查界面',
-		screenshotCaption: 'USBLinkMic macOS 端界面：在一个窗口内检查 ADB、虚拟声卡与手机端状态，直接切换麦克风与双向网络链路。',
-		downloads: [
-			{
-				label: '下载 macOS 安装包 (.dmg)',
-				platform: 'macOS 26+ (Apple Silicon)',
-				version: 'v4.0.8',
-				size: '34.9 MB',
-				format: 'DMG',
-				url: 'https://github.com/xxkingstuggle/usblinkmic/releases/download/v4.0.8/USBLinkMic-4.0.8-public.dmg',
-				primary: true,
-				note: '推荐 macOS 用户下载，拖入 Applications 即可使用',
-			},
-			{
-				label: '下载 Android 客户端 (.apk)',
-				platform: 'Android 8.0+',
-				version: 'v4.0.8',
-				size: '11.4 MB',
-				format: 'APK',
-				url: 'https://github.com/xxkingstuggle/usblinkmic/releases/download/v4.0.8/USBLinkMic-4.0.8-review.4.apk',
-				primary: true,
-				note: '安装到 Android 手机，提供麦克风采集与 VPN 反向网络接口',
-			},
-			{
-				label: 'macOS 便携压缩包 (.zip)',
-				platform: 'macOS 26+ (Apple Silicon)',
-				version: 'v4.0.8',
-				size: '31.7 MB',
-				format: 'ZIP',
-				url: 'https://github.com/xxkingstuggle/usblinkmic/releases/download/v4.0.8/USBLinkMic-4.0.8-public-macOS.zip',
-				note: '适合直接解压运行或脚本化部署',
-			},
-		],
-		highlights: [
-			{
-				title: '手机麦克风 → Mac 虚拟声卡（USB / 无线双模）',
-				body: 'Android 端通过 AudioRecord 采集 48kHz / 16-bit PCM 音频，经由 USB ADB 端口转发或局域网配对传回 Mac，并注入 BlackHole 2ch，供会议软件、录音软件和语音输入直接选用。',
-			},
-			{
-				title: '手机网络 → Mac（USB 共享网络）',
-				body: '外出或会场 Wi-Fi 拥堵时，通过 USB CDC-NCM 将手机蜂窝网络直接作为 Mac 的有线网卡接入，一边供电一边保持稳定低抖动连接。',
-			},
-			{
-				title: 'Mac 网络 → 手机（免 Root USB 反向共享）',
-				body: '在桌面内网、抓包联调或弱移动信号室内，将 Mac 当前网络经由内置 Rust 转发器与 Android VPNService 反向桥接给手机，无需 Root。',
-			},
-			{
-				title: '面向真实桌面现场的自愈状态机',
-				body: '内置高采样率重采样、4ms 交叉淡入淡出防爆音、无锁环形缓冲与断线自动退避重连，拔线、息屏或声卡切回后无需重启整套软件。',
-			},
-		],
-		scenarios: [
-			{
-				scenario: '桌面外接显示器办公 / 线上会议',
-				pain: 'MacBook 合盖外接显示器后内置麦克风被遮挡，桌面蓝牙耳机切入通话模式又会导致全系统音质跌落。',
-				outcome: '把放在桌面的 Android 手机作为高信噪比指向性麦克风接入 Mac，耳机继续保持高音质立体声输出。',
-				mechanism: '48kHz/16-bit 单声道 PCM 帧 + 序列号与 CRC16 校验，经 ADB forward 或局域网直连进入 BlackHole 2ch。',
-			},
-			{
-				scenario: '差旅、会场与咖啡馆弱网救急',
-				pain: '公共 Wi-Fi 高丢包，而普通无线个人热点在信道拥挤时耗电快、延迟跳变明显。',
-				outcome: '插上 USB 数据线即可让 Mac 走手机 5G 网络，同时给手机补电，连接稳定度接近有线以太网。',
-				mechanism: '基于 Android USB 网络共享（CDC-NCM）与 macOS 网络接口状态自动探测。',
-			},
-			{
-				scenario: '移动端联调与桌面网络共享给手机',
-				pain: '开发机连着稳定有线网或特定代理环境，但测试手机在室内信号弱、配置无线代理繁琐。',
-				outcome: '一键开启「Mac 网络给手机」，手机流量直接走 USB 线经由 Mac 出口访问网络。',
-				mechanism: '打包内置 gnirehtet Rust relay 守护进程 + Android 端本地 VPNService 虚拟网卡。',
-			},
-		],
-		workflow: [
-			{
-				step: '01',
-				title: '安装双端应用与虚拟声卡',
-				description: '在 Mac 安装 USBLinkMic.app 与 BlackHole 2ch，在手机安装配套 APK。',
-				detail: '首次打开时，应用顶部的准备就绪卡片会逐项核对虚拟声卡、ADB 工具与手机连接状态。',
-			},
-			{
-				step: '02',
-				title: '选择 USB 数据线或无线局域网连接',
-				description: '插上开启了 USB 调试的手机，或在同一 Wi-Fi 下使用配对码/二维码无线连接麦克风。',
-				detail: 'v4.0.8 同时支持有线低延迟链路与免插线的无线麦克风会客模式。',
-			},
-			{
-				step: '03',
-				title: '按需开启麦克风或网络方向',
-				description: '点击对应卡片开关，在系统声音输入中选择 BlackHole 2ch 即可开始说话或联网。',
-				detail: '支持开机自启、断线自动重连、实时电平表监控与一键导出脱敏诊断日志。',
-			},
-		],
-		specs: [
-			{ label: '当前版本', value: 'v4.0.8（2026-10-17 发布）' },
-			{ label: 'macOS 系统要求', value: 'macOS 26+（Apple Silicon arm64）' },
-			{ label: 'Android 系统要求', value: 'Android 8.0+（USB 共享网络需 Android 11+）' },
-			{ label: '音频规格', value: '48kHz / 16-bit / 单声道 PCM，20ms 分帧 + CRC16' },
-			{ label: '连接方式', value: 'USB (ADB / CDC-NCM / VPNService) + 局域网无线麦克风' },
-			{ label: '开源许可与源码', value: 'GitHub 公开仓库（SwiftUI + Kotlin + Rust Relay）' },
-		],
-		faq: [
-			{
-				question: '为什么麦克风功能需要配合 BlackHole 2ch？',
-				answer: 'macOS 对内核级音频驱动有严格签名限制。复用成熟的开源虚拟声卡 BlackHole 2ch，可以让 USBLinkMic 专注于跨设备传输与重采样缓冲，避免在系统里塞入不透明的私有音频驱动。',
-			},
-			{
-				question: '没有数据线的时候能只用麦克风吗？',
-				answer: '可以。v4.0.8 支持局域网无线麦克风模式：当 Mac 和 Android 手机在同一 Wi-Fi 下，可通过配对码或扫码直接建立音频流。双向 USB 网络共享则仍需连接数据线。',
-			},
-			{
-				question: '安装包提示未公证或无法直接打开怎么办？',
-				answer: '当前公开构建使用本地开发者签名。首次打开如遇系统拦截，可在「系统设置 → 隐私与安全性」中点击「仍要打开」，或在终端对 `/Applications/USBLinkMic.app` 执行 `xattr -cr`。',
-			},
-		],
-	},
-	{
-		slug: 'habitbloom',
-		name: 'HabitBloom',
-		tagline: '把每天的小习惯放进一张愿意点开的卡片，在 iPhone、iPad 与 Mac 桌面安静同步',
-		headline: '去掉打卡系统的喧哗，只留下一张每天顺手点亮的习惯卡片。',
-		summary:
-			'HabitBloom 是一款用 SwiftUI 与 SwiftData 构建的跨苹果设备习惯记录应用。它用单页网格、月度日历与心情记录取代复杂的连胜惩罚机制，并通过自研的 Cloudflare Workers + Durable Objects 远端快照方案，解决了个人免费签名（Sideload）环境下桌面 Widget 与多端状态无法同步的痛点。',
-		category: '日常习惯与桌面小组件',
-		platforms: ['iOS', 'iPadOS', 'macOS (Mac Catalyst)'],
-		platformsLabel: 'iPhone · iPad · Mac',
-		statusBadge: '源码自编译 · 个人自用迭代中',
-		statusTone: 'source',
-		latestVersion: '内部演进版',
-		releaseDate: '2026-09-19',
-		availabilitySummary: '目前以 Xcode 本地签名与 Sideload 方式在作者自己的设备上长期运行，暂未提供公开安装包。',
-		availabilityNotice:
-			'诚实说明：HabitBloom 旨在验证个人免费签名下的多端同步与 Widget 刷新架构，目前尚未上架 App Store 或打包公开 IPA/DMG。你可以在详情页与工程文章中查看完整的界面设计、SwiftData 建模与 Cloudflare 同步实现。',
-		repoUrl: 'https://github.com/xxkingstuggle/HabitBloom',
-		repoVisibility: 'private',
-		articleSlug: 'habitbloom-habit-tracker',
-		articleTitle: 'HabitBloom：把每天的小习惯，放进一张愿意点开的卡片',
-		icon: habitbloomIcon,
-		screenshot: habitbloomShot,
-		screenshotAlt: 'HabitBloom 在 iPhone 与 iPad 上的习惯卡片、日历与统计界面',
-		screenshotCaption: 'HabitBloom 真实运行界面：柔和的暖色卡片层级，将今日打卡、月度热力日历与轻量心情记录收束在同一屏。',
-		downloads: [],
-		highlights: [
-			{
-				title: '无压迫感的卡片式每日打卡',
-				body: '打开应用第一眼只展示今天需要完成的习惯卡片与进度环。没有红点轰炸、排行榜或断签焦虑，点一下即可完成记录。',
-			},
-			{
-				title: '月度日历回看与轻量心情批注',
-				body: '每次打卡可顺手附上当天的心情与简短备注；在月历视图中按天回看时，能看清习惯起伏背后的生活脉络。',
-			},
-			{
-				title: '突破免费签名限制的桌面 Widget 同步',
-				body: '针对个人免费 Apple ID 无法使用 App Group / CloudKit 的限制，设计了「本地文件降级 + Cloudflare 远端快照」双轨链路，让桌面小组件依然能实时反映打卡进度。',
-			},
-			{
-				title: 'iPhone · iPad · Mac 三端同源体验',
-				body: '基于 SwiftUI 与 SwiftData 单一代码库适配 iOS、iPadOS 分栏与 Mac Catalyst 桌面窗口，多设备通过 WebSocket 与版本快照保持最终一致。',
-			},
-		],
-		scenarios: [
-			{
-				scenario: '早晚例行小事的快速确认',
-				pain: '功能繁重的效率软件打开需要先过启动页、切标签、填表单，记录成本比习惯本身还高。',
-				outcome: '在桌面小组件看到今日剩余习惯，点进卡片一秒完成勾选，立刻回到原本的生活节奏。',
-				mechanism: 'SwiftUI 轻量视图层级 + WidgetKit 定时拉取最新聚合快照。',
-			},
-			{
-				scenario: '在 iPhone、iPad 与 Mac 之间无缝切换',
-				pain: '白天在 Mac 前工作、晚上用 iPhone 睡前复盘，如果只在单机存储，记录很快就会割裂。',
-				outcome: '任意设备修改习惯或打卡后，其他在线设备通过 WebSocket 实时收到同步通知并合并本地状态。',
-				mechanism: 'Cloudflare Workers + Durable Objects 维护房间级快照与乐观锁版本号。',
-			},
-			{
-				scenario: '不想为自用小工具每年交平台税',
-				pain: 'Apple Developer Program 每年 99 美元；而不付费的个人免费签名会被剥夺 CloudKit 与跨进程 App Group 权限。',
-				outcome: '零平台年费即可在自己的多台苹果设备上跑通多端同步与桌面 Widget 展示。',
-				mechanism: '将主应用聚合好的轻量 Widget 快照推送到个人边缘节点，由小组件独立读取。',
-			},
-		],
-		workflow: [
-			{
-				step: '01',
-				title: '建立低摩擦的习惯卡片',
-				description: '为每个习惯设定图标、色彩与周期，首页自动聚合成清爽的今日待办网格。',
-				detail: '刻意克制配置项，避免把时间花在「装修任务管理器」上。',
-			},
-			{
-				step: '02',
-				title: '随手记录打卡与当下心情',
-				description: '点击卡片完成今日打卡，可选记录心情状态与一句简短备注。',
-				detail: '所有改动优先写入本地 SwiftData，离线状态下同样即时响应。',
-			},
-			{
-				step: '03',
-				title: '边缘节点同步到多端与桌面小组件',
-				description: '后台自动将全量快照与 Widget 摘要同步至 Cloudflare Durable Objects。',
-				detail: '即使在免费签名环境下，iPhone、iPad、Mac 与桌面小组件也能保持一致。',
-			},
-		],
-		specs: [
-			{ label: '当前状态', value: '个人自用与持续演进（Xcode 本地签名安装）' },
-			{ label: '支持平台', value: 'iOS · iPadOS · macOS (Mac Catalyst)' },
-			{ label: '客户端技术栈', value: 'SwiftUI + SwiftData + WidgetKit' },
-			{ label: '同步后端', value: 'Cloudflare Workers + Durable Objects + WebSocket' },
-			{ label: '离线能力', value: '本地优先存储，网络恢复后基于版本号自动合并' },
-			{ label: '配套工程手记', value: '已公开完整设计取舍与免费签名突围方案' },
-		],
-		faq: [
-			{
-				question: '为什么页面上没有提供 HabitBloom 的直接下载安装包？',
-				answer: '因为 HabitBloom 目前使用作者个人的免费 Apple ID 签名运行，未上架 App Store，也未签发可通用的企业/公证分发包。我们坚持只提供真实可用的安装包，不放失效链接或虚假下载按钮。',
-			},
-			{
-				question: '如果想参考它的免费签名 Widget 同步方案，可以从哪里了解？',
-				answer: '可以直接阅读配套工程文章《HabitBloom：把每天的小习惯，放进一张愿意点开的卡片》，文中详细记录了 App Group 受限原因、Cloudflare Workers + Durable Objects 同步协议以及离线冲突处理。',
-			},
-		],
-	},
+const release = 'https://github.com/xxkingstuggle/usblinkmic/releases';
+export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
+  {
+    slug:'usblinkmic', name:'USBLinkMic', category:'跨设备音频与网络工具',
+    tagline:'让 Android 的麦克风和网络，接进 Mac 的工作流',
+    headline:'一根线，接起手边的两个设备。',
+    summary:'USBLinkMic 把手机拾音、手机网络共享给 Mac、Mac 网络反向共享给手机，放进一个原生面板。音频通过 ADB 或局域网传输，网络链路通过 USB 工作。它要解决的是连接、依赖与状态提示散落在多条命令里的麻烦。',
+    platforms:['macOS 26+ · Apple Silicon','Android 8.0+'], platformsLabel:'macOS · Android', statusBadge:'v4.0.8 公开发布', statusTone:'release',latestVersion:'v4.0.8',releaseDate:'2026-10-17',
+    availabilitySummary:'公开提供 macOS DMG / ZIP 与 Android APK。下载对应 v4.0.8；下方截图是本机 4.0.10 开发版。',
+    availabilityNotice:'macOS 公开包尚未完成 Apple 公证。USB 功能需要调试授权；供其他 Mac 软件使用的音频输入需要 BlackHole 2ch。Android USB 网络共享依赖系统与机型支持，请先读安装说明。',
+    repoUrl:'https://github.com/xxkingstuggle/usblinkmic',repoVisibility:'public',releasesUrl:`${release}/tag/v4.0.8`,checksumsUrl:`${release}/download/v4.0.8/SHA256SUMS.txt`,
+    articleSlug:'usblinkmic-android-mac-bridge',articleTitle:'USBLinkMic：把 Android 麦克风与网络接入 Mac',
+    icon:usblinkmicIcon,screenshot:usblinkmicShot,screenshotAlt:'USBLinkMic Mac 4.0.10 开发版的手机麦克风面板，设备标识已遮盖',
+    screenshotCaption:'2026-10-23 采集的真实 Mac 界面，Mac / Android 安装元数据均为 4.0.10（开发版，未公开发布）。只展示当前界面与状态，不代表公开 v4.0.8 的外观或完整功能验收。设备标识已遮盖。Android 界面截图待补，本图仅展示 Mac。',
+    verifiedAt:'2026-10-23',developmentVersion:'4.0.10 · 有未提交修改',installedVersion:'Mac / Android 4.0.10',
+    contribution:'我负责需求取舍、跨平台集成、维护与验收，Codex 等 AI 助手参与实现和审查。项目复用 Android platform-tools、Gnirehtet 的 Java relay，随包保留 OpenJDK 运行时与许可，并通过外部 BlackHole 虚拟声卡对接音频输入；这些第三方成果不属于个人从零实现。',
+    limitations:['跨机型、息屏、插拔与长时间运行的完整 T01–T24 设备验收仍待完成。','当前截图来自开发版 4.0.10，不能据此认定公开 v4.0.8 已包含后续修复。','收到 PCM 帧不等于会议软件已收到可听声音；音频路由与系统输入需另行确认。','未承诺普遍的低延迟数值、功耗收益或所有 Android ROM 的网络兼容性。','无线麦克风链路未加密，只适合可信局域网。'],
+    sources:[{label:'v4.0.8 发行页与文件',url:`${release}/tag/v4.0.8`},{label:'公开版安装说明',url:`${release}/download/v4.0.8/INSTALL.md`},{label:'依赖与来源',url:'https://github.com/xxkingstuggle/usblinkmic/blob/v4.0.8/docs/dependencies.md'}],
+    downloads:[
+      {label:'下载 macOS DMG',platform:'macOS 26+ · Apple Silicon',version:'v4.0.8',size:'34.9 MB',format:'DMG',url:`${release}/download/v4.0.8/USBLinkMic-4.0.8-public.dmg`,primary:true,note:'未公证，先阅读安装说明'},
+      {label:'下载 Android APK',platform:'Android 8.0+',version:'v4.0.8',size:'11.4 MB',format:'APK',url:`${release}/download/v4.0.8/USBLinkMic-4.0.8-review.4.apk`,primary:true,note:'与公开 Mac 版本配套'},
+      {label:'macOS ZIP',platform:'macOS 26+ · Apple Silicon',version:'v4.0.8',size:'31.7 MB',format:'ZIP',url:`${release}/download/v4.0.8/USBLinkMic-4.0.8-public-macOS.zip`}
+    ],
+    highlights:[{title:'手机拾音，Mac 接收',body:'Android AudioRecord 采集音频，通过 USB ADB 转发或局域网直连传给 Mac。输出到 BlackHole 2ch 后，可在其他软件里选择对应音频输入。'},
+      {title:'网络有两个方向',body:'手机网络给 Mac 走 Android USB 网络共享；Mac 网络给手机走 Java relay 和 Android VPNService。两条网络路径互斥，并各有权限和系统条件。'},
+      {title:'把连接状态说明白',body:'面板集中展示设备、依赖与任务状态。开发版进一步区分请求成功、收到有效音频和实际可听，避免一个绿色状态代替所有判断。'},
+      {title:'复用成熟部件',body:'将 ADB 和手机端配套资源组织进安装流程，复用 BlackHole 与 Gnirehtet，把主要工作放在两端集成、错误提示和生命周期处理。'}],
+    scenarios:[{scenario:'会议与录音的输入选择',pain:'想用手边的 Android 拾音，又不想每次手动配置转发和音频路由。',outcome:'通过面板连接手机，再在 Mac 软件中选择虚拟声卡。实际可听与音质由使用环境验证。',mechanism:'AudioRecord → ADB / 局域网 → Mac → BlackHole。'},
+      {scenario:'Mac 临时使用手机网络',pain:'需要通过数据线接入手机当前可共享的网络。',outcome:'使用 Android USB 网络共享，Mac 识别对应网络接口；是否可用受系统与设备支持影响。',mechanism:'Android Tethering / CDC-NCM 与 macOS 网络接口。'},
+      {scenario:'把 Mac 网络送回手机',pain:'测试手机需要使用桌面侧网络，希望减少手工中继步骤。',outcome:'通过 USB 和 Android 本地 VPN 接口进行反向网络共享，无需 Root。',mechanism:'ADB reverse + Gnirehtet Java relay + VPNService。'}],
+    workflow:[{step:'01',title:'先准备两端',description:'按公开版安装说明准备 Mac 应用、Android 客户端与 BlackHole 2ch。',detail:'先确认系统要求和未公证安装边界。'},
+      {step:'02',title:'建立连接',description:'USB 模式需要数据线与手机调试授权；无线麦克风使用同一局域网配对。',detail:'USB 网络链路仍需要数据线，不随无线麦克风启用。'},
+      {step:'03',title:'确认实际使用结果',description:'在 Mac 软件里选择音频输入，分别检查手机、接收与软件端的状态。',detail:'收到音频帧只是中间一步，听见声音还需要正确路由。'}],
+    specs:[{label:'公开版本',value:'v4.0.8 / 2026-10-17'},{label:'系统',value:'macOS 26+ Apple Silicon / Android 8.0+'},{label:'USB 网络',value:'手机网络共享需兼容 Android 系统（文档建议 Android 11+）'},{label:'源码',value:'Swift / Kotlin / 第三方 Java relay'},{label:'音频链路',value:'USB ADB 或局域网 / BlackHole 2ch'},{label:'本轮核对',value:'Release、安装元数据、当前 UI；未跑完整设备矩阵'}],
+    faq:[{question:'截图里的 4.0.10 在哪里下载？',answer:'本页截图是当前本机开发版，用来展示真实界面。4.0.10 尚未公开发布；可下载的是 v4.0.8，界面和功能可能不同。'},
+      {question:'为什么需要 BlackHole？',answer:'它提供一个可被其他 Mac 软件选择的虚拟音频设备。USBLinkMic 负责接收和转送手机音频，BlackHole 负责系统侧音频接入，两者职责不同。'},
+      {question:'已经可以保证所有手机都稳定使用吗？',answer:'还不能。已有公开包与实现，但系统网络能力、音频路由、锁屏和长期运行仍需要逐设备验证。遇到问题可以在公开仓库提交经过脱敏的复现步骤。'}]
+  },
+  {
+    slug:'habitbloom',name:'HabitBloom',category:'习惯卡片与 Widget 实践',tagline:'让今天的小事，有一张愿意点开的卡片',headline:'记录习惯，也练习给功能划边界。',
+    summary:'HabitBloom 用 SwiftUI、SwiftData 和 WidgetKit 探索卡片式习惯记录。这个个人项目还包含免费签名条件下的 HTTP 远端快照方案。它适合作为界面与约束设计案例，尚未成为可公开安装的产品。',
+    platforms:['iOS','iPadOS','Mac Catalyst'],platformsLabel:'iPhone · iPad · Mac',statusBadge:'个人原型 · 私有源码',statusTone:'source',latestVersion:'未公开发布',releaseDate:'2026-10-23 核对',
+    availabilitySummary:'私有源码，暂无公开 IPA / DMG，也未上架 App Store。本页提供工程说明，不提供下载。',availabilityNotice:'远端快照和 Widget 刷新有调度与网络限制；完整冲突解决 UI 与公开分发流程仍未完成，不承诺多端实时一致。',repoUrl:'',repoVisibility:'private',articleSlug:'habitbloom-habit-tracker',articleTitle:'HabitBloom：给习惯卡片 Widget 留一条远端快照路径',icon:habitbloomIcon,screenshot:habitbloomShot,screenshotAlt:'HabitBloom 项目图标展示，非运行界面',screenshotCaption:'HabitBloom 项目图标与配色展示，不是运行截图。不展示个人习惯、日历与备注数据。',verifiedAt:'2026-10-23',developmentVersion:'个人源码迭代',installedVersion:'本轮未做安装/运行验收',
+    contribution:'我负责产品范围、界面方向与集成，AI 助手参与实现与审查。案例仅描述已核对的代码设计，不把原型和静态说明当作多设备功能验收。',limitations:['源码私有且无公开安装包，访客暂时无法自行体验。','HTTP 快照不等于 WebSocket 实时推送；Widget 刷新受系统调度影响。','完整冲突解决 UI、iCloud、服务端推送与公开 IPA 发布流程尚未完成。'],sources:[],downloads:[],
+    highlights:[{title:'今天的卡片优先',body:'用图标、颜色与目标日期组织习惯，首页优先展示当天记录。'}, {title:'先存本地',body:'SwiftData 承担本地存储，远端使用 HTTP 快照；不将网络成功与本地记录混为一谈。'}, {title:'Widget 单独拿快照',body:'用预先整理的摘要减少小组件端的数据处理。免费签名和重签名环境需要单独验证。'}],
+    scenarios:[{scenario:'快速记录今天',pain:'不希望一次简单记录被复杂的配置和统计打断。',outcome:'尝试用卡片缩短记录路径；本轮未做用户效率测量。',mechanism:'SwiftUI 卡片 + SwiftData 本地记录。'}, {scenario:'让小组件拿到数据',pain:'个人签名条件下，主应用与 Widget 共享数据可能受限。',outcome:'实现 HTTP 快照路径；不承诺即时刷新或完整冲突处理。',mechanism:'Cloudflare Workers / Durable Objects 存取快照。'}],
+    workflow:[{step:'01',title:'界定今天要做的事',description:'为习惯选择图标、颜色和周期。',detail:'这是原型的交互设计说明。'}, {step:'02',title:'先完成本地记录',description:'通过卡片记录完成情况，数据保存在本地模型。',detail:'个人图片与备注不作为公开演示素材。'}, {step:'03',title:'单独验证远端与 Widget',description:'检查快照读取与更新触发时机。',detail:'仍需补多设备冲突与侧载环境验收。'}],
+    specs:[{label:'状态',value:'个人原型 / 私有源码 / 无公开包'},{label:'客户端',value:'SwiftUI · SwiftData · WidgetKit'},{label:'远端设计',value:'HTTP 快照 / Workers + Durable Objects'},{label:'未完成',value:'完整冲突 UI 与公开分发流程'}],
+    faq:[{question:'可以下载或查看源码吗？',answer:'暂时不可以。仓库为私有，没有公开安装包。这里保留的是设计案例与已知限制，未来如公开分发会单独更新。'}, {question:'它能实时同步所有设备吗？',answer:'本轮代码核对支持 HTTP 快照方案，没有将其确认为 WebSocket 实时同步。系统调度、离线恢复和多设备冲突仍需要更多验证。'}]
+  }
 ];
-
-export function getSoftwareBySlug(slug: string): SoftwareProduct | undefined {
-	return SOFTWARE_PRODUCTS.find((product) => product.slug === slug);
-}
-
-export function getSoftwareByArticleSlug(articleSlug: string): SoftwareProduct | undefined {
-	return SOFTWARE_PRODUCTS.find((product) => product.articleSlug === articleSlug);
-}
+export const WORKBENCH_PROJECTS = [
+  {name:'Colorful',status:'私有原型 / 浏览器工具',summary:'让明确启用的 Chromium PWA 使用主题色。重点是默认关闭、域名继承与可恢复的设置。',href:'/posts/browser-tools-boundaries/#colorful'},
+  {name:'Linux.do 标题检索',status:'开发札记 / 用户脚本',summary:'只索引公开主题标题，在本地检索。遇到限流或挑战就停下，不越过站点权限。',href:'/posts/browser-tools-boundaries/#linuxdo'},
+  {name:'AI 协作实践',status:'工程方法 / 持续修订',summary:'把任务拆清楚，再检查真实差异与验证结果。保留模型参与和人工判断各自的责任。',href:'/posts/lightweight-multi-agent-coding-loop/'},
+  {name:'zjx-download',status:'开发中 / 无公开分发',summary:'macOS 下载器与浏览器交接实践。当前仍有网络启动问题，设备验收未完成。',href:'/posts/browser-tools-boundaries/#zjx-download'}
+];
+export function getSoftwareBySlug(slug:string) { return SOFTWARE_PRODUCTS.find(p=>p.slug===slug); }
+export function getSoftwareByArticleSlug(slug:string) { return SOFTWARE_PRODUCTS.find(p=>p.articleSlug===slug); }

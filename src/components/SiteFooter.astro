@@ -1,4 +1,5 @@
 ---
+import { SOFTWARE_PRODUCTS } from '../lib/software';
 import { siteConfig } from '../config';
 
 const year = new Date().getFullYear();
@@ -11,18 +12,18 @@ const year = new Date().getFullYear();
 				<span class="footer-monogram" aria-hidden="true">X</span>
 				<div>
 					<strong>Xin · myzjx.com</strong>
-					<span>个人软件官网与工程开发手记</span>
+					<span>软件、设计与工程手记</span>
 				</div>
 			</a>
 			<p class="footer-bio">
-				从自己真实遇到的具体问题出发，构建跨设备工具与原生应用，并把架构取舍、踩坑复盘和日常思考完整留存。
+				从具体问题出发做工具，记录实现与取舍。AI 参与开发，公开内容按实际证据说明。
 			</p>
 		</div>
 
 		<nav class="footer-col" aria-label="软件产品导航">
 			<h2 class="footer-col-title">软件与作品</h2>
 			<a href="/software/">全部软件总览</a>
-			<a href="/software/usblinkmic/">USBLinkMic <span class="footer-pill">v4.0.8</span></a>
+			<a href="/software/usblinkmic/">USBLinkMic <span class="footer-pill">{SOFTWARE_PRODUCTS[0].latestVersion}</span></a>
 			<a href="/software/habitbloom/">HabitBloom</a>
 			<a href="/posts/lightweight-multi-agent-coding-loop/">多 Agent 编码回路实践</a>
 		</nav>

@@ -1,4 +1,5 @@
 ---
+import { SOFTWARE_PRODUCTS } from '../lib/software';
 import ThemeSwitcher from './ThemeSwitcher.astro';
 
 const currentPath = Astro.url.pathname;
@@ -13,7 +14,7 @@ const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/lin
 		<a class="brand" href="/" aria-label="Xin · myzjx.com 首页">
 			<span class="brand-monogram" aria-hidden="true">X</span>
 			<span class="brand-identity">
-				<span class="brand-name">Xin</span>
+				<span class="brand-name">MYZJX</span>
 				<span class="brand-domain">myzjx.com</span>
 			</span>
 		</a>
@@ -28,7 +29,7 @@ const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/lin
 		<div class="header-actions">
 			<a class="header-cta" href="/software/usblinkmic/">
 				<span>获取 USBLinkMic</span>
-				<span class="header-cta-badge">v4.0.8</span>
+				<span class="header-cta-badge">{SOFTWARE_PRODUCTS[0].latestVersion}</span>
 			</a>
 			<ThemeSwitcher />
 			<details class="mobile-nav" data-mobile-nav>
@@ -47,7 +48,7 @@ const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/lin
 						</a>
 						<a href="/software/" aria-current={isSoftware ? 'page' : undefined}>
 							<strong>软件与工具</strong>
-							<span>USBLinkMic v4.0.8 下载与 HabitBloom 介绍</span>
+							<span>公开作品、个人原型与工程实践</span>
 						</a>
 						<a href="/posts/" aria-current={isPosts ? 'page' : undefined}>
 							<strong>文章与手记</strong>

@@ -1,14 +1,14 @@
 ---
-title: HabitBloom，把「每天该做的事」做成一张愿意点开的卡片
+title: HabitBloom：给习惯卡片 Widget 留一条远端快照路径
 pubDate: 2026-09-15
-description: HabitBloom 是一款用 SwiftUI 写的习惯打卡应用。这里记录它怎么缩小功能范围、怎么处理免费签名下的小组件数据问题，以及我如何让 AI Agent 参与代码审查。
+updatedDate: 2026-10-23
+description: 记录 HabitBloom 如何用本地 SwiftData、App Group 与 HTTP 快照支持 Widget；它仍是私有源码、没有公开安装包，也不承诺实时多设备同步。
 tags:
   - 独立开发
   - SwiftUI
-  - iOS
   - WidgetKit
-kicker: iOS/macOS 应用 · HABITBLOOM
-featured: true
+  - 工程取舍
+kicker: 个人应用 · HABITBLOOM
 draft: false
 kind: project
 presentation: article
@@ -18,67 +18,35 @@ cover: ../../assets/projects/habitbloom-cover.png
 import ArticleMedia from '../../components/article/ArticleMedia.astro';
 import habitImg from '../../assets/projects/habitbloom-icon.png';
 
-我用过几款习惯打卡应用。有些功能很全，打开之后要找半天；有些又太简单，用一阵子就不想再点开。
+HabitBloom 从卡片式习惯记录开始。主 App 的数据可以先放在本机，桌面小组件却需要另一条能拿到摘要的路径。免费签名与侧载条件，又让这件事多了一层约束。
 
-所以我想做的东西很小，今天要做的习惯最好直接出现在手机桌面上。点一下，记上了，就可以离开。
+这份案例记录当前源码采用的本地存储与远端快照方案。项目源码私有，暂时没有公开安装包。
 
 <ArticleMedia
 	src={habitImg}
 	alt="HabitBloom 应用图标"
-	caption="HabitBloom 共用一套 SwiftUI 实现，运行在 iPhone、iPad 和 Mac 上。"
+	caption="HabitBloom 是一款 SwiftUI 习惯记录应用，使用 SwiftData 保存本地数据。"
 	width="content"
 />
 
-## 1. 我先给它划几条线
+## 先把数据留在本机
 
-做着做着，功能很容易越加越多。我开工前先想好几条边界，后面遇到新点子，就拿它们对一遍。打开要快，一进来就看到今天的卡片；不登录也能用；免费 Apple 账号可以签名安装；自己选的图片留在本地，云端只同步文字字段。
+HabitBloom 用 SwiftData 保存习惯和打卡记录，WidgetKit 展示单项习惯、多项习惯和摘要卡片。项目也包含本地提醒、统计和可交互的日历。这个范围适合先把个人使用路径做出来，不需要一开始就依赖账号或完整云端同步。
 
-这几条线也帮我砍掉了一些听起来不错的想法。我没有继续做 iCloud / CloudKit 同步、服务器推送提醒、Live Activities 和灵动岛提醒，先把不登录也能用、桌面卡片好点开这件事做好。
+小组件拿数据有两条路：正常共享环境可以读 App Group 快照；侧载环境下，项目还实现了 Cloudflare Worker 的远端 HTTP 快照。主 App 通过 HTTP 请求写入快照，小组件请求时尝试读取远端内容；请求失败时会回退到已有的缓存或本地 App Group 数据。它交换的是已经整理好的 Widget 状态，不是让 Widget 直接查询主 App 的 SwiftData。
 
-习惯可以自定义名称、图标、颜色、卡片样式、目标星期、提醒和排序。首页用贴纸风格的卡片，图标可以选 emoji 或 SF Symbols；打卡音效、动画、本地通知和三类 WidgetKit 小组件也都在范围里。数据用 SwiftData 保存，Mac Catalyst 版本可以在 Mac 上跑同一套逻辑，方便调试。
+小组件打卡也有对应的回并流程：Widget 记录操作，并尝试把更新后的快照发到远端；主 App 启动时会将待处理的 Widget 打卡合并回本地数据。代码里是 HTTP 请求与启动时回并，没有 WebSocket 通道，也没有完整的多设备冲突处理界面。
 
-## 2. 免费签名下，小组件怎么拿到数据
+## 这条路径的边界
 
-这是我在这个项目里卡得最久的问题。
+快照请求受网络和 WidgetKit 刷新时机影响。远端请求失败时，界面可能使用缓存或本地快照；不能把它描述成所有设备都能实时看到最新内容。多个设备同时编辑、离线期间的多次修改以及冲突如何呈现，也没有作为完整同步产品验证。
 
-主 App 和小组件通常会用 App Group 共享数据。模拟器里正常，接上 Xcode 调试时也正常。可把 App 侧载到真机之后，我遇到过小组件空白或显示旧数据的情况。问题出在我当时使用的第三方重签名路径上，模拟器和有线调试没能把它复现出来。
+因此更准确的说法是：HabitBloom 用本地 SwiftData 保存主数据，并为 Widget 提供 App Group 与 HTTP 远端快照路径；主 App 在启动时回并部分 Widget 打卡。这是一项应用内的工程方案，不代表可靠的通用多端同步服务。
 
-我换了个办法，不让小组件依赖这条本地共享链路。
+## 参与与状态
 
-- 主 App 在几个关键时机，把一份**已经渲染好的快照**写到 Cloudflare Workers + Durable Objects。
-- 小组件通过共享的 `HABITBLOOM_REMOTE_DEVICE_KEY` 读取快照，然后直接显示。
-- App Group 留作 Xcode 环境下的本地兜底，不再负责我这条真机侧载路径。
+我负责定义功能边界、组织应用与 Widget 的数据路径，并检查集成后的实现。AI 工具参与了开发或检查；其输出需要回到源码、构建和相应测试核对。项目还使用 Apple 的 SwiftUI、SwiftData、WidgetKit，以及 Cloudflare Worker / Durable Objects 等平台能力，这些平台本身不归我所有。
 
-这样小组件拿到的是已经算好的内容，不需要在自己的运行时间里重新查 SwiftData、再做一遍统计。数据准备和显示也分得更清楚。
+项目状态文档列出了当前已实现功能和明确缺口。CloudKit 同步、推送提醒、完整的远端冲突处理界面和公开 IPA 发布流程都不在已完成范围内。源码仓库为私有，也没有公开安装包；访客目前可以阅读这篇方案说明，不能据此编译或安装 HabitBloom。
 
-云端备份也按同一条边界来做，只传文字。习惯名称、颜色、周期和打卡记录会备份；卡片照片经过本地裁剪压缩后，只留在设备上。
-
-这条云端路径也有明确的边界。它没有冲突合并界面，也没有断网后的队列重放。它处理的是侧载环境下小组件显示数据的问题，不是全平台实时同步。
-
-## 3. 我怎么和 AI Agent 协作
-
-一个人做 App，很容易一边定架构，一边被自己的假设带着走。我把 AI Agent 放进流程里，主要是让它帮我审查，不是让它替我想完整个产品。
-
-我会先写清需求，再动代码。我不会只说「帮我写个打卡 App」，而是把功能边界、数据模型和签名限制整理出来，再拆一个具体任务给它。比如给定 SwiftData 模型，生成按 `[year][month]` 统计的热图聚合，同时说明不能在主线程扫描全部历史记录。任务边界清楚，结果才容易检查。
-
-我也会让它帮忙查漏。项目里有一份 `PERMISSIONS.md`，记录 App Groups、CloudKit、Push、Live Activities 等能力的使用状态，也标出它们和免费签名之间的关系。Agent 可以帮我把清单过一遍，但结论还得回到 Apple 文档和真机构建上核对。
-
-改了什么也得看得见。Agent 说做完还不算，我会看 Git 差异，也会跑 `xcodebuild` 和项目里的 smoke / stress 测试。之前有一次，系统缺少 iOS 运行库，`actool` 在打包时直接报错。这个问题只读代码看不出来，确实得构建一遍。
-
-它也会给出过时的写法。SwiftUI 和 WidgetKit 的 API 会随 SDK 变化，我遇到过编译器拒绝 Agent 提供的代码，最后还是根据报错逐项改正。我把它的输出当起点，能不能用得以项目里的编译和验证为准。
-
-## 4. 成品与代码
-
-HabitBloom 目前能作为个人产品使用，包含这些部分。
-
-- iPhone、iPad 和 Mac 运行同一套代码，三类桌面小组件在真机侧载环境下可靠刷新。
-- 提供统计、连续天数和月度热力图，也可以使用 Cloudflare 轻量备份。
-- 项目留有 Core smoke 和 stress 测试可执行文件。
-
-没做的部分我也记录在项目里，CloudKit 同步、服务端推送提醒、完整的图片裁剪 UI、小组件直接打卡按钮，以及 IPA 打包分发流程都还没有。这些是我在当前约束下主动留下的范围。
-
-> HabitBloom 源码在 [GitHub](https://github.com/xxkingstuggle/HabitBloom)。
-
----
-
-我现在会先写边界，再决定功能。那几条约束帮我挡掉了不少「顺手加一下」的点子，也让项目容易收住。
+想看项目的整体状态与其他公开作品，可以回到 [HabitBloom 作品页](/software/habitbloom/)。

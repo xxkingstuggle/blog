@@ -1,14 +1,15 @@
 ---
-title: USBLinkMic，让 Android 手机变成 Mac 的麦克风和网卡
+title: USBLinkMic：把 Android 麦克风与网络接入 Mac
 pubDate: 2026-09-14
-description: USBLinkMic 把 Android 手机麦克风和网络接到 Mac。这里记录它怎么把 ADB 流程收进图形应用，以及一次 DHCP 时序问题的排查过程。
+updatedDate: 2026-10-23
+description: 从手机拾音到 USB 双向供网，记录音频路由、系统权限与跨端状态如何接进一个 Mac 面板。
 tags:
-  - 独立开发
   - macOS
   - Android
   - 音频
   - 网络
-kicker: macOS + Android 工具 · USBLINKMIC
+  - 工程案例
+kicker: macOS + Android · USBLINKMIC
 draft: false
 kind: project
 presentation: article
@@ -16,95 +17,32 @@ cover: ../../assets/projects/usblinkmic-mac.png
 ---
 
 import ArticleMedia from '../../components/article/ArticleMedia.astro';
-import usblinkmicImg from '../../assets/projects/usblinkmic-mac.png';
+import macInterface from '../../assets/projects/usblinkmic-mac.png';
 
-有次线上开会，我发现 MacBook 自带麦克风在空一点的房间里容易录出回声，手边 Android 手机的麦克风反而更合适。
+<ArticleMedia src={macInterface} alt="USBLinkMic Mac 4.0.10 开发版手机麦克风面板，设备标识已遮盖" caption="2026-10-23 真实运行截图：本机安装的 4.0.10 开发版。公开下载为 v4.0.8；本图不代表公开版外观或完整功能验收。" width="wide" />
 
-当时能用的方案不少，但通常要先装 Homebrew、Android SDK，把 `adb` 加进 PATH，再手动跑 `adb reverse`，最后还要自己配置音频路由。这些步骤我能照着做，但如果想把工具交给别人用，它们就成了额外门槛。
+手机有现成的麦克风，也能接入网络；Mac 需要的是能被其他软件选择的音频输入，以及可用的网络接口。USBLinkMic 把两端之间的连接步骤收进一个面板，但音频、供网与系统权限仍是三件需要分别确认的事。
 
-我开始做 USBLinkMic 时，想解决的就不只是传音频，而是把这些步骤收进一个图形应用里，让人先看到能做什么，再按界面一步步连起来。
+本文更新于 2026-10-23，链路说明依据公开 Release、对应 Git 标签和仓库文档。
 
-<ArticleMedia
-	src={usblinkmicImg}
-	alt="USBLinkMic Mac 端主界面"
-	caption="Mac 端主界面把三条功能链路和音频状态放在一起。"
-	width="wide"
-/>
+## 一套 Mac 界面，三条不同的链路
 
-## 1. 先把范围定下来
+USBLinkMic 的公开说明把它分成三项用途：Android 手机麦克风传到 Mac、手机通过 USB 网络共享给 Mac，以及 Mac 通过 Android VPN 与转发组件给手机供网。它们共用一个 Mac 应用入口，但依赖的系统能力不同；“插上线”并不代表三条链路都已经就绪。
 
-目前项目里有三条彼此独立的链路。
+麦克风路径通过 ADB 或同一可信局域网传输 Android 采集的声音。要让会议或录音软件选择手机作为输入，还需要把声音交给虚拟音频设备；项目使用 BlackHole 作为可选的外部组件，用户需自行安装。Wi-Fi 音频链路没有加密，不能在不可信的公共网络中使用。
 
-- **手机麦克风 → Mac**，通过 ADB 或局域网把 Android 麦克风音频送到 Mac，并输出到选定的 Mac 输出设备。
-- **手机网络 → Mac**，通过 ADB 启动 USB CDC-NCM，把手机的移动网络共享给 Mac。
-- **Mac 网络 → 手机**，通过 ADB 反向中继加 Android VPN Service，把 Mac 的网络反向共享回手机。
+手机给 Mac 供网依赖 Android 的 USB NCM 与系统共享能力。Mac 给手机供网则使用 Android VPN 接口和 Gnirehtet 转发组件。两种供网方向互斥；Android 版本、厂商系统和 macOS 网络服务都会影响可用性。Gnirehtet 与 BlackHole 都是第三方项目，来源和许可应按各自记录查看。
 
-第三条在 3.1.0 版本接入了 gnirehtet v2.5.1 的 Rust relay，手机端不需要再单独安装一款工具。
+## 集成边界比功能清单更有用
 
-功能清单列出来不算太难，真正花时间的是怎么把它们做成别人也能走完的流程。
+公开仓库把配套 Android APK、ADB 和 Mac 端运行所需组件放进 Mac 安装包，减少用户另行准备开发工具的步骤；USB 调试、录音与 VPN 等系统授权仍需要用户自己确认。BlackHole 不随应用自动安装。
 
-## 2. 把依赖收进 DMG
+项目也区分“链路已经连接”和“互联网一定可用”。手机网络接入 Mac 后，macOS 仍可能优先使用 Wi-Fi；应用显示链路状态，不会替用户重排系统网络优先级。这个边界能避免一个绿色状态被误读为整条网络路径都已验收。
 
-早期版本有个绕不开的门槛，`adb` 要从哪里来。它不随 macOS 提供，用户得自己安装 Homebrew 或 Android SDK。对熟悉命令行的人来说只是多一步，对其他人来说，这一步就足够劝退。
+## 发布记录不等于全场景通过
 
-3.2.0 把独立的 Universal 架构 `adb`（37.0.1）和 Android APK 一起打进 Mac 端，再用首次使用向导带人检测连接、确认调试授权、安装手机端 App、选用途预设，最后做声音测试。装好 DMG 后，不必再单独装 Homebrew、Android SDK，也不用手动敲这些命令。
+本文讨论的是公开标签及其 Release 对应的项目记录。当前公开版本、正在开发的源码版本和已安装应用可能不同；下载与可用版本请以 [USBLinkMic 作品页](/software/usblinkmic/) 的当前状态为准。
 
-我还把几个容易出问题的地方放进界面里。
+仓库的验收文档把测试项与自动化下层证据、待实机检查分开记录。它没有宣称跨 ROM、长时间运行、反复插拔以及复杂网络组合都已通过。因此，源码中的生命周期处理、自动化测试和一次界面截图，都不能单独证明所有手机上稳定可用。
 
-- **音频路由和防啸叫提示**，画出手机到会议软件的连接路径，说明 BlackHole 2ch 怎么安装，也提醒哪些设置可能产生啸叫。
-- **日志脱敏**，复制日志时会抹掉设备序列号、敏感 IP 和主机用户名，方便排查时少暴露设备信息。
-- **设置草稿保护**，标出哪些修改立即生效，哪些需要重启，并允许放弃还没保存的内容。
-
-## 3. DHCP 为什么没赶上
-
-有个问题我想把排查过程记下来。Android 已经通过 `start-ethernet` 回调报告启动成功，`tethered` 接口里也能看到 `usb0`，但 Mac 端还是报 USB 网卡没有拿到 IP。
-
-这两个信号很关键，手机侧的 Tethering 已经起来了，出错的是 Mac 读取网络接口的时机。如果把注意力一直放在手机有没有启动上，就会往错误的方向查。
-
-我沿着调用链往回找，最后看到的流程是这样。
-
-```text
-startNcmTethering  (AppModel.swift:469)
-  └─ 判断 network.ip != "-" → 为 false 则失败
-       └─ network.ip 由 refreshNetworkWithRetry 更新
-            └─ 3 轮 × 2s = 6s，每轮调用 networksetup -getinfo
-```
-
-当时的等待窗口只有 6 秒，每轮只读一次 IP，没有重新触发 `detectnewhardware` 或启用网络服务。DHCP 要是晚一点完成，App 就已经报错了。
-
-我用实验脚本把等待改成 25 秒，并在每轮重新触发检测和 enable，问题就消失了。
-
-```text
-修复前：3 × 2s，每轮只读 IP
-修复后：25s 轮询，每轮重新触发 detectnewhardware + enable
-```
-
-后来我给这条链路补了诊断信息，也给清理流程加了超时限制。退出 App 时，ADB reverse、VPN 和网络配置都要按上限收尾，不能因为清理卡住就一直挂在那里。
-
-这次排查让我记住一件很具体的事，跨设备的「启动成功」只说明对端接到了请求，不等于 Mac 上的状态已经准备好。中间那段等待，也得认真处理。
-
-## 4. 我把 AI Agent 放在什么位置
-
-这个项目同时碰到 macOS、Android、音频和系统网络配置。我用 AI Agent 做审查和查漏，尤其适合先把调用链整理清楚。
-
-上面的 DHCP 问题，我让 Agent 只读检查「Android Tethering 成功之后，Mac 怎么拿到 IP」这一段。它给了带文件名、方法名和行号的调用链，包括 `AppModel.swift:469` 的判断、`AppModel.swift:677` 的 `refreshNetworkWithRetry`，以及 `AppModel.swift:703` 对 `networksetup -getinfo` 的调用。我当时要求它不要改代码，先把因果关系摆出来，确认方向后再决定修哪里。
-
-它也帮我做横向检查。项目里留下了能耗、构建配置、代码质量，以及 Android Shell 和 Mac 端能力对齐的审查记录。涉及两端时，我自己很容易只盯着手上的那一侧；让 Agent 按清单扫一遍，能提醒我去看另一端。
-
-不过审查报告和建议都得验证。3.1.0 的整数 PCM 波形问题，是结合实际波形观察和性能追踪确认的，不是因为读了几行代码就算修好。
-
-Agent 对 ADB、Android 版本和 macOS 网络行为也可能说错。我遇到过不适用于当时系统版本的 `networksetup` 用法，最后还是本机测试和系统返回值更可靠。Agent 能帮我缩小排查范围，不能替我给结论盖章。
-
-## 5. 成品与代码
-
-- macOS 原生应用 + Android 客户端，DMG / APK 双产物
-- 内建 `adb` 与 APK，零配置启动
-- 三条网络/音频链路，麦克风上行、USB NCM 共享、Mac 网络反向共享
-- 实时电平表、音频路由可视化、脱敏日志导出
-- 单元测试、音频性能追踪、双端诊断信息
-
-> USBLinkMic 源码在 [GitHub](https://github.com/xxkingstuggle/USBLinkMic)。
-
----
-
-做完以后，时间主要花在安装、连接、状态提示和出错后的清理上。把这些环节接起来，用户才不用碰终端。对我来说，这些收尾比再加一个功能更能说明项目有没有做完整。
+我负责需求判断、范围取舍，以及把 Mac、Android 与系统组件接进一条可检查的流程；AI 工具参与开发和审查，结果仍要由项目证据核对。本文不声称每段代码都由我独立从零编写，也不把 BlackHole 或 Gnirehtet 的实现归为个人成果。
