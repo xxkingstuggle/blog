@@ -11,43 +11,33 @@ const habit = SOFTWARE_PRODUCTS[1];
 const posts = (await getListedPosts()).filter(p => p.data.kind === 'project').slice(0,3);
 ---
 <BaseLayout title="Xin 的个人工作台" description={siteConfig.description} image={usb.screenshot}>
-  <section class="shell maker-intro" aria-labelledby="intro-title">
-    <div class="maker-eyebrow"><span>MYZJX / Xin 的个人工作台</span><span>软件 · 设计 · 工程手记</span></div>
-    <div class="maker-intro-grid">
-      <h1 id="intro-title">把日常的麻烦，<br />做成<span>顺手的工具。</span></h1>
-      <div class="maker-intro-note">
-        <p>你好，我是 Xin。我借助 AI 做原生软件和浏览器工具，负责需求取舍、集成与验收，也把过程中想明白的事写下来。</p>
-        <div class="maker-links"><a href="#selected-work">看代表作品 <span aria-hidden="true">↘</span></a><a href="/about/">认识我 <span aria-hidden="true">↗</span></a></div>
-      </div>
-    </div>
+  <section class="shell studio-intro" aria-labelledby="intro-title">
+    <p class="eyebrow" data-reveal>MYZJX · Xin 的个人工作台</p>
+    <h1 id="intro-title" data-reveal>把想法做成工具。<br/><span>把日常变得顺手。</span></h1>
+    <p class="studio-lead" data-reveal>你好，我是 Xin。借助 AI 做原生软件和浏览器工具，<br class="desktop-break"/>负责需求取舍、集成与验收，也记下背后的思考。</p>
+    <div class="studio-actions" data-reveal><a class="btn-primary" href="#selected-work">探索作品 <span aria-hidden="true">↓</span></a><a class="text-link" href="/about/">认识我 <span aria-hidden="true">↗</span></a></div>
   </section>
 
   <section class="shell selected-work" id="selected-work" aria-labelledby="selected-title">
-    <div class="folio-label"><span id="selected-title">01 / 代表作品</span><span>从一个具体问题开始</span></div>
-    <article class="flagship">
-      <div class="flagship-copy">
-        <div class="app-identity"><Image src={usb.icon} alt="" width={56} height={56} /><div><span class="small-label">macOS + Android</span><h2>USBLinkMic</h2></div></div>
-        <h3>手机放在手边，<br />麦克风接进 Mac。</h3>
-        <p>把 Android 拾音、USB 网络共享和反向网络中继，收进一个 Mac 面板。少记几条命令，多看一眼连接状态。</p>
-        <div class="release-line"><span class="status-pill" data-tone="release">{usb.latestVersion} 公开版</span><span>另有 4.0.10 开发界面预览</span></div>
-        <div class="brand-hero-actions"><a class="btn-primary" href="/software/usblinkmic/">查看作品与下载 <span aria-hidden="true">↗</span></a><a class="text-link" href={`/posts/${usb.articleSlug}/`}>读工程取舍 →</a></div>
-        <p class="flagship-footnote">依赖 BlackHole 与 ADB。设备兼容、长时间运行仍需实机验证。</p>
-      </div>
-      <div class="flagship-art"><ProductVisual product={usb} priority /><p class="visual-provenance">真实运行截图 · 本机开发版 4.0.10 · 设备标识已遮盖</p></div>
+    <article class="hero-showcase" data-reveal>
+      <div class="showcase-heading"><div class="app-identity"><Image src={usb.icon} alt="" width={48} height={48}/><div><p class="eyebrow">代表作品 · macOS + Android</p><h2 id="selected-title">USBLinkMic</h2></div></div><a class="showcase-link" href="/software/usblinkmic/">查看作品与下载 <span aria-hidden="true">↗</span></a></div>
+      <div class="showcase-message"><h3>手机放在手边。<br class="mobile-break"/>麦克风接进 Mac。</h3><p>音频、USB 网络共享与反向中继，收进一个原生面板。</p></div>
+      <a class="showcase-image" href="/software/usblinkmic/" aria-label="查看 USBLinkMic 真实界面、功能与下载"><ProductVisual product={usb} priority/></a>
+      <div class="showcase-caption"><span class="status-pill" data-tone="release">{usb.latestVersion} 公开版</span><p>实拍为 4.0.10 开发版 · 设备标识已遮盖</p><a class="text-link" href={`/posts/${usb.articleSlug}/`}>读工程取舍 <span aria-hidden="true">→</span></a></div>
     </article>
-    <div class="case-insights"><div><span>问题</span><p>手机有麦克风，Mac 软件需要一个可选的音频输入。</p></div><div><span>取舍</span><p>复用虚拟声卡与 USB 工具，把精力留给连接和状态提示。</p></div><div><span>交付</span><p>公开双端安装包、源码与安装说明；开发进展单独标注。</p></div></div>
+    <div class="case-insights" data-reveal><div><span>01 / 场景</span><p>手机有麦克风，Mac 软件需要一个可选的音频输入。</p></div><div><span>02 / 取舍</span><p>复用 BlackHole、ADB 等组件，专注连接流程与状态反馈。</p></div><div><span>03 / 边界</span><p>双端安装包与源码已公开；机型兼容和长期稳定性仍需实测。</p></div></div>
   </section>
 
   <section class="shell maker-section" aria-labelledby="explorations-title">
-    <div class="folio-heading"><div><span class="small-label">02 / 继续动手</span><h2 id="explorations-title">不只有一种解法。</h2></div><a class="text-link" href="/software/">全部作品与状态 ↗</a></div>
+    <div class="folio-heading" data-reveal><div><p class="eyebrow">更多作品</p><h2 id="explorations-title">小工具，<br/>也值得认真对待。</h2></div><a class="text-link" href="/software/">全部作品与状态 <span aria-hidden="true">↗</span></a></div>
     <div class="exploration-grid">
-      <article class="bloom-preview"><div class="bloom-mark"><Image src={habit.icon} alt="HabitBloom 应用图标" width={150} height={150} /></div><div><span class="small-label">个人工具 / 暂无公开安装包</span><h3><a href="/software/habitbloom/">HabitBloom <span aria-hidden="true">↗</span></a></h3><p>一张今天愿意点开的习惯卡片。也记录免费签名条件下，Widget 获取快照的设计与限制。</p></div></article>
-      <div class="workbench-list">{WORKBENCH_PROJECTS.slice(0,3).map((p,i)=><a class="bench-row" href={p.href}><span class="bench-index">0{i+1}</span><div><span class="small-label">{p.status}</span><h3>{p.name}</h3><p>{p.summary}</p></div><span aria-hidden="true">↗</span></a>)}</div>
+      <a class="bloom-preview" href="/software/habitbloom/" data-reveal><div class="bloom-mark"><Image src={habit.icon} alt="HabitBloom 项目图标" width={192} height={192}/></div><div><p class="eyebrow">个人原型 · 暂无公开安装包</p><h3>HabitBloom <span aria-hidden="true">↗</span></h3><p>一张今天愿意点开的习惯卡片。探索免费签名下，Widget 获取快照的设计与限制。</p></div></a>
+      <div class="workbench-list" data-reveal>{WORKBENCH_PROJECTS.slice(0,3).map((p,i)=><a class="bench-row" href={p.href}><span class="bench-index">0{i+1}</span><div><span class="small-label">{p.status}</span><h3>{p.name}</h3><p>{p.summary}</p></div><span class="link-arrow" aria-hidden="true">↗</span></a>)}</div>
     </div>
   </section>
 
-  <section class="maker-method" aria-labelledby="method-title"><div class="shell method-inner"><span class="small-label">工作方式</span><h2 id="method-title">想清楚一点，<br />做出来，再核对。</h2><div><p>我感兴趣的是软件落到具体生活里的那一段。安装时少一个门槛，断线后多一句解释，功能边界写得清楚一些。</p><p>Codex、AGY 和其他模型参与实现与审查。我负责决定做什么，也为最终交付负责。公开版、开发版和还没验证的想法，各自说明。</p><a href="/about/" class="text-link">我的工作方式与联系入口 ↗</a></div></div></section>
+  <section class="maker-method" aria-labelledby="method-title"><div class="shell method-inner" data-reveal><div><p class="eyebrow">从想法到交付</p><h2 id="method-title">想清楚。做出来。<br/><span>再核对一次。</span></h2></div><div><p>我关心软件落到具体生活里的那一段。安装时少一个门槛，断线后多一句解释，功能边界写得清楚一些。</p><p>AI 参与实现与审查。我负责决定做什么，也为最终交付负责。公开版、开发版和还没验证的想法，各自说明。</p><a href="/about/" class="text-link">我的工作方式 <span aria-hidden="true">↗</span></a></div></div></section>
 
-  <section class="shell maker-section" aria-labelledby="notes-title"><div class="folio-heading"><div><span class="small-label">03 / 留下判断过程</span><h2 id="notes-title">作品之外，写一点为什么。</h2></div><a class="text-link" href="/posts/">全部文章 ↗</a></div><div class="maker-articles">{posts.map((post,index)=><ArticleRow post={post} index={index} />)}</div></section>
-  <section class="shell maker-contact"><span class="small-label">保持连接</span><h2>有具体的问题，<br />就有值得聊的开始。</h2><div><p>原生工具、跨设备体验，或怎样把 AI 的产出变成可检查的交付。欢迎从一个项目或问题聊起。</p><a class="btn-primary" href="/about/#contact">联系与订阅 ↗</a></div></section>
+  <section class="shell maker-section" aria-labelledby="notes-title"><div class="folio-heading" data-reveal><div><p class="eyebrow">工程与思考</p><h2 id="notes-title">也写下，<br/>为什么这样做。</h2></div><a class="text-link" href="/posts/">全部文章 <span aria-hidden="true">↗</span></a></div><div class="maker-articles" data-reveal>{posts.map((post,index)=><ArticleRow post={post} index={index}/>)}</div></section>
+  <section class="shell maker-contact" data-reveal><p class="eyebrow">保持连接</p><h2>从一个具体问题，<br/>开始聊聊。</h2><p>原生工具、跨设备体验，或怎样把 AI 的产出变成可检查的交付。</p><a class="btn-primary" href="/about/#contact">联系与订阅 <span aria-hidden="true">↗</span></a></section>
 </BaseLayout>

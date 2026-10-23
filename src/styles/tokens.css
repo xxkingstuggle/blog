@@ -1,183 +1,58 @@
-/* ==========================================================================
-   Xin · myzjx.com — Design Tokens
-   Brand Identity: Warm Editorial Craft & Native Software Studio
-   ========================================================================== */
-
+/* MYZJX — one layout, spacing and interaction vocabulary. */
 :root {
-	color-scheme: light;
-
-	/* Surface & Canvas Palette */
-	--bg: #F5F2EB;
-	--surface: #FDFBF7;
-	--surface-subtle: #EAE5DA;
-	--surface-elevated: #FFFFFF;
-	--surface-glass: rgba(245, 242, 235, 0.88);
-	--surface-dark: #1A1916;
-	--surface-dark-subtle: #252420;
-
-	/* Typography Colors */
-	--text: #181715;
-	--text-secondary: #3D3A34;
-	--text-muted: #666157;
-	--text-on-dark: #F4F1EA;
-	--text-on-dark-muted: #A7A296;
-
-	/* Structural Hairlines */
-	--line: #DCD6C8;
-	--line-subtle: #E7E2D6;
-	--line-strong: #B8B0A0;
-
-	/* Brand Accents — Studio Teal & Warm Amber */
-	--accent: #1E5E4E;
-	--accent-contrast: #16493C;
-	--accent-hover: #123D32;
-	--accent-soft: #DFECE7;
-	--accent-warm: #B85A3A;
-	--accent-warm-soft: #F3E2DA;
-
-	/* Semantic Status Colors */
-	--status-ok: #1E6F4C;
-	--status-ok-bg: #E2F2EA;
-	--status-warn: #A85D14;
-	--status-warn-bg: #F9ECDC;
-	--status-danger: #B9382C;
-	--status-danger-bg: #FBE5E2;
-	--status-info: #23588A;
-	--status-info-bg: #E3EEF8;
-
-	/* Code & Terminal Surface */
-	--code-bg: #1B1C19;
-	--code-text: #EFECE4;
-	--hero-bg: #181715;
-
-	/* Layout Grid & Rhythm */
-	--site-width: 1180px;
-	--content-width: 720px;
-	--wide-width: 1080px;
-	--header-height: 76px;
-
-	/* Radii */
-	--radius-xs: 6px;
-	--radius-sm: 10px;
-	--radius-md: 16px;
-	--radius-lg: 22px;
-	--radius-xl: 28px;
-	--radius-pill: 999px;
-
-	/* Shadows */
-	--shadow-subtle: 0 2px 10px rgba(24, 23, 21, 0.04);
-	--shadow-card: 0 12px 34px rgba(24, 23, 21, 0.06), 0 1px 2px rgba(24, 23, 21, 0.04);
-	--shadow-stage: 0 24px 64px rgba(24, 23, 21, 0.12), 0 2px 6px rgba(24, 23, 21, 0.06);
-
-	/* Typography Stacks */
-	--font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
-	--font-serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "New York", Georgia, serif;
-	--font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-
-	/* Spacing Scale */
-	--space-xs: 4px;
-	--space-sm: 8px;
-	--space-md: 16px;
-	--space-lg: 24px;
-	--space-xl: 40px;
-	--space-2xl: 64px;
-	--space-3xl: 96px;
-
-	/* Motion */
-	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-	--duration-fast: 150ms;
-	--duration-normal: 240ms;
+  color-scheme: light;
+  --bg: #f5f5f7; --surface: #fff; --surface-subtle: #ececf0; --surface-elevated: #fff;
+  --surface-glass: rgb(250 250 252 / .88); --surface-dark: #161618; --surface-dark-subtle: #232326;
+  --text: #1d1d1f; --text-secondary: #515158; --text-muted: #66666e;
+  --text-on-dark: #f5f5f7; --text-on-dark-muted: #aaaab2;
+  --line: #dcdce2; --line-subtle: #e8e8ed; --line-strong: #b0b0b8;
+  --accent: #0066cc; --accent-contrast: #005bb5; --accent-hover: #004c99; --accent-soft: #eaf2fc;
+  --accent-warm: #a44226; --accent-warm-soft: #fff0e9;
+  --status-ok: #216543; --status-ok-bg: #e8f5ed; --status-warn: #8e4a0a; --status-warn-bg: #fff2e2;
+  --status-danger: #b42318; --status-danger-bg: #feeceb; --status-info: #005bb5; --status-info-bg: #eaf2fc;
+  --code-bg: #19191d; --code-text: #f5f5f7; --hero-bg: #161618;
+  --site-width: 1200px; --content-width: 720px; --wide-width: 1080px; --header-height: 64px;
+  --page-gutter: 48px; --section-space: 96px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px;
+  --space-8: 32px; --space-12: 48px; --space-16: 64px; --space-24: 96px; --space-32: 128px;
+  --space-xs: var(--space-1); --space-sm: var(--space-2); --space-md: var(--space-4);
+  --space-lg: var(--space-6); --space-xl: var(--space-12); --space-2xl: var(--space-16); --space-3xl: var(--space-24);
+  --radius-xs: 6px; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 24px; --radius-xl: 32px; --radius-pill: 999px;
+  --shadow-subtle: 0 2px 8px rgb(29 29 31 / .04);
+  --shadow-card: 0 12px 32px rgb(29 29 31 / .06);
+  --shadow-stage: 0 24px 64px rgb(29 29 31 / .14);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-serif: var(--font-sans);
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --duration-fast: 180ms; --duration-normal: 240ms; --duration-press: 100ms;
 }
-
-:root[data-color-mode="dark"] {
-	color-scheme: dark;
-	--bg: #141513;
-	--surface: #1C1E1B;
-	--surface-subtle: #252823;
-	--surface-elevated: #232621;
-	--surface-glass: rgba(20, 21, 19, 0.88);
-	--surface-dark: #0E0F0D;
-	--surface-dark-subtle: #181A17;
-
-	--text: #EFECE4;
-	--text-secondary: #C8C4B8;
-	--text-muted: #9A968A;
-	--text-on-dark: #F4F1EA;
-	--text-on-dark-muted: #A7A296;
-
-	--line: #32352E;
-	--line-subtle: #262923;
-	--line-strong: #4A4E44;
-
-	--accent: #68C6AE;
-	--accent-contrast: #7ED4BE;
-	--accent-hover: #96E0CD;
-	--accent-soft: #1E3831;
-	--accent-warm: #E59576;
-	--accent-warm-soft: #3D2820;
-
-	--status-ok: #58C294;
-	--status-ok-bg: #193529;
-	--status-warn: #F0B465;
-	--status-warn-bg: #382A16;
-	--status-danger: #F0796E;
-	--status-danger-bg: #3B1E1B;
-	--status-info: #78B4EC;
-	--status-info-bg: #1A2E40;
-
-	--code-bg: #0E0F0D;
-	--code-text: #EFECE4;
-	--hero-bg: #0E0F0D;
-
-	--shadow-subtle: 0 2px 10px rgba(0, 0, 0, 0.24);
-	--shadow-card: 0 14px 36px rgba(0, 0, 0, 0.34);
-	--shadow-stage: 0 28px 68px rgba(0, 0, 0, 0.48);
+:root[data-color-mode='dark'] {
+  color-scheme: dark;
+  --bg: #111113; --surface: #1c1c1f; --surface-subtle: #28282c; --surface-elevated: #242428;
+  --surface-glass: rgb(22 22 24 / .88); --surface-dark: #08080a; --surface-dark-subtle: #151518;
+  --text: #f5f5f7; --text-secondary: #c3c3cc; --text-muted: #a0a0ab;
+  --line: #36363c; --line-subtle: #2b2b30; --line-strong: #62626c;
+  --accent: #79baff; --accent-contrast: #90c6ff; --accent-hover: #b3d8ff; --accent-soft: #162c43;
+  --accent-warm: #f5ad91; --accent-warm-soft: #3c2921;
+  --status-ok: #8ad5ab; --status-ok-bg: #193227; --status-warn: #f0c085; --status-warn-bg: #382b1c;
+  --status-danger: #ffa29a; --status-danger-bg: #402421; --status-info: #90c6ff; --status-info-bg: #162c43;
+  --shadow-card: 0 12px 32px rgb(0 0 0 / .18); --shadow-stage: 0 24px 64px rgb(0 0 0 / .4);
 }
-
 @media (prefers-color-scheme: dark) {
-	:root:not([data-color-mode]),
-	:root[data-color-mode="system"] {
-		color-scheme: dark;
-		--bg: #141513;
-		--surface: #1C1E1B;
-		--surface-subtle: #252823;
-		--surface-elevated: #232621;
-		--surface-glass: rgba(20, 21, 19, 0.88);
-		--surface-dark: #0E0F0D;
-		--surface-dark-subtle: #181A17;
-
-		--text: #EFECE4;
-		--text-secondary: #C8C4B8;
-		--text-muted: #9A968A;
-		--text-on-dark: #F4F1EA;
-		--text-on-dark-muted: #A7A296;
-
-		--line: #32352E;
-		--line-subtle: #262923;
-		--line-strong: #4A4E44;
-
-		--accent: #68C6AE;
-		--accent-contrast: #7ED4BE;
-		--accent-hover: #96E0CD;
-		--accent-soft: #1E3831;
-		--accent-warm: #E59576;
-		--accent-warm-soft: #3D2820;
-
-		--status-ok: #58C294;
-		--status-ok-bg: #193529;
-		--status-warn: #F0B465;
-		--status-warn-bg: #382A16;
-		--status-danger: #F0796E;
-		--status-danger-bg: #3B1E1B;
-		--status-info: #78B4EC;
-		--status-info-bg: #1A2E40;
-
-		--code-bg: #0E0F0D;
-		--code-text: #EFECE4;
-		--hero-bg: #0E0F0D;
-
-		--shadow-subtle: 0 2px 10px rgba(0, 0, 0, 0.24);
-		--shadow-card: 0 14px 36px rgba(0, 0, 0, 0.34);
-		--shadow-stage: 0 28px 68px rgba(0, 0, 0, 0.48);
-	}
+  :root:not([data-color-mode]), :root[data-color-mode='system'] {
+    color-scheme: dark;
+    --bg: #111113; --surface: #1c1c1f; --surface-subtle: #28282c; --surface-elevated: #242428;
+    --surface-glass: rgb(22 22 24 / .88); --surface-dark: #08080a; --surface-dark-subtle: #151518;
+    --text: #f5f5f7; --text-secondary: #c3c3cc; --text-muted: #a0a0ab;
+    --line: #36363c; --line-subtle: #2b2b30; --line-strong: #62626c;
+    --accent: #79baff; --accent-contrast: #90c6ff; --accent-hover: #b3d8ff; --accent-soft: #162c43;
+    --accent-warm: #f5ad91; --accent-warm-soft: #3c2921;
+    --status-ok: #8ad5ab; --status-ok-bg: #193227; --status-warn: #f0c085; --status-warn-bg: #382b1c;
+    --status-danger: #ffa29a; --status-danger-bg: #402421; --status-info: #90c6ff; --status-info-bg: #162c43;
+    --shadow-card: 0 12px 32px rgb(0 0 0 / .18); --shadow-stage: 0 24px 64px rgb(0 0 0 / .4);
+  }
 }
+@media (max-width: 1024px) { :root { --page-gutter: 24px; } }
+@media (max-width: 768px) { :root { --section-space: 64px; } }
+@media (max-width: 359px) { :root { --page-gutter: 16px; } }

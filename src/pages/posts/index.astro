@@ -8,7 +8,7 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 ---
 
 <BaseLayout title="文章与手记" description="Xin 的工程复盘、软件开发手记与日常思考，按时间排列。">
-	<header class="shell page-heading">
+	<header class="shell page-heading" data-reveal>
 		<div class="section-kicker">
 			<span class="kicker-dot" aria-hidden="true"></span>
 			<span>JOURNAL & ENGINEERING NOTES / 文章与手记</span>
@@ -69,15 +69,15 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 
 <style>
 	.posts-section {
-		padding: 28px 0 64px;
+		padding: var(--space-8) 0 var(--space-16);
 	}
 	.index-tools {
 		display: flex;
 		justify-content: space-between;
-		gap: 20px;
+		gap: var(--space-6);
 		flex-wrap: wrap;
 		align-items: center;
-		padding: 16px 20px;
+		padding: var(--space-4) var(--space-6);
 		background: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--radius-md);
@@ -144,7 +144,7 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 		font-family: var(--font-mono);
 		font-size: 12px;
 		color: var(--text-muted);
-		margin: 20px 0 4px;
+		margin: var(--space-6) 0 var(--space-1);
 	}
 	.index-empty {
 		color: var(--text-muted);
@@ -161,7 +161,7 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 	}
 	@media (max-width: 640px) {
 		.index-tools {
-			padding: 14px;
+			padding: var(--space-4);
 		}
 		.index-search {
 			width: 100%;

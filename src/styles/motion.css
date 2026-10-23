@@ -1,3 +1,38 @@
+/* Visible content is the default. Entrance animations are attached by JS only
+   while a section enters view, never by hiding the server-rendered HTML. */
+:where(a, button, summary, input, textarea, select):focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 4px;
+}
+:where(a, button, summary) { -webkit-tap-highlight-color: transparent; }
+:is(.btn-primary, .btn-secondary, .header-cta, .theme-menu-trigger, .mobile-nav-trigger, button, .download-item) {
+  transition: transform var(--duration-fast) var(--ease-out), background-color var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+:where(.btn-primary, .btn-secondary, .header-cta) > [aria-hidden], .text-link [aria-hidden], .showcase-link [aria-hidden], .link-arrow {
+  display: inline-block; transition: transform var(--duration-normal) var(--ease-out);
+}
+a:is(:hover,:focus-visible) > [aria-hidden], a:is(:hover,:focus-visible) .link-arrow { transform: translate(3px,-2px); }
+:where(a.bloom-preview, .bench-row, .article-row, a.workbench-product-card, .next-article-card, .download-item) {
+  transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) ease, border-color var(--duration-normal) ease, background-color var(--duration-normal) ease;
+}
+.showcase-image .product-visual { transition: transform 400ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover, .btn-secondary:hover, .header-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgb(0 50 100 / .12); }
+  a.bloom-preview:hover, a.workbench-product-card:hover, .next-article-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card); border-color: var(--line-strong); }
+  .bench-row:hover, .article-row:hover { transform: translateX(4px); }
+  .download-item:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: var(--shadow-subtle); }
+  .showcase-image:hover .product-visual { transform: translateY(-4px) scale(1.008); }
+}
+a:is(.btn-primary,.btn-secondary,.header-cta,.bloom-preview,.bench-row,.article-row,.download-item,.next-article-card,.workbench-product-card):active,
+button:not(:disabled):active, summary:active, :is(a,button,summary)[data-pressed] { transform: scale(.97); transition-duration: var(--duration-press); }
+.showcase-image:active .product-visual { transform: scale(.985); transition-duration: var(--duration-press); }
+.site-nav a:active, .text-link:active, .showcase-link:active, .mobile-nav-links a:active { transform: scale(.97); transition-duration: var(--duration-press); }
+.mobile-nav-bars span { transition: transform 260ms var(--ease-out); }
+.mobile-nav[open] .mobile-nav-bars span:first-child { transform: translateY(2.75px) rotate(45deg); }
+.mobile-nav[open] .mobile-nav-bars span:last-child { transform: translateY(-2.75px) rotate(-45deg); }
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  :is(a,button,summary)[data-pressed] { transform: none !important; }
+  .showcase-image:is(:hover,:active) .product-visual { transform: none !important; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  :is(a,button,summary,.product-visual):is(:hover,:active,:focus-visible), a:is(:hover,:focus-visible) > [aria-hidden], a:is(:hover,:focus-visible) .link-arrow { transform: none !important; }
 }

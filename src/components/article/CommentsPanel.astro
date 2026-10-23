@@ -19,7 +19,8 @@ const { post } = Astro.props;
 		<p class="comments-empty">正在加载留言…</p>
 	</div>
 
-	<form class="comments-form" data-comments-form>
+	<form class="comments-form" method="post" data-comments-form>
+		<fieldset disabled data-comments-fields>
 		<div class="comments-form-heading"><strong>写下回应</strong><span>称呼和个人链接均可选填</span></div>
 		<div class="comments-form-grid">
 			<label>称呼<input name="authorName" maxlength="80" autocomplete="name" placeholder="匿名访客" /></label>
@@ -31,6 +32,8 @@ const { post } = Astro.props;
 			<button type="submit"><span data-submit-label>提交留言</span><span aria-hidden="true">→</span></button>
 			<span class="comments-submit-note" data-comments-status role="status" aria-live="polite"></span>
 		</div>
+		</fieldset>
+		<noscript><p class="comments-empty">启用 JavaScript 后可读取和提交留言；文章正文可以正常阅读。</p></noscript>
 	</form>
 </section>
 
@@ -131,5 +134,11 @@ const { post } = Astro.props;
 		}
 	});
 
+	const fields = form?.querySelector<HTMLFieldSetElement>('[data-comments-fields]');
+	if (fields && slug) fields.disabled = false;
 	void loadComments();
 </script>
+
+<style>
+	[data-comments-fields] { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: var(--space-4); }
+</style>

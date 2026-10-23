@@ -33,14 +33,14 @@ const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/lin
 			</a>
 			<ThemeSwitcher />
 			<details class="mobile-nav" data-mobile-nav>
-				<summary class="mobile-nav-trigger" aria-label="打开导航菜单">
+				<summary class="mobile-nav-trigger" aria-label="站点导航菜单" aria-controls="mobile-nav-panel">
 					<span class="mobile-nav-bars" aria-hidden="true">
 						<span></span>
 						<span></span>
 					</span>
 					<span class="mobile-nav-label">菜单</span>
 				</summary>
-				<div class="mobile-nav-panel" role="dialog" aria-label="站点导航">
+				<div class="mobile-nav-panel" id="mobile-nav-panel" role="dialog" aria-label="站点导航">
 					<nav class="mobile-nav-links" aria-label="移动端主导航">
 						<a href="/" aria-current={isHome ? 'page' : undefined}>
 							<strong>首页</strong>
@@ -70,18 +70,3 @@ const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/lin
 		</div>
 	</div>
 </header>
-
-<script>
-	const mobileNav = document.querySelector<HTMLDetailsElement>('[data-mobile-nav]');
-	document.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape' && mobileNav?.open) {
-			mobileNav.open = false;
-			mobileNav.querySelector<HTMLElement>('summary')?.focus();
-		}
-	});
-	document.addEventListener('click', (event) => {
-		if (mobileNav?.open && event.target instanceof Node && !mobileNav.contains(event.target)) {
-			mobileNav.open = false;
-		}
-	});
-</script>

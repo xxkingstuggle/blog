@@ -6,7 +6,7 @@ import { SOFTWARE_PRODUCTS } from '../lib/software';
 ---
 
 <BaseLayout title="关于 Xin" description="我是 Xin，从具体问题出发做软件，负责需求判断、集成与验收，也把 AI 和第三方贡献说清楚。">
-	<header class="shell page-heading">
+	<header class="shell page-heading" data-reveal>
 		<div class="section-kicker">
 			<span class="kicker-dot" aria-hidden="true"></span>
 			<span>ABOUT XIN / 关于我</span>
@@ -86,8 +86,8 @@ import { SOFTWARE_PRODUCTS } from '../lib/software';
 		display: grid;
 		grid-template-columns: minmax(0, 700px) minmax(280px, 360px);
 		justify-content: space-between;
-		gap: 48px;
-		padding: 48px 0 64px;
+		gap: var(--space-12);
+		padding: var(--space-12) 0 var(--space-16);
 	}
 	.about-prose {
 		margin: 0;
@@ -100,11 +100,11 @@ import { SOFTWARE_PRODUCTS } from '../lib/software';
 	.about-sidebar {
 		display: flex;
 		flex-direction: column;
-		gap: 20px;
+		gap: var(--space-6);
 		align-self: start;
 	}
 	.about-card {
-		padding: 22px;
+		padding: var(--space-6);
 		border-radius: var(--radius-lg);
 		background: var(--surface);
 		border: 1px solid var(--line);
