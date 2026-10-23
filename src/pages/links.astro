@@ -2,57 +2,147 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="友链" description="Xin 维护的友链与推荐。">
-	<section class="shell links-page" aria-labelledby="links-heading">
-		<div class="hero-eyebrow" style="color: var(--accent-contrast);">LINKS / 友链</div>
-		<h1 id="links-heading">一起保持连接</h1>
-		<p class="links-lead">这里收录我愿意持续阅读和推荐的站点。链接状态由后台定期检查。</p>
-		<div class="links-grid" id="links-grid"><p class="links-empty">正在加载友链…</p></div>
+<BaseLayout title="友链与推荐" description="Xin 维护的友链与长期阅读推荐。">
+	<header class="shell page-heading">
+		<div class="section-kicker">
+			<span class="kicker-dot" aria-hidden="true"></span>
+			<span>FRIENDS & LINKS / 友链与推荐</span>
+		</div>
+		<h1>一起保持连接</h1>
+		<p>这里收录我长期阅读、彼此启发的朋友站点与独立博客。友链数据由后台维护并定期检查可达状态。</p>
+	</header>
+
+	<section class="shell links-page" aria-label="友链列表">
+		<div class="links-grid" id="links-grid" aria-live="polite" aria-busy="true">
+			<div class="links-state-card">
+				<strong>正在加载友链列表…</strong>
+				<p>正在从站点服务读取公开友链。</p>
+			</div>
+		</div>
 	</section>
 </BaseLayout>
 
 <style>
-	.links-page { padding: clamp(60px, 8vw, 96px) 0 110px; }
-	.links-page h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); letter-spacing: -.04em; margin: 16px 0; }
-	.links-lead { max-width: 56ch; color: var(--text-muted); font-size: 1.1rem; }
-	.links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-top: 44px; }
-	.link-card { display: block; padding: 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
-	.link-card:hover { border-color: var(--text); transform: translateY(-2px); }
-	.link-card h2 { margin: 0 0 6px; font-size: 1.15rem; }
-	.link-card p { margin: 0; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
-	.link-card small { display: block; margin-top: 14px; color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; overflow-wrap: anywhere; }
-	.links-empty { color: var(--text-muted); }
+	.links-page {
+		padding: 40px 0 96px;
+	}
+	.links-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+		gap: 18px;
+	}
+	:global(.link-card) {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 24px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-md);
+		background: var(--surface);
+		transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+	}
+	:global(.link-card:hover) {
+		border-color: var(--text);
+		transform: translateY(-2px);
+	}
+	:global(.link-card h2) {
+		margin: 0 0 8px;
+		font-size: 1.15rem;
+	}
+	:global(.link-card p) {
+		margin: 0;
+		color: var(--text-secondary);
+		font-size: 14px;
+		line-height: 1.65;
+	}
+	:global(.link-card small) {
+		display: block;
+		margin-top: 16px;
+		padding-top: 12px;
+		border-top: 1px solid var(--line-subtle);
+		color: var(--text-muted);
+		font-family: var(--font-mono);
+		font-size: 11.5px;
+		overflow-wrap: anywhere;
+	}
+	.links-state-card,
+	:global(.links-state-card) {
+		grid-column: 1 / -1;
+		padding: 36px 28px;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--line);
+		background: var(--surface);
+		text-align: center;
+	}
+	.links-state-card strong,
+	:global(.links-state-card strong) {
+		display: block;
+		font-size: 16px;
+		color: var(--text);
+		margin-bottom: 6px;
+	}
+	.links-state-card p,
+	:global(.links-state-card p) {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: 14px;
+	}
 </style>
 
 <script>
 	const linksGrid = document.getElementById('links-grid');
+
+	function renderStateCard(title: string, detail: string) {
+		if (!linksGrid) return;
+		linksGrid.setAttribute('aria-busy', 'false');
+		const card = document.createElement('div');
+		card.className = 'links-state-card';
+		const heading = document.createElement('strong');
+		heading.textContent = title;
+		const body = document.createElement('p');
+		body.textContent = detail;
+		card.append(heading, body);
+		linksGrid.replaceChildren(card);
+	}
+
 	async function loadLinks() {
 		try {
 			const response = await fetch('/api/links');
-			if (!response.ok) throw new Error();
+			if (!response.ok) throw new Error('status');
 			const body = await response.json();
 			if (!linksGrid) return;
+			linksGrid.setAttribute('aria-busy', 'false');
 			linksGrid.replaceChildren();
 			for (const link of body.links || []) {
 				let safeUrl: URL;
 				try {
 					safeUrl = new URL(String(link.url || ''));
 					if (!['http:', 'https:'].includes(safeUrl.protocol)) continue;
-				} catch { continue; }
-				const card = document.createElement('a'); card.className = 'link-card'; card.href = safeUrl.toString(); card.target = '_blank'; card.rel = 'noopener noreferrer';
-				const title = document.createElement('h2'); title.textContent = String(link.name || '未命名');
-				const description = document.createElement('p'); description.textContent = String(link.description || '');
-				const url = document.createElement('small'); url.textContent = String(link.url || '');
-				card.append(title, description, url); linksGrid.append(card);
+				} catch {
+					continue;
+				}
+				const card = document.createElement('a');
+				card.className = 'link-card';
+				card.href = safeUrl.toString();
+				card.target = '_blank';
+				card.rel = 'noopener noreferrer';
+				const top = document.createElement('div');
+				const title = document.createElement('h2');
+				title.textContent = String(link.name || '未命名站点');
+				const description = document.createElement('p');
+				description.textContent = String(link.description || '独立网站与个人记录。');
+				top.append(title, description);
+				const url = document.createElement('small');
+				url.textContent = String(link.url || '');
+				card.append(top, url);
+				linksGrid.append(card);
 			}
-			if (!body.links?.length) { const empty = document.createElement('p'); empty.className = 'links-empty'; empty.textContent = '友链会在后台配置后出现在这里。'; linksGrid.append(empty); }
+			if (!linksGrid.children.length) {
+				renderStateCard('暂未添加公开友链', '管理员在后台添加并启用友链后，会自动展示在这里。');
+			}
 		} catch {
-			if (!linksGrid) return;
-			const empty = document.createElement('p');
-			empty.className = 'links-empty';
-			empty.textContent = '友链功能将在后台上线后开放。';
-			linksGrid.replaceChildren(empty);
+			renderStateCard('暂时无法加载友链列表', '当前处于离线或本地静态预览环境，稍后可刷新重试。');
 		}
 	}
-	loadLinks();
+	void loadLinks();
 </script>

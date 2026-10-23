@@ -3,39 +3,56 @@ import AdminLayout from '../layouts/AdminLayout.astro';
 import '../styles/login.css';
 ---
 
-<AdminLayout title="管理员登录" description="使用已授权的 GitHub 账号登录 Xin 的个人博客管理后台。" context="管理员入口">
+<AdminLayout title="管理员登录" description="使用已授权的 GitHub 账号登录 Xin 的软件工作室与博客后台。" context="管理员身份验证">
 	<main class="login-page" id="main-content">
 		<div class="login-layout">
-			<section class="login-story" aria-label="个人博客后台">
-				<div class="login-kicker"><span class="login-kicker-dot"></span> PRIVATE EDITORIAL DESK</div>
-				<p class="login-story-title">把想法写下来，<br /><em>慢慢整理成文章。</em></p>
-				<p class="login-story-copy">这是 myzjx.com 的内容工作台。文章、评论与友链都在这里管理，公开页面继续保持简洁。</p>
-				<div class="login-story-rule"><span>01</span><span>WRITE · REVIEW · PUBLISH</span></div>
+			<section class="login-story" aria-label="工作室与内容后台说明">
+				<div>
+					<div class="login-kicker"><span class="login-kicker-dot"></span> MYZJX.COM · STUDIO &amp; EDITORIAL DESK</div>
+					<p class="login-story-title">管理文章发布、<br /><em>版本校验与读者交流。</em></p>
+					<p class="login-story-copy">
+						这里是 <code>myzjx.com</code> 的私有内容工作台。仓库中的已有文章、新撰写的手记草稿、读者留言审核以及友链巡检均在此统一调度，并通过 GitHub 源文件 SHA 校验确保每次发布安全可追溯。
+					</p>
+				</div>
+				<div class="login-story-specs">
+					<div class="login-story-spec">
+						<span>CONTENT ENGINE</span>
+						<strong>仓库已有文章 + D1 草稿合并管理</strong>
+					</div>
+					<div class="login-story-spec">
+						<span>PUBLISH SAFETY</span>
+						<strong>GitHub Blob SHA 乐观锁与上线构建核对</strong>
+					</div>
+				</div>
+				<div class="login-story-rule"><span>STUDIO DESK</span><span>WRITE · PREVIEW · COMMIT · VERIFY</span></div>
 			</section>
 
 			<section class="login-card" aria-labelledby="login-heading">
 				<div class="login-card-heading">
-					<div class="login-card-label">管理员账户</div>
-					<h1 id="login-heading">登录内容后台</h1>
-					<p>使用已授权的 GitHub 账号继续。本站只开放给管理员，不提供公开注册。</p>
+					<div class="login-card-label">管理员验证 · ADMIN AUTH</div>
+					<h1 id="login-heading">登录内容工作台</h1>
+					<p>使用已列入白名单的 GitHub 管理员账号或 Cloudflare Access 身份继续。本站后台不开放公开注册。</p>
 				</div>
 
 				<div class="login-notice" id="login-notice" data-state="loading" role="status" aria-live="polite">
 					<span class="login-notice-mark" aria-hidden="true"></span>
-					<span id="login-notice-text">正在检查登录状态…</span>
+					<span id="login-notice-text">正在检查当前会话状态…</span>
 				</div>
 
 				<a class="github-login-button" id="github-login" href="/auth/github/start">
 					<span class="github-mark" aria-hidden="true">GH</span>
-					<span>继续使用 GitHub 登录</span>
+					<span>使用 GitHub 管理员账号登录</span>
 					<span class="github-login-arrow" aria-hidden="true">↗</span>
 				</a>
 
 				<div class="login-security-note">
 					<span class="login-lock" aria-hidden="true">⌑</span>
-					<span>GitHub 完成身份验证后，后台仍会检查管理员名单。登录状态会在一段时间后过期。</span>
+					<span>通过 GitHub OAuth 验证后，服务端会再次核对 <code>ADMIN_GITHUB_LOGINS</code> 权限名单并签发受 CSRF 保护的 HttpOnly 会话。</span>
 				</div>
-				<a class="login-back-link" href="/">← 返回 myzjx.com</a>
+				<div class="login-back-links">
+					<a class="login-back-link" href="/">← 返回 myzjx.com 首页</a>
+					<a class="login-back-link" href="/software/">查看软件作品</a>
+				</div>
 			</section>
 		</div>
 	</main>
@@ -47,19 +64,26 @@ import '../styles/login.css';
 	const loginButton = document.querySelector<HTMLAnchorElement>('#github-login');
 	const reason = new URLSearchParams(location.search).get('reason');
 	const messages: Record<string, string> = {
-		signin: '后台只对指定管理员开放，请使用已授权的 GitHub 账号。',
-		'expired': '登录状态已过期，请重新验证身份。',
-		'signed-out': '你已安全退出。需要时可以再次登录。',
-		'not-authorized': '这个 GitHub 账号没有后台权限。请切换到已授权的管理员账号。',
-		'cancelled': '你取消了 GitHub 授权。准备好后可以重新登录。',
-		'invalid': '这次登录请求已失效，请从此页面重新开始。',
-		'provider-error': 'GitHub 暂时没有完成验证，请稍后重试。',
-		'unavailable': '登录服务暂时不可用，请稍后再试。',
+		signin: '后台仅对指定管理员开放，请使用已授权的 GitHub 账号登录。',
+		'expired': '管理员会话已过期，请重新验证身份。',
+		'signed-out': '你已安全退出后台。需要时可以再次登录。',
+		'not-authorized': '当前 GitHub 账号未在管理员白名单中，请切换已授权账号。',
+		'cancelled': '你已取消 GitHub 授权，准备好后可随时重新发起登录。',
+		'invalid': '登录状态校验参数已失效，请从当前页面重新发起登录。',
+		'provider-error': 'GitHub 身份验证暂时未能完成，请稍后重试。',
+		'unavailable': '当前环境尚未配置完整的 GitHub OAuth 凭据，请检查后台配置或稍后再试。',
 	};
 
-	if (noticeText && reason && messages[reason]) noticeText.textContent = messages[reason];
+	if (noticeText && reason && messages[reason]) {
+		noticeText.textContent = messages[reason];
+		if (['not-authorized', 'invalid', 'provider-error', 'unavailable'].includes(reason)) {
+			notice?.setAttribute('data-state', 'error');
+		} else {
+			notice?.setAttribute('data-state', 'ready');
+		}
+	}
 	loginButton?.addEventListener('click', () => {
-		if (noticeText) noticeText.textContent = '正在前往 GitHub 完成身份验证…';
+		if (noticeText) noticeText.textContent = '正在前往 GitHub 完成管理员身份验证…';
 		notice?.setAttribute('data-state', 'loading');
 	});
 
@@ -70,13 +94,18 @@ import '../styles/login.css';
 				return;
 			}
 			if (response.status === 401 || response.status === 403) {
-				if (noticeText && !messages[reason ?? '']) noticeText.textContent = '请使用已授权的 GitHub 账号继续。';
+				if (noticeText && !messages[reason ?? '']) {
+					noticeText.textContent = '请使用已授权的 GitHub 管理员账号继续。';
+				}
+				if (!reason) notice?.setAttribute('data-state', 'ready');
 				return;
 			}
 			throw new Error('service');
 		})
 		.catch(() => {
-			if (noticeText) noticeText.textContent = '暂时无法连接登录服务。你可以稍后重试，或先返回网站。';
+			if (noticeText && !messages[reason ?? '']) {
+				noticeText.textContent = '本地静态预览或离线模式下未连接鉴权服务；在线上环境可通过 GitHub OAuth 登录。';
+			}
 			notice?.setAttribute('data-state', 'error');
 		});
 </script>

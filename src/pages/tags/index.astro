@@ -2,31 +2,62 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAllTags, getListedPosts } from '../../lib/posts';
 
-const tags = getAllTags(await getListedPosts());
+const posts = await getListedPosts();
+const tags = getAllTags(posts);
 ---
 
-<BaseLayout title="标签索引" description="按主题关键词浏览所有文章。">
-	<section class="shell" style="padding: clamp(60px, 8vw, 96px) 0 40px;">
-		<div class="hero-eyebrow" style="color: var(--accent-contrast);">TAXONOMY / 索引</div>
-		<h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -0.035em; margin-bottom: 16px;">
-			标签索引
-		</h1>
-		<p style="font-size: 1.15rem; color: var(--text-muted); max-width: 54ch; line-height: 1.6; margin: 0;">
-			按主题与栏目关键词聚合所有内容。
-		</p>
-	</section>
+<BaseLayout title="标签索引" description="按主题关键词浏览 Xin 的全部工程文章与思考手记。">
+	<header class="shell page-heading">
+		<div class="section-kicker">
+			<span class="kicker-dot" aria-hidden="true"></span>
+			<span>TOPIC INDEX / 标签索引</span>
+		</div>
+		<h1>按主题标签浏览</h1>
+		<p>涵盖跨端软件开发、音频与网络协议、SwiftUI、多 Agent 协作以及日常思考。</p>
+	</header>
 
-	<section class="shell" style="padding-bottom: 110px;">
-		<div class="tag-list" style="gap: 12px;">
-			{tags.map((tag) => (
-				<a
-					class="tag-item"
-					href={`/tags/${encodeURIComponent(tag)}/`}
-					style="padding: 8px 16px; font-size: 15px;"
-				>
-					#{tag}
-				</a>
-			))}
+	<section class="shell" style="padding: 40px 0 88px;">
+		<div class="tag-grid">
+			{tags.map((tag) => {
+				const count = posts.filter((p) => p.data.tags.includes(tag)).length;
+				return (
+					<a class="tag-card" href={`/tags/${encodeURIComponent(tag)}/`}>
+						<strong>#{tag}</strong>
+						<span>{count} 篇文章</span>
+					</a>
+				);
+			})}
 		</div>
 	</section>
 </BaseLayout>
+
+<style>
+	.tag-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 14px;
+	}
+	.tag-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px 18px;
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		border: 1px solid var(--line);
+		transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+	}
+	.tag-card:hover {
+		border-color: var(--text);
+		transform: translateY(-1px);
+	}
+	.tag-card strong {
+		font-size: 15px;
+		color: var(--text);
+	}
+	.tag-card span {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: var(--text-muted);
+	}
+</style>

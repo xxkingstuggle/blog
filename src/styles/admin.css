@@ -540,13 +540,32 @@ select.admin-control {
 }
 
 .status-draft { background: var(--surface-subtle); color: var(--text-muted); }
+.status-repo_draft { background: var(--surface-subtle); color: var(--text-secondary); border: 1px solid var(--line); }
+.status-unpublished_edits { background: var(--warm-soft, rgba(184, 90, 58, 0.14)); color: var(--warm, #b85a3a); }
 .status-publishing { background: rgba(217, 119, 6, 0.15); color: #d97706; }
 .status-deploying { background: rgba(37, 99, 235, 0.15); color: #2563eb; }
-.status-published { background: rgba(16, 138, 40, 0.15); color: #0f5c20; }
+.status-published { background: var(--accent-soft, rgba(30, 94, 78, 0.14)); color: var(--accent, #1e5e4e); }
+.status-published_superseded { background: var(--surface-subtle); color: var(--text-secondary); }
 .status-conflict { background: rgba(220, 38, 38, 0.15); color: #dc2626; }
 .status-publish_failed { background: rgba(220, 38, 38, 0.15); color: #dc2626; }
 
 :root[data-color-mode="dark"] .status-published {
+	color: var(--accent);
+}
+
+.admin-mdx-banner {
+	padding: 12px 16px;
+	border-radius: 8px;
+	border: 1px solid var(--accent-line, var(--line));
+	background: var(--accent-soft);
+	color: var(--text);
+	font-size: 13px;
+	line-height: 1.6;
+}
+.admin-mdx-banner[hidden] {
+	display: none !important;
+}
+.admin-mdx-banner strong {
 	color: var(--accent);
 }
 

@@ -2,23 +2,24 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="页面未找到 (404)" description="你所请求的内容不存在或已迁移。">
-	<section class="shell" style="padding: clamp(80px, 15vh, 160px) 0; text-align: center;">
-		<div style="font-family: var(--font-mono); font-size: clamp(4rem, 10vw, 7rem); font-weight: 800; line-height: 1; color: var(--accent-contrast); margin-bottom: 20px;">
-			404
+<BaseLayout title="页面未找到 (404)" description="你访问的页面不存在或已迁移。">
+	<section class="shell" style="padding: clamp(72px, 14vh, 140px) 0;">
+		<div class="related-article-banner" style="flex-direction: column; align-items: flex-start; max-width: 680px; margin-inline: auto;">
+			<div class="section-kicker">
+				<span class="kicker-dot" aria-hidden="true"></span>
+				<span>404 NOT FOUND / 页面未找到</span>
+			</div>
+			<h1 style="font-family: var(--font-serif); font-size: clamp(2rem, 4vw, 2.8rem); margin: 0 0 12px;">
+				这个地址暂时没有内容
+			</h1>
+			<p style="font-size: 15px; color: var(--text-secondary); line-height: 1.75; margin-bottom: 24px;">
+				请检查链接拼写是否有误，或直接前往软件产品官网页与文章索引。
+			</p>
+			<div class="brand-hero-actions" style="margin-bottom: 0;">
+				<a class="btn-primary" href="/">返回首页</a>
+				<a class="btn-secondary" href="/software/">浏览软件与工具</a>
+				<a class="btn-secondary" href="/posts/">阅读全部文章</a>
+			</div>
 		</div>
-		<h1 style="font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: 750; margin-bottom: 16px;">
-			内容已跃迁或不存在
-		</h1>
-		<p style="font-size: 1.1rem; color: var(--text-muted); max-width: 44ch; margin: 0 auto 32px; line-height: 1.6;">
-			这里目前处于纯粹的真空状态。请检查地址输入是否有误，或返回主站索引。
-		</p>
-		<a
-			href="/"
-			style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 999px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 700; text-decoration: none;"
-		>
-			<span>回到首页</span>
-			<span aria-hidden="true">→</span>
-		</a>
 	</section>
 </BaseLayout>

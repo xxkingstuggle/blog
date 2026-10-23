@@ -37,15 +37,17 @@ const canonical = new URL(canonicalPath, siteConfig.url).toString();
 	<body class="admin-body">
 		<a class="skip-link" href="#main-content">跳到主要内容</a>
 		<header class="admin-topbar">
-			<a class="admin-brand" href="/" aria-label="Xin 首页">
-				<span class="admin-brand-mark" aria-hidden="true">X.</span>
+			<a class="admin-brand" href="/" aria-label="Xin · myzjx.com 首页">
+				<span class="admin-brand-mark" aria-hidden="true">X</span>
 				<span class="admin-brand-name">Xin</span>
 				<span class="admin-brand-divider" aria-hidden="true"></span>
-				<span class="admin-brand-context">随手记</span>
+				<span class="admin-brand-context">软件工作室与手记</span>
 			</a>
 			<div class="admin-topbar-center"><span class="admin-topbar-context">{context}</span></div>
 			<div class="admin-topbar-actions">
-				<a class="admin-front-link" href="/">返回网站 <span aria-hidden="true">↗</span></a>
+				<a class="admin-front-link" href="/software/">软件作品</a>
+				<a class="admin-front-link" href="/posts/">文章列表</a>
+				<a class="admin-front-link" href="/">返回官网 <span aria-hidden="true">↗</span></a>
 				<ThemeSwitcher />
 			</div>
 		</header>

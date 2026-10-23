@@ -99,10 +99,12 @@ const MAX_MEDIA_REQUEST_BYTES = 12 * 1024 * 1024;
 const RESERVED_ALIAS_PATHS = new Set([
 	'/',
 	'/about',
+	'/software',
 	'/posts',
 	'/archive',
 	'/tags',
 	'/links',
+	'/login',
 	'/admin',
 	'/api',
 	'/media',
@@ -596,6 +598,103 @@ async function buildSha(env: Env) {
 	}
 }
 
+interface RepoArticleCatalogEntry {
+	id: string;
+	slug: string;
+	title: string;
+	description: string;
+	body: string;
+	pub_date: string;
+	updated_date?: string | null;
+	tags: string[];
+	kind: string;
+	presentation: string;
+	featured: number;
+	kicker?: string | null;
+	listed: number;
+	draft: boolean;
+	aliases: string[];
+	cover?: string | null;
+	extra_frontmatter?: Record<string, unknown>;
+	source_path: string;
+	source_blob_sha: string;
+	has_mdx?: boolean;
+}
+
+async function loadRepoCatalog(env: Env): Promise<{ commitSha: string | null; articles: RepoArticleCatalogEntry[] }> {
+	try {
+		const catalogUrl = new URL('/__content.json', env.PUBLIC_ORIGIN);
+		const response = await env.ASSETS.fetch(new Request(catalogUrl, { headers: { 'Cache-Control': 'no-cache' } }));
+		if (!response.ok) return { commitSha: null, articles: [] };
+		const catalog = (await response.json()) as { commitSha?: string; articles?: RepoArticleCatalogEntry[] };
+		return {
+			commitSha: typeof catalog.commitSha === 'string' ? catalog.commitSha : null,
+			articles: Array.isArray(catalog.articles) ? catalog.articles : [],
+		};
+	} catch {
+		return { commitSha: null, articles: [] };
+	}
+}
+
+function repoEntryToDraftRecord(entry: RepoArticleCatalogEntry, catalogCommitSha: string | null): JsonRecord {
+	const hasMdx =
+		Boolean(entry.has_mdx) ||
+		entry.source_path.endsWith('.mdx') ||
+		/^\s*import\s+.+from\s+['"].+['"]/m.test(entry.body) ||
+		/<[A-Z][A-Za-z0-9]*\b/.test(entry.body);
+	return {
+		id: `repo:${entry.slug}`,
+		slug: entry.slug,
+		title: entry.title,
+		description: entry.description,
+		body: entry.body,
+		pub_date: entry.pub_date,
+		updated_date: entry.updated_date ?? null,
+		tags_json: JSON.stringify(entry.tags ?? []),
+		kind: entry.kind || 'thought',
+		presentation: entry.presentation || 'article',
+		featured: entry.featured ? 1 : 0,
+		kicker: entry.kicker ?? null,
+		source_path: entry.source_path,
+		source_blob_sha: entry.source_blob_sha,
+		listed: entry.listed === 0 ? 0 : 1,
+		aliases_json: JSON.stringify(entry.aliases ?? []),
+		aliases: entry.aliases ?? [],
+		cover: entry.cover ?? null,
+		extra_frontmatter_json: JSON.stringify(entry.extra_frontmatter ?? {}),
+		status: entry.draft ? 'draft' : 'published',
+		repo_draft: Boolean(entry.draft),
+		has_unpublished_changes: false,
+		has_mdx: hasMdx,
+		origin_source: 'repo',
+		publish_commit_sha: entry.draft ? null : catalogCommitSha,
+		error_code: null,
+		version: 1,
+		updated_at: entry.updated_date || entry.pub_date,
+	};
+}
+
+function enrichDbDraftRecord(draft: JsonRecord, repoEntry?: RepoArticleCatalogEntry): JsonRecord {
+	const bodyStr = String(draft.body ?? '');
+	const sourcePathStr = String(draft.source_path ?? '');
+	const hasMdx =
+		Boolean(repoEntry?.has_mdx) ||
+		sourcePathStr.endsWith('.mdx') ||
+		/^\s*import\s+.+from\s+['"].+['"]/m.test(bodyStr) ||
+		/<[A-Z][A-Za-z0-9]*\b/.test(bodyStr);
+	const isLinkedToPublished = Boolean(draft.source_blob_sha || draft.publish_commit_sha || (repoEntry && !repoEntry.draft));
+	const hasUnpublishedChanges = draft.status === 'draft' && isLinkedToPublished;
+	return {
+		...draft,
+		cover: draft.cover ?? repoEntry?.cover ?? null,
+		updated_date: draft.updated_date ?? repoEntry?.updated_date ?? null,
+		has_unpublished_changes: hasUnpublishedChanges,
+		repo_draft: Boolean(repoEntry?.draft && draft.status === 'draft' && !draft.publish_commit_sha),
+		has_mdx: hasMdx,
+		origin_source: repoEntry ? 'repo+d1' : 'd1',
+	};
+}
+
 function githubPath(path: string) {
 	return path.split('/').map((part) => encodeURIComponent(part)).join('/');
 }
@@ -654,33 +753,165 @@ async function adminSession(request: Request, env: Env) {
 }
 
 async function adminOverview(env: Env) {
-	const [draftRows, commentRows, linkRows, recentDrafts, commitSha] = await Promise.all([
-		env.DB.prepare('SELECT status, COUNT(*) AS count FROM drafts GROUP BY status').all<{ status: string; count: number }>(),
+	const [allDbDrafts, commentRows, linkRows, commitSha, repoCatalog] = await Promise.all([
+		env.DB.prepare('SELECT id, slug, title, status, source_blob_sha, publish_commit_sha, updated_at FROM drafts ORDER BY updated_at DESC').all<{
+			id: string;
+			slug: string;
+			title: string;
+			status: string;
+			source_blob_sha: string | null;
+			publish_commit_sha: string | null;
+			updated_at: string;
+		}>(),
 		env.DB.prepare('SELECT status, COUNT(*) AS count FROM comments GROUP BY status').all<{ status: string; count: number }>(),
 		env.DB.prepare('SELECT status, COUNT(*) AS count FROM links GROUP BY status').all<{ status: string; count: number }>(),
-		env.DB.prepare("SELECT id, slug, title, status, updated_at, publish_commit_sha FROM drafts ORDER BY updated_at DESC LIMIT 6").all(),
 		buildSha(env),
+		loadRepoCatalog(env),
 	]);
+
 	const countByStatus = (rows: { results: Array<{ status: string; count: number }> }) =>
 		Object.fromEntries(rows.results.map((row) => [row.status, Number(row.count)]));
+
+	const repoBySlug = new Map(repoCatalog.articles.map((item) => [item.slug, item]));
+	const dbBySlug = new Map(allDbDrafts.results.map((item) => [item.slug, item]));
+
+	const draftCounts: Record<string, number> = {
+		draft: 0,
+		publishing: 0,
+		deploying: 0,
+		published: 0,
+		published_superseded: 0,
+		conflict: 0,
+		publish_failed: 0,
+		repo_published: 0,
+		repo_draft: 0,
+		unpublished_edits: 0,
+	};
+
+	for (const row of allDbDrafts.results) {
+		draftCounts[row.status] = (draftCounts[row.status] ?? 0) + 1;
+		const repoItem = repoBySlug.get(row.slug);
+		const isOnline = Boolean(row.source_blob_sha || row.publish_commit_sha || (repoItem && !repoItem.draft));
+		if (row.status === 'draft' && isOnline) {
+			draftCounts.unpublished_edits += 1;
+		}
+	}
+
+	// Count repository articles that are not already counted as published in D1
+	const publishedSlugs = new Set<string>();
+	for (const item of repoCatalog.articles) {
+		if (!item.draft) {
+			publishedSlugs.add(item.slug);
+			draftCounts.repo_published += 1;
+		} else {
+			draftCounts.repo_draft += 1;
+			if (!dbBySlug.has(item.slug)) {
+				draftCounts.draft += 1;
+			}
+		}
+	}
+	for (const row of allDbDrafts.results) {
+		if (row.status === 'published' || row.status === 'published_superseded') {
+			publishedSlugs.add(row.slug);
+		}
+	}
+	// Ensure `drafts.published` reflects the true union of published repo articles + D1 published articles
+	draftCounts.published = Math.max(draftCounts.published, publishedSlugs.size);
+
+	// Merge recent activity from D1 and repo catalog
+	const recentCombined: Array<{
+		id: string;
+		slug: string;
+		title: string;
+		status: string;
+		updated_at: string;
+		publish_commit_sha?: string | null;
+		has_unpublished_changes?: boolean;
+		repo_draft?: boolean;
+	}> = [];
+
+	for (const row of allDbDrafts.results) {
+		const repoItem = repoBySlug.get(row.slug);
+		const isOnline = Boolean(row.source_blob_sha || row.publish_commit_sha || (repoItem && !repoItem.draft));
+		recentCombined.push({
+			id: row.id,
+			slug: row.slug,
+			title: row.title,
+			status: row.status,
+			updated_at: row.updated_at,
+			publish_commit_sha: row.publish_commit_sha,
+			has_unpublished_changes: row.status === 'draft' && isOnline,
+			repo_draft: Boolean(repoItem?.draft && row.status === 'draft' && !row.publish_commit_sha),
+		});
+	}
+
+	for (const item of repoCatalog.articles) {
+		if (dbBySlug.has(item.slug)) continue;
+		recentCombined.push({
+			id: `repo:${item.slug}`,
+			slug: item.slug,
+			title: item.title,
+			status: item.draft ? 'draft' : 'published',
+			updated_at: item.updated_date || item.pub_date,
+			publish_commit_sha: item.draft ? null : repoCatalog.commitSha,
+			has_unpublished_changes: false,
+			repo_draft: Boolean(item.draft),
+		});
+	}
+
+	recentCombined.sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
+
 	return json({
-		drafts: countByStatus(draftRows),
+		drafts: draftCounts,
 		comments: countByStatus(commentRows),
 		links: countByStatus(linkRows),
-		recent: recentDrafts.results,
-		commitSha,
+		recent: recentCombined.slice(0, 8),
+		commitSha: commitSha ?? repoCatalog.commitSha,
 		checkedAt: new Date().toISOString(),
 	});
 }
 
 async function listDrafts(env: Env) {
-	const result = await env.DB.prepare('SELECT id, slug, title, description, pub_date, kind, presentation, featured, status, source_path, source_blob_sha, listed, version, updated_at, publish_commit_sha, error_code FROM drafts ORDER BY updated_at DESC LIMIT 100').all();
-	return json({ drafts: result.results });
+	const [result, repoCatalog] = await Promise.all([
+		env.DB.prepare('SELECT * FROM drafts ORDER BY updated_at DESC LIMIT 100').all<JsonRecord>(),
+		loadRepoCatalog(env),
+	]);
+	const repoBySlug = new Map(repoCatalog.articles.map((item) => [item.slug, item]));
+	const seenSlugs = new Set<string>();
+	const merged: JsonRecord[] = [];
+
+	for (const row of result.results) {
+		const slug = String(row.slug ?? '');
+		seenSlugs.add(slug);
+		merged.push(enrichDbDraftRecord(row, repoBySlug.get(slug)));
+	}
+
+	for (const entry of repoCatalog.articles) {
+		if (seenSlugs.has(entry.slug)) continue;
+		merged.push(repoEntryToDraftRecord(entry, repoCatalog.commitSha));
+	}
+
+	return json({ drafts: merged });
 }
 
 async function getDraft(request: Request, env: Env, id: string) {
 	const url = new URL(request.url);
 	const recheck = url.searchParams.get('recheck') === '1';
+	const repoCatalog = await loadRepoCatalog(env);
+	const repoBySlug = new Map(repoCatalog.articles.map((item) => [item.slug, item]));
+
+	if (id.startsWith('repo:')) {
+		const slug = id.slice('repo:'.length);
+		const existingDb = await env.DB.prepare('SELECT * FROM drafts WHERE slug=?').bind(slug).first<JsonRecord>();
+		if (existingDb) {
+			try { existingDb.aliases = JSON.parse(String(existingDb.aliases_json ?? '[]')); } catch { existingDb.aliases = []; }
+			return json({ draft: enrichDbDraftRecord(existingDb, repoBySlug.get(slug)) });
+		}
+		const repoEntry = repoBySlug.get(slug);
+		if (!repoEntry) return error('草稿或仓库文章不存在。', 404);
+		return json({ draft: repoEntryToDraftRecord(repoEntry, repoCatalog.commitSha) });
+	}
+
 	let draft = await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<JsonRecord>();
 	if (!draft) return error('草稿不存在。', 404);
 	if (draft.status === 'deploying' || (recheck && draft.status === 'publish_failed' && draft.error_code === 'deployment_timeout')) {
@@ -688,7 +919,8 @@ async function getDraft(request: Request, env: Env, id: string) {
 		draft = (await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<JsonRecord>()) ?? draft;
 	}
 	try { draft.aliases = JSON.parse(String(draft.aliases_json ?? '[]')); } catch { draft.aliases = []; }
-	return json({ draft });
+	const slug = String(draft.slug ?? '');
+	return json({ draft: enrichDbDraftRecord(draft, repoBySlug.get(slug)) });
 }
 
 async function saveDraft(request: Request, env: Env, id?: string) {
@@ -707,69 +939,156 @@ async function saveDraft(request: Request, env: Env, id?: string) {
 		? input.tags.filter((tag): tag is string => typeof tag === 'string').map((tag) => tag.trim().slice(0, 40)).filter(Boolean).slice(0, 20)
 		: [];
 	const pubDate = typeof input.pubDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input.pubDate) ? input.pubDate : new Date().toISOString().slice(0, 10);
+	const updatedDate = typeof input.updatedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input.updatedDate.trim()) ? input.updatedDate.trim() : null;
+	const cover = typeof input.cover === 'string' && input.cover.trim() ? input.cover.trim().slice(0, 260) : null;
 	const featured = input.featured === true ? 1 : 0;
-	const kicker = typeof input.kicker === 'string' ? input.kicker.trim().slice(0, 120) : null;
+	const kicker = typeof input.kicker === 'string' && input.kicker.trim() ? input.kicker.trim().slice(0, 120) : null;
 	const listed = input.listed === false ? 0 : 1;
 	const aliasesJson = JSON.stringify(aliases);
 	const tagsJson = JSON.stringify(tags);
 
-	if (!id) {
-		const sourcePath = sourcePathForSlug(slug, typeof input.sourcePath === 'string' ? input.sourcePath : undefined);
+	const repoCatalog = await loadRepoCatalog(env);
+	const repoEntry = repoCatalog.articles.find((item) => item.slug === slug);
+
+	let targetId = id;
+	const isImportingRepoDraft = Boolean(id && id.startsWith('repo:'));
+	if (targetId && targetId.startsWith('repo:')) {
+		const repoSlug = targetId.slice('repo:'.length);
+		if (repoSlug !== slug) return error('已保存的草稿不能修改 Slug。', 422, 'slug_immutable');
+		const existingBySlug = await env.DB.prepare('SELECT id FROM drafts WHERE slug=?').bind(slug).first<{ id: string }>();
+		if (existingBySlug) {
+			targetId = existingBySlug.id;
+		} else {
+			targetId = undefined;
+		}
+	}
+
+	if (!targetId) {
+		const existingBySlug = await env.DB.prepare('SELECT id FROM drafts WHERE slug=?').bind(slug).first<{ id: string }>();
+		if (existingBySlug) {
+			return error('该 Slug 已存在草稿或已发布文章，请在左侧列表打开已有文章进行编辑。', 409, 'slug_exists');
+		}
+		const requestedSourcePath = typeof input.sourcePath === 'string' && input.sourcePath.trim()
+			? input.sourcePath.trim()
+			: repoEntry?.source_path;
+		const sourcePath = sourcePathForSlug(slug, requestedSourcePath);
 		if (!sourcePath) return error('源文件只能位于 src/content/blog，且必须与 slug 一致。', 422, 'invalid_source_path');
+		// Never trust client-supplied sourceBlobSha; only derive from the verified repository catalog
+		const initialBlobSha = repoEntry?.source_blob_sha ?? null;
+		const finalCover = cover ?? repoEntry?.cover ?? null;
+		const finalUpdatedDate = updatedDate ?? repoEntry?.updated_date ?? null;
+		const extraFrontmatterJson = JSON.stringify(repoEntry?.extra_frontmatter ?? {});
 		const draftId = crypto.randomUUID();
-		await env.DB.prepare(`INSERT INTO drafts (id, slug, title, description, body, pub_date, tags_json, kind, presentation, featured, kicker, source_path, source_blob_sha, listed, aliases_json, status, version, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 'draft', 1, datetime('now'))`).bind(
-			draftId,
-			slug,
+		try {
+			await env.DB.prepare(`INSERT INTO drafts (id, slug, title, description, body, pub_date, updated_date, tags_json, kind, presentation, featured, kicker, source_path, source_blob_sha, listed, aliases_json, cover, extra_frontmatter_json, status, version, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 1, datetime('now'))`).bind(
+				draftId,
+				slug,
+				title,
+				description,
+				input.body,
+				pubDate,
+				finalUpdatedDate,
+				tagsJson,
+				kind,
+				presentation,
+				featured,
+				kicker,
+				sourcePath,
+				initialBlobSha,
+				listed,
+				aliasesJson,
+				finalCover,
+				extraFrontmatterJson,
+			).run();
+		} catch {
+			// Fallback if migration 0003 columns are not yet present in an older D1 schema
+			await env.DB.prepare(`INSERT INTO drafts (id, slug, title, description, body, pub_date, updated_date, tags_json, kind, presentation, featured, kicker, source_path, source_blob_sha, listed, aliases_json, status, version, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 1, datetime('now'))`).bind(
+				draftId,
+				slug,
+				title,
+				description,
+				input.body,
+				pubDate,
+				finalUpdatedDate,
+				tagsJson,
+				kind,
+				presentation,
+				featured,
+				kicker,
+				sourcePath,
+				initialBlobSha,
+				listed,
+				aliasesJson,
+			).run();
+		}
+		return json({ id: draftId, status: 'draft', version: 1, sourceBlobSha: initialBlobSha, sourcePath }, isImportingRepoDraft ? 200 : 201);
+	}
+
+	const version = Number(input.version);
+	if (!Number.isInteger(version) || version < 1) return error('缺少有效的草稿版本，请重新载入。', 428, 'draft_version_required');
+	const existing = await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(targetId).first<JsonRecord>();
+	if (!existing) return error('草稿不存在。', 404);
+	if (existing.status === 'publishing' || existing.status === 'deploying') return error('草稿正在发布，暂时不能保存。', 409, 'publish_in_progress');
+	if (slug !== String(existing.slug)) return error('已保存的草稿不能修改 Slug。', 422, 'slug_immutable');
+
+	const preservedCover = input.cover !== undefined ? cover : ((existing.cover as string | null) ?? repoEntry?.cover ?? null);
+	const preservedUpdatedDate = input.updatedDate !== undefined ? updatedDate : ((existing.updated_date as string | null) ?? repoEntry?.updated_date ?? null);
+	const preservedSourceBlobSha = (existing.source_blob_sha as string | null) ?? repoEntry?.source_blob_sha ?? null;
+
+	let result: D1Result;
+	try {
+		result = await env.DB.prepare(`UPDATE drafts SET title=?, description=?, body=?, pub_date=?, updated_date=?, tags_json=?, kind=?, presentation=?, featured=?, kicker=?, source_path=?, source_blob_sha=COALESCE(source_blob_sha, ?), listed=?, aliases_json=?, cover=?, status='draft', error_code=NULL, version=version+1, updated_at=datetime('now')
+		WHERE id=? AND version=? AND status NOT IN ('publishing', 'deploying')`).bind(
 			title,
 			description,
 			input.body,
 			pubDate,
+			preservedUpdatedDate,
 			tagsJson,
 			kind,
 			presentation,
 			featured,
 			kicker,
-			sourcePath,
+			existing.source_path,
+			preservedSourceBlobSha,
 			listed,
 			aliasesJson,
+			preservedCover,
+			targetId,
+			version,
 		).run();
-		return json({ id: draftId, status: 'draft', version: 1 }, 201);
+	} catch {
+		result = await env.DB.prepare(`UPDATE drafts SET title=?, description=?, body=?, pub_date=?, updated_date=?, tags_json=?, kind=?, presentation=?, featured=?, kicker=?, source_path=?, source_blob_sha=COALESCE(source_blob_sha, ?), listed=?, aliases_json=?, status='draft', error_code=NULL, version=version+1, updated_at=datetime('now')
+		WHERE id=? AND version=? AND status NOT IN ('publishing', 'deploying')`).bind(
+			title,
+			description,
+			input.body,
+			pubDate,
+			preservedUpdatedDate,
+			tagsJson,
+			kind,
+			presentation,
+			featured,
+			kicker,
+			existing.source_path,
+			preservedSourceBlobSha,
+			listed,
+			aliasesJson,
+			targetId,
+			version,
+		).run();
 	}
-
-	const version = Number(input.version);
-	if (!Number.isInteger(version) || version < 1) return error('缺少有效的草稿版本，请重新载入。', 428, 'draft_version_required');
-	const existing = await env.DB.prepare('SELECT status, slug, source_path, source_blob_sha FROM drafts WHERE id=?').bind(id).first<{ status: string; slug: string; source_path: string; source_blob_sha: string | null }>();
-	if (!existing) return error('草稿不存在。', 404);
-	if (existing.status === 'publishing' || existing.status === 'deploying') return error('草稿正在发布，暂时不能保存。', 409, 'publish_in_progress');
-	if (slug !== existing.slug) return error('已保存的草稿不能修改 Slug。', 422, 'slug_immutable');
-
-	const result = await env.DB.prepare(`UPDATE drafts SET title=?, description=?, body=?, pub_date=?, tags_json=?, kind=?, presentation=?, featured=?, kicker=?, source_path=?, listed=?, aliases_json=?, status='draft', error_code=NULL, version=version+1, updated_at=datetime('now')
-	WHERE id=? AND version=? AND status NOT IN ('publishing', 'deploying')`).bind(
-		title,
-		description,
-		input.body,
-		pubDate,
-		tagsJson,
-		kind,
-		presentation,
-		featured,
-		kicker,
-		existing.source_path,
-		listed,
-		aliasesJson,
-		id,
-		version,
-	).run();
 	if (changes(result) !== 1) {
-		const check = await env.DB.prepare('SELECT status, version FROM drafts WHERE id=?').bind(id).first<{ status: string; version: number }>();
+		const check = await env.DB.prepare('SELECT status, version FROM drafts WHERE id=?').bind(targetId).first<{ status: string; version: number }>();
 		if (!check) return error('草稿不存在。', 404);
 		if (check.status === 'publishing' || check.status === 'deploying') {
 			return error('草稿正在发布，暂时不能保存。', 409, 'publish_in_progress');
 		}
 		return error('草稿已在其他页面被修改，请重新载入后合并。', 409, 'draft_version_conflict');
 	}
-	return json({ id, status: 'draft', version: version + 1 });
+	return json({ id: targetId, status: 'draft', version: version + 1, sourceBlobSha: preservedSourceBlobSha, sourcePath: existing.source_path });
 }
 
 function yamlString(value: string) {
@@ -781,11 +1100,22 @@ function markdownFileFromDraft(draft: JsonRecord) {
 	try { tags = JSON.parse(String(draft.tags_json ?? '[]')); } catch { tags = []; }
 	let aliases: string[] = [];
 	try { aliases = JSON.parse(String(draft.aliases_json ?? '[]')); } catch { aliases = []; }
+	let extraFrontmatter: Record<string, unknown> = {};
+	try { extraFrontmatter = JSON.parse(String(draft.extra_frontmatter_json ?? '{}')); } catch { extraFrontmatter = {}; }
+
+	const extraLines: string[] = [];
+	for (const [key, val] of Object.entries(extraFrontmatter)) {
+		if (val === undefined || val === null) continue;
+		extraLines.push(`${key}: ${JSON.stringify(val)}`);
+	}
+
 	const lines = [
 		'---',
 		`title: ${yamlString(String(draft.title ?? ''))}`,
 		`pubDate: ${yamlString(String(draft.pub_date ?? new Date().toISOString().slice(0, 10)))}`,
+		...(draft.updated_date ? [`updatedDate: ${yamlString(String(draft.updated_date))}`] : []),
 		`description: ${yamlString(String(draft.description ?? draft.title ?? ''))}`,
+		...(draft.cover ? [`cover: ${yamlString(String(draft.cover))}`] : []),
 		`tags: [${tags.map(yamlString).join(', ')}]`,
 		'draft: false',
 		`listed: ${draft.listed !== 0}`,
@@ -794,6 +1124,7 @@ function markdownFileFromDraft(draft: JsonRecord) {
 		`kind: ${yamlString(String(draft.kind ?? 'thought'))}`,
 		`presentation: ${yamlString(String(draft.presentation ?? 'article'))}`,
 		...(draft.kicker ? [`kicker: ${yamlString(String(draft.kicker))}`] : []),
+		...extraLines,
 		'---',
 		'',
 		String(draft.body ?? ''),

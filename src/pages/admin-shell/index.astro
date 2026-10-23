@@ -5,12 +5,12 @@ import AdminComments from '../../components/admin/AdminComments.astro';
 import AdminLinks from '../../components/admin/AdminLinks.astro';
 ---
 
-<AdminLayout title="内容后台" description="管理文章、评论与友链。" context="内容工作台" canonicalPath="/admin/">
+<AdminLayout title="内容后台" description="管理仓库已有文章、新草稿、读者评论与友链。" context="内容工作台" canonicalPath="/admin/">
 	<div class="admin-app" id="main-content">
 		<aside class="admin-rail" aria-label="后台工作区">
 			<div class="admin-rail-heading">
 				<span>工作区</span>
-				<small>EDITORIAL DESK</small>
+				<small>STUDIO &amp; EDITORIAL DESK</small>
 			</div>
 			<div class="admin-tabs admin-nav-tabs" role="tablist" aria-label="后台管理导航" aria-orientation="vertical">
 				<button type="button" class="admin-nav-button admin-tab-btn" id="tab-btn-overview" data-tab="overview" role="tab" aria-selected="true" aria-controls="tab-panel-overview" tabindex="0">
@@ -28,7 +28,7 @@ import AdminLinks from '../../components/admin/AdminLinks.astro';
 			</div>
 			<div class="admin-rail-note">
 				<span class="admin-rail-note-dot" aria-hidden="true"></span>
-				<span>内容储存在博客后台，发布记录写入 GitHub。</span>
+				<span>仓库已有文章与 D1 草稿合并管理，发布时执行 GitHub SHA 乐观锁校验。</span>
 			</div>
 		</aside>
 
@@ -36,9 +36,9 @@ import AdminLinks from '../../components/admin/AdminLinks.astro';
 			<div class="admin-env-banner" id="admin-env-banner" role="status" hidden></div>
 			<header class="admin-heading-row">
 				<div>
-					<div class="admin-eyebrow">YOUR SITE / CONTENT</div>
-					<h1 id="admin-heading">内容工作台</h1>
-					<p id="admin-subheading">查看内容状态，继续写作或处理读者留言。</p>
+					<div class="admin-eyebrow">MYZJX.COM / STUDIO DESK</div>
+					<h1 id="admin-heading">内容与发布工作台</h1>
+					<p id="admin-subheading">统一查看仓库已有文章与后台草稿，支持编辑、预览、原子发布与上线确认。</p>
 				</div>
 				<div class="admin-account-tools">
 					<span class="admin-status" id="admin-status" role="status" aria-live="polite">正在连接…</span>
@@ -49,7 +49,7 @@ import AdminLinks from '../../components/admin/AdminLinks.astro';
 
 			<section class="admin-tab-panel overview-panel" id="tab-panel-overview" role="tabpanel" aria-labelledby="tab-btn-overview">
 				<div class="overview-lead">
-					<div><span class="overview-section-label">SITE STATUS</span><h2>站点总览</h2><p>内容和发布状态来自当前后台数据库与构建清单。</p></div>
+					<div><span class="overview-section-label">SITE STATUS</span><h2>站点总览</h2><p>汇总仓库内容清单（<code>__content.json</code>）与后台 D1 数据库的实时状态。</p></div>
 					<button type="button" class="admin-small-button" id="refresh-overview">重新检查</button>
 				</div>
 
@@ -61,48 +61,48 @@ import AdminLinks from '../../components/admin/AdminLinks.astro';
 
 				<div class="overview-metrics" aria-label="内容统计">
 					<button type="button" class="overview-metric" data-open-tab="posts">
-						<span>待处理文章</span><strong id="metric-drafts">—</strong><small>草稿、冲突或发布失败</small>
+						<span>待处理文章</span><strong id="metric-drafts">—</strong><small id="metric-drafts-note">未发布草稿、有未发布修改、冲突或失败</small>
 					</button>
 					<button type="button" class="overview-metric" data-open-tab="comments">
-						<span>待审核评论</span><strong id="metric-comments">—</strong><small>读者提交后需人工审核</small>
+						<span>待审核评论</span><strong id="metric-comments">—</strong><small>读者提交后需人工审核才公开展示</small>
 					</button>
 					<button type="button" class="overview-metric" data-open-tab="links">
-						<span>公开友链</span><strong id="metric-links">—</strong><small>当前设置为正常展示</small>
+						<span>公开友链</span><strong id="metric-links">—</strong><small>当前状态为正常公开展示的站点</small>
 					</button>
-					<div class="overview-metric overview-metric-static">
-						<span>已发布文章</span><strong id="metric-published">—</strong><small>后台记录的发布状态</small>
-					</div>
+					<button type="button" class="overview-metric" data-open-tab="posts">
+						<span>已发布文章</span><strong id="metric-published">—</strong><small id="metric-published-note">合并仓库公开文章与后台已发布记录</small>
+					</button>
 				</div>
 
 				<div class="overview-grid">
 					<section class="overview-section overview-recent" aria-labelledby="overview-recent-title">
-						<div class="overview-section-heading"><div><span class="overview-section-label">RECENT ACTIVITY</span><h3 id="overview-recent-title">最近内容</h3></div><button type="button" class="text-action" data-open-tab="posts">打开文章 <span aria-hidden="true">→</span></button></div>
+						<div class="overview-section-heading"><div><span class="overview-section-label">CONTENT INVENTORY</span><h3 id="overview-recent-title">文章与近期变更</h3></div><button type="button" class="text-action" data-open-tab="posts">进入编辑器 <span aria-hidden="true">→</span></button></div>
 						<div class="overview-recent-list" id="overview-recent-list" aria-live="polite"><p class="overview-empty">正在加载内容记录…</p></div>
 					</section>
 					<aside class="overview-section overview-publish-flow" aria-labelledby="overview-flow-title">
-						<div class="overview-section-heading"><div><span class="overview-section-label">PUBLISH FLOW</span><h3 id="overview-flow-title">发布流程</h3></div></div>
+						<div class="overview-section-heading"><div><span class="overview-section-label">PUBLISH FLOW</span><h3 id="overview-flow-title">统计口径与发布机制</h3></div></div>
 						<ol class="publish-steps">
-							<li><span>01</span><div><strong>保存草稿</strong><small>自动保存当前编辑内容</small></div></li>
-							<li><span>02</span><div><strong>提交到 GitHub</strong><small>发布时写入博客文章源文件</small></div></li>
-							<li><span>03</span><div><strong>部署并确认</strong><small>页面与后台按同一提交发布</small></div></li>
+							<li><span>01</span><div><strong>合并目录与保存草稿</strong><small>仓库已有文章（含 <code>.md</code> / <code>.mdx</code>）可直接载入编辑，保存后写入后台草稿并保留原始封面与组件。</small></div></li>
+							<li><span>02</span><div><strong>SHA 校验并提交 GitHub</strong><small>发布时比对源文件 <code>source_blob_sha</code>，若外部有改动则拦截并标记冲突，绝不静默覆盖。</small></div></li>
+							<li><span>03</span><div><strong>构建部署与上线确认</strong><small>后台轮询线上构建清单（<code>__build.json</code>），确认静态页面与发布 Commit 一致后切换为“已发布”。</small></div></li>
 						</ol>
-						<p class="overview-flow-note">发布过程会显示在文章状态里；若部署仍在进行，可以稍后重新检查。</p>
+						<p class="overview-flow-note">说明：“已发布文章”统计仓库内非草稿文章与后台已发布记录的并集；已发布文章在后台保存新修改但尚未发布时，会标记为“有未发布修改”。</p>
 					</aside>
 				</div>
 			</section>
 
 			<section class="admin-tab-panel" id="tab-panel-posts" role="tabpanel" aria-labelledby="tab-btn-posts" hidden>
-				<div class="admin-panel-intro"><span class="overview-section-label">WRITE & PUBLISH</span><h2>文章</h2><p>草稿保存在后台，发布后会写入文章源文件并等待部署。</p></div>
+				<div class="admin-panel-intro"><span class="overview-section-label">WRITE &amp; PUBLISH</span><h2>文章与草稿管理</h2><p>左侧列出全部已发布文章与草稿。点击任意文章即可载入编辑、保存草稿、安全预览或发布更新。</p></div>
 				<AdminEditor />
 			</section>
 
 			<section class="admin-tab-panel" id="tab-panel-comments" role="tabpanel" aria-labelledby="tab-btn-comments" hidden>
-				<div class="admin-panel-intro"><span class="overview-section-label">READER RESPONSES</span><h2>评论</h2><p>读者可以匿名留言；新评论通过审核后才会公开。</p></div>
+				<div class="admin-panel-intro"><span class="overview-section-label">READER RESPONSES</span><h2>评论审核</h2><p>读者可以匿名留言；新评论默认处于待审核状态，通过后才会在文章页公开展示。</p></div>
 				<AdminComments />
 			</section>
 
 			<section class="admin-tab-panel" id="tab-panel-links" role="tabpanel" aria-labelledby="tab-btn-links" hidden>
-				<div class="admin-panel-intro"><span class="overview-section-label">FRIENDS & LINKS</span><h2>友链</h2><p>管理公开展示的站点链接及其状态。</p></div>
+				<div class="admin-panel-intro"><span class="overview-section-label">FRIENDS &amp; LINKS</span><h2>友链管理</h2><p>管理公开展示的友站链接、排序权重与在线巡检状态。</p></div>
 				<AdminLinks />
 			</section>
 

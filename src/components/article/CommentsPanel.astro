@@ -10,9 +10,9 @@ const { post } = Astro.props;
 		<div>
 			<div class="section-label">READER NOTES / 读者回应</div>
 			<h2 id="comments-heading">聊聊这篇文章</h2>
-			<p class="comments-intro">无需登录即可留言。新留言会先经过审核，再显示在这里。</p>
+			<p class="comments-intro">无需登录即可留言。新留言会先经过后台人工审核，通过后公开展示在这里。</p>
 		</div>
-		<span class="comments-note">欢迎补充你的想法</span>
+		<span class="comments-note">欢迎补充你的工程实践或想法</span>
 	</div>
 
 	<div class="comments-list" data-comments-list aria-live="polite" aria-busy="true">
@@ -20,12 +20,12 @@ const { post } = Astro.props;
 	</div>
 
 	<form class="comments-form" data-comments-form>
-		<div class="comments-form-heading"><strong>写下回应</strong><span>称呼和个人链接均可不填</span></div>
+		<div class="comments-form-heading"><strong>写下回应</strong><span>称呼和个人链接均可选填</span></div>
 		<div class="comments-form-grid">
 			<label>称呼<input name="authorName" maxlength="80" autocomplete="name" placeholder="匿名访客" /></label>
 			<label>个人链接 <span>可选</span><input name="authorUrl" type="url" maxlength="300" inputmode="url" placeholder="https://" /></label>
 		</div>
-		<label>回应<textarea name="body" required minlength="2" maxlength="2000" rows="4" placeholder="对这篇文章有什么想法？"></textarea></label>
+		<label>回应<textarea name="body" required minlength="2" maxlength="2000" rows="4" placeholder="对这篇文章或相关软件有什么问题与想法？"></textarea></label>
 		<input class="comments-honeypot" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
 		<div class="comments-submit-row">
 			<button type="submit"><span data-submit-label>提交留言</span><span aria-hidden="true">→</span></button>
@@ -66,7 +66,7 @@ const { post } = Astro.props;
 		if (!list) return;
 		list.replaceChildren();
 		list.setAttribute('aria-busy', 'false');
-		if (!comments.length) { showListMessage('还没有留言，欢迎开启这段交流。'); return; }
+		if (!comments.length) { showListMessage('还没有公开留言，欢迎开启这段交流。'); return; }
 		for (const comment of comments) {
 			const item = document.createElement('article'); item.className = 'comment-item';
 			const meta = document.createElement('div'); meta.className = 'comment-meta';
@@ -90,7 +90,10 @@ const { post } = Astro.props;
 		showListMessage('正在加载公开留言…');
 		try {
 			const response = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`, { cache: 'no-store' });
-			if (!response.ok) throw new Error('留言暂时无法读取。请稍后重试。');
+			const contentType = response.headers.get('content-type') || '';
+			if (!response.ok || !contentType.includes('application/json')) {
+				throw new Error('留言暂时无法读取。请稍后重试。');
+			}
 			const result = await response.json() as { comments?: Array<{ author_name?: string; body?: string; created_at?: string }> };
 			list.dataset.state = 'ready';
 			renderComments(Array.isArray(result.comments) ? result.comments : []);

@@ -2,61 +2,204 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleRow from '../../components/ArticleRow.astro';
 import { getListedPosts, KIND_LABELS } from '../../lib/posts';
+
 const posts = await getListedPosts();
 const filters = ['all', 'project', 'thought', 'update'] as const;
 ---
-<BaseLayout title="文章" description="个人项目、技术实践和一些想法，按时间排列。">
-  <header class="shell page-heading"><p class="eyebrow">THE JOURNAL / 文章</p><h1>做过的事，想过的问题<span class="heading-dot">.</span></h1><p>项目怎么做出来，问题怎么解决。也记一点工作之外的事。</p></header>
-  <section class="shell posts-section" aria-label="文章索引">
-    <div class="index-tools">
-      <div class="index-filters" role="group" aria-label="按分类筛选文章">
-        {filters.map((filter) => <button type="button" class="index-filter" data-filter={filter} aria-pressed={filter === 'all'}>{filter === 'all' ? '全部' : KIND_LABELS[filter]}<span>{filter === 'all' ? posts.length : posts.filter((post) => post.data.kind === filter).length}</span></button>)}
-      </div>
-      <label class="index-search"><span aria-hidden="true">⌕</span><input type="search" id="post-search" aria-label="搜索文章标题、摘要或标签" placeholder="找一篇文章…" /></label>
-    </div>
-    <p class="index-count" id="index-count" role="status" aria-live="polite">共 {posts.length} 篇文章</p>
-    <div id="posts-list">
-      {posts.map((post, index) => <div class="post-index-item" data-kind={post.data.kind} data-search={[post.data.title, post.data.description, ...post.data.tags].join(' ').toLocaleLowerCase()}><ArticleRow post={post} index={index} /></div>)}
-    </div>
-    <p id="posts-empty" class="index-empty" hidden>还没有找到。换个关键词，或看看其他分类。</p>
-  </section>
+
+<BaseLayout title="文章与手记" description="Xin 的工程复盘、软件开发手记与日常思考，按时间排列。">
+	<header class="shell page-heading">
+		<div class="section-kicker">
+			<span class="kicker-dot" aria-hidden="true"></span>
+			<span>JOURNAL & ENGINEERING NOTES / 文章与手记</span>
+		</div>
+		<h1>做过的事，想过的问题</h1>
+		<p>记录个人软件的架构取舍、真实开发里的踩坑排查，以及工作之外的自省与观察。</p>
+	</header>
+
+	<section class="shell posts-section" aria-label="文章索引">
+		<div class="index-tools">
+			<div class="index-filters" role="group" aria-label="按分类筛选文章">
+				{filters.map((filter) => (
+					<button
+						type="button"
+						class="index-filter"
+						data-filter={filter}
+						aria-pressed={filter === 'all'}
+					>
+						<span>{filter === 'all' ? '全部' : KIND_LABELS[filter]}</span>
+						<span class="index-filter-count">
+							{filter === 'all' ? posts.length : posts.filter((post) => post.data.kind === filter).length}
+						</span>
+					</button>
+				))}
+			</div>
+			<label class="index-search">
+				<span aria-hidden="true">⌕</span>
+				<input
+					type="search"
+					id="post-search"
+					aria-label="搜索文章标题、摘要或标签"
+					placeholder="搜索标题、关键词或标签…"
+				/>
+			</label>
+		</div>
+
+		<p class="index-count" id="index-count" role="status" aria-live="polite">
+			共 {posts.length} 篇已发布文章
+		</p>
+
+		<div id="posts-list">
+			{posts.map((post, index) => (
+				<div
+					class="post-index-item"
+					data-kind={post.data.kind}
+					data-search={[post.data.title, post.data.description, ...post.data.tags].join(' ').toLocaleLowerCase()}
+				>
+					<ArticleRow post={post} index={index} />
+				</div>
+			))}
+		</div>
+
+		<p id="posts-empty" class="index-empty" hidden>
+			没有找到匹配的文章。试试清除搜索词或切换上方分类。
+		</p>
+	</section>
 </BaseLayout>
+
 <style>
-.posts-section { padding-bottom: 32px; }
-.index-tools { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: center; border-block: 1px solid var(--line); padding: 18px 0; }
-.index-filters { display: flex; gap: 20px; }
-.index-filter { border: 0; padding: 8px 0; background: none; font-size: 13px; cursor: pointer; color: var(--text-muted); }
-.index-filter span { font: 10px var(--font-mono); margin-left: 7px; opacity: .7; }
-.index-filter[aria-pressed="true"] { color: var(--accent-contrast); }
-.index-search { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
-.index-search > span { font-size: 24px; }
-.index-search input { background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 9px 0; font-size: 12px; width: 170px; }
-.index-count { font: 10px/1.6 var(--font-mono); color: var(--text-muted); margin: 18px 0 0; }
-.index-empty { color: var(--text-muted); text-align: center; padding: 64px 0; }
-.post-index-item[hidden], .index-empty[hidden] { display: none; }
-@media(max-width:600px) { .index-tools { gap: 12px; } .index-search { width: 100%; } .index-search input { width: 100%; } }
+	.posts-section {
+		padding: 28px 0 64px;
+	}
+	.index-tools {
+		display: flex;
+		justify-content: space-between;
+		gap: 20px;
+		flex-wrap: wrap;
+		align-items: center;
+		padding: 16px 20px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius-md);
+	}
+	.index-filters {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.index-filter {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		border: 1px solid transparent;
+		padding: 7px 14px;
+		border-radius: var(--radius-pill);
+		background: transparent;
+		font-size: 13.5px;
+		font-weight: 500;
+		cursor: pointer;
+		color: var(--text-secondary);
+		transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+	}
+	.index-filter:hover {
+		background: var(--surface-subtle);
+		color: var(--text);
+	}
+	.index-filter[aria-pressed="true"] {
+		background: var(--text);
+		color: var(--bg);
+		border-color: var(--text);
+		font-weight: 600;
+	}
+	.index-filter-count {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		opacity: 0.78;
+	}
+	.index-search {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 12px;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-pill);
+		background: var(--bg);
+		color: var(--text-muted);
+	}
+	.index-search input {
+		background: none;
+		border: 0;
+		padding: 4px 0;
+		font-size: 13.5px;
+		width: 220px;
+		color: var(--text);
+	}
+	.index-search input:focus {
+		outline: none;
+	}
+	.index-search:focus-within {
+		border-color: var(--accent-contrast);
+	}
+	.index-count {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: var(--text-muted);
+		margin: 20px 0 4px;
+	}
+	.index-empty {
+		color: var(--text-muted);
+		text-align: center;
+		padding: 64px 20px;
+		background: var(--surface);
+		border: 1px dashed var(--line);
+		border-radius: var(--radius-md);
+		margin-top: 20px;
+	}
+	.post-index-item[hidden],
+	.index-empty[hidden] {
+		display: none;
+	}
+	@media (max-width: 640px) {
+		.index-tools {
+			padding: 14px;
+		}
+		.index-search {
+			width: 100%;
+		}
+		.index-search input {
+			width: 100%;
+		}
+	}
 </style>
+
 <script>
-const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
-const items = document.querySelectorAll<HTMLElement>('.post-index-item');
-const search = document.getElementById('post-search') as HTMLInputElement | null;
-const count = document.getElementById('index-count');
-const empty = document.getElementById('posts-empty');
-let activeFilter = 'all';
-function updateIndex() {
-  const term = search?.value.trim().toLocaleLowerCase() ?? '';
-  let visible = 0;
-  items.forEach((item) => {
-    item.hidden = !((activeFilter === 'all' || item.dataset.kind === activeFilter) && (item.dataset.search ?? '').includes(term));
-    if (!item.hidden) visible++;
-  });
-  if (count) count.textContent = `共 ${visible} 篇文章`;
-  if (empty) empty.hidden = visible !== 0;
-}
-buttons.forEach((button) => button.addEventListener('click', () => {
-  activeFilter = button.dataset.filter ?? 'all';
-  buttons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
-  updateIndex();
-}));
-search?.addEventListener('input', updateIndex);
+	const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+	const items = document.querySelectorAll<HTMLElement>('.post-index-item');
+	const search = document.getElementById('post-search') as HTMLInputElement | null;
+	const count = document.getElementById('index-count');
+	const empty = document.getElementById('posts-empty');
+	let activeFilter = 'all';
+
+	function updateIndex() {
+		const term = search?.value.trim().toLocaleLowerCase() ?? '';
+		let visible = 0;
+		items.forEach((item) => {
+			item.hidden = !(
+				(activeFilter === 'all' || item.dataset.kind === activeFilter) &&
+				(item.dataset.search ?? '').includes(term)
+			);
+			if (!item.hidden) visible++;
+		});
+		if (count) count.textContent = `共 ${visible} 篇已发布文章`;
+		if (empty) empty.hidden = visible !== 0;
+	}
+
+	buttons.forEach((button) =>
+		button.addEventListener('click', () => {
+			activeFilter = button.dataset.filter ?? 'all';
+			buttons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+			updateIndex();
+		})
+	);
+	search?.addEventListener('input', updateIndex);
 </script>

@@ -2,9 +2,9 @@
 ---
 
 <div class="admin-layout" id="admin-editor-layout">
-	<aside class="admin-sidebar" aria-label="草稿列表">
+	<aside class="admin-sidebar" aria-label="文章与草稿列表">
 		<div class="admin-sidebar-heading">
-			<span>草稿</span>
+			<span>文章与草稿</span>
 			<button type="button" class="admin-small-button" id="new-draft">+ 新建</button>
 		</div>
 		<ul class="admin-draft-list" id="draft-list">
@@ -13,6 +13,10 @@
 	</aside>
 
 	<form class="admin-editor" id="draft-form">
+		<div class="admin-mdx-banner" id="mdx-preserve-banner" hidden>
+			<strong>MDX 组件与资源保护已启用：</strong>当前文章使用 <code>.mdx</code> 或内联组件语法。保存与发布会自动保留源文件后缀、<code>import</code> 语句、封面与扩展 Frontmatter，编辑正文时请勿误删顶部组件导入。
+		</div>
+
 		<!-- 1. 基本内容 -->
 		<div class="admin-editor-section">
 			<div class="admin-editor-section-title">基本内容</div>
@@ -35,7 +39,7 @@
 			</div>
 			<div class="admin-field-row-full">
 				<div class="admin-field-col">
-					<label class="admin-field-label" for="field-body">Markdown 正文 *</label>
+					<label class="admin-field-label" for="field-body">Markdown / MDX 正文 *</label>
 					<textarea class="admin-control" id="field-body" name="body" required rows="18" placeholder="# 一次新的发布&#10;&#10;写下你的想法、项目或近况。"></textarea>
 				</div>
 			</div>
@@ -50,6 +54,12 @@
 					<input class="admin-control admin-control-mono" id="field-pubDate" name="pubDate" type="date" />
 				</div>
 				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-updatedDate">更新日期（可选）</label>
+					<input class="admin-control admin-control-mono" id="field-updatedDate" name="updatedDate" type="date" />
+				</div>
+			</div>
+			<div class="admin-field-row">
+				<div class="admin-field-col">
 					<label class="admin-field-label" for="field-kind">栏目</label>
 					<select class="admin-control" id="field-kind" name="kind">
 						<option value="thought">思考 (Thought)</option>
@@ -57,8 +67,6 @@
 						<option value="update">近况 (Update)</option>
 					</select>
 				</div>
-			</div>
-			<div class="admin-field-row">
 				<div class="admin-field-col">
 					<label class="admin-field-label" for="field-presentation">展示模板</label>
 					<select class="admin-control" id="field-presentation" name="presentation">
@@ -66,24 +74,26 @@
 						<option value="feature">重点发布 (Feature)</option>
 					</select>
 				</div>
-				<div class="admin-field-col" style="justify-content: flex-end;">
+			</div>
+			<div class="admin-field-row">
+				<div class="admin-field-col">
 					<label class="admin-checkbox-label">
 						<input type="checkbox" name="featured" id="field-featured" />
 						<span>首页重点推荐（Featured）</span>
 					</label>
 				</div>
-			</div>
-			<div class="admin-field-row-full">
-				<label class="admin-checkbox-label">
-					<input type="checkbox" name="listed" id="field-listed" checked />
-					<span>公开索引（取消后发布仍可通过直达链接访问，但不进入首页、文章列表、RSS 及站点地图）</span>
-				</label>
+				<div class="admin-field-col">
+					<label class="admin-checkbox-label">
+						<input type="checkbox" name="listed" id="field-listed" checked />
+						<span>公开索引（进入首页、列表、RSS 与站点地图）</span>
+					</label>
+				</div>
 			</div>
 		</div>
 
 		<!-- 3. 内容信息 -->
 		<div class="admin-editor-section">
-			<div class="admin-editor-section-title">内容信息</div>
+			<div class="admin-editor-section-title">内容信息与资源</div>
 			<div class="admin-field-row">
 				<div class="admin-field-col">
 					<label class="admin-field-label" for="field-tags">标签（逗号分隔）</label>
@@ -94,9 +104,13 @@
 					<input class="admin-control admin-control-mono" id="field-kicker" name="kicker" placeholder="THOUGHT / FIELD NOTE" />
 				</div>
 			</div>
-			<div class="admin-field-row-full">
+			<div class="admin-field-row">
 				<div class="admin-field-col">
-					<label class="admin-field-label" for="field-aliases">Alias 永久链接重定向（逗号分隔，必须以 / 开头）</label>
+					<label class="admin-field-label" for="field-cover">封面路径（可选，保留已有文章 cover）</label>
+					<input class="admin-control admin-control-mono" id="field-cover" name="cover" placeholder="../../assets/blog-placeholder-1.jpg" />
+				</div>
+				<div class="admin-field-col">
+					<label class="admin-field-label" for="field-aliases">Alias 永久链接重定向（逗号分隔，以 / 开头）</label>
 					<input class="admin-control admin-control-mono" id="field-aliases" name="aliases" placeholder="/my-release, /release-notes" />
 				</div>
 			</div>
@@ -104,16 +118,16 @@
 
 		<!-- 4. 系统信息（只读，默认折叠） -->
 		<details class="admin-details" id="system-info-details">
-			<summary>系统信息</summary>
+			<summary>系统信息与版本校验</summary>
 			<div class="admin-details-body">
 				<div class="admin-field-row">
 					<div class="admin-field-col">
 						<label class="admin-field-label" for="field-sourcePath">源文件路径</label>
-						<input class="admin-control admin-control-mono" id="field-sourcePath" name="sourcePath" placeholder="保存后自动生成" readonly />
+						<input class="admin-control admin-control-mono" id="field-sourcePath" name="sourcePath" placeholder="保存后自动生成（支持 .md / .mdx）" readonly />
 					</div>
 					<div class="admin-field-col">
 						<label class="admin-field-label" for="field-sourceBlobSha">GitHub Blob SHA</label>
-						<input class="admin-control admin-control-mono" id="field-sourceBlobSha" name="sourceBlobSha" placeholder="由后端托管，首次发布后自动获取" readonly />
+						<input class="admin-control admin-control-mono" id="field-sourceBlobSha" name="sourceBlobSha" placeholder="由后端托管，防覆盖冲突校验" readonly />
 					</div>
 				</div>
 				<div class="admin-field-row">
@@ -127,7 +141,7 @@
 					</div>
 				</div>
 				<div class="admin-notice">
-					说明：媒体存储尚未启用。<code>source_blob_sha</code> 由后端管理，已保存草稿自动锁定 Slug，以防源文件与路由失配。
+					说明：已有仓库文章与新草稿统一在此管理。<code>source_blob_sha</code> 用于 GitHub 源文件乐观锁校验；若远程文件被外部改动，发布将自动拦截并提示冲突，绝不静默覆盖。
 				</div>
 			</div>
 		</details>

@@ -1,16 +1,86 @@
 ---
 import ThemeSwitcher from './ThemeSwitcher.astro';
+
 const currentPath = Astro.url.pathname;
+const isHome = currentPath === '/';
+const isSoftware = currentPath.startsWith('/software');
+const isPosts = currentPath.startsWith('/posts') || currentPath.startsWith('/archive') || currentPath.startsWith('/tags');
+const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/links');
 ---
+
 <header class="site-header" id="site-header">
-  <div class="shell header-inner">
-    <a class="brand" href="/" aria-label="Xin 首页"><span class="brand-mark" aria-hidden="true">x.</span><span class="brand-name">Xin<span class="brand-divider"> / </span><span class="brand-caption">随手记</span></span></a>
-    <nav class="site-nav" aria-label="主导航">
-      <a href="/" aria-current={currentPath === '/' ? 'page' : undefined}>首页</a>
-      <a href="/posts/" aria-current={currentPath.startsWith('/posts') ? 'page' : undefined}>文章</a>
-      <a href="/#projects">作品</a>
-      <a href="/about/" aria-current={currentPath.startsWith('/about') ? 'page' : undefined}>关于</a>
-    </nav>
-    <ThemeSwitcher />
-  </div>
+	<div class="shell header-inner">
+		<a class="brand" href="/" aria-label="Xin · myzjx.com 首页">
+			<span class="brand-monogram" aria-hidden="true">X</span>
+			<span class="brand-identity">
+				<span class="brand-name">Xin</span>
+				<span class="brand-domain">myzjx.com</span>
+			</span>
+		</a>
+
+		<nav class="site-nav" aria-label="主导航">
+			<a href="/" aria-current={isHome ? 'page' : undefined}>首页</a>
+			<a href="/software/" aria-current={isSoftware ? 'page' : undefined}>软件与工具</a>
+			<a href="/posts/" aria-current={isPosts ? 'page' : undefined}>文章与手记</a>
+			<a href="/about/" aria-current={isAbout ? 'page' : undefined}>关于</a>
+		</nav>
+
+		<div class="header-actions">
+			<a class="header-cta" href="/software/usblinkmic/">
+				<span>获取 USBLinkMic</span>
+				<span class="header-cta-badge">v4.0.8</span>
+			</a>
+			<ThemeSwitcher />
+			<details class="mobile-nav" data-mobile-nav>
+				<summary class="mobile-nav-trigger" aria-label="打开导航菜单">
+					<span class="mobile-nav-bars" aria-hidden="true">
+						<span></span>
+						<span></span>
+					</span>
+					<span class="mobile-nav-label">菜单</span>
+				</summary>
+				<div class="mobile-nav-panel" role="dialog" aria-label="站点导航">
+					<nav class="mobile-nav-links" aria-label="移动端主导航">
+						<a href="/" aria-current={isHome ? 'page' : undefined}>
+							<strong>首页</strong>
+							<span>个人品牌、代表软件与近期手记</span>
+						</a>
+						<a href="/software/" aria-current={isSoftware ? 'page' : undefined}>
+							<strong>软件与工具</strong>
+							<span>USBLinkMic v4.0.8 下载与 HabitBloom 介绍</span>
+						</a>
+						<a href="/posts/" aria-current={isPosts ? 'page' : undefined}>
+							<strong>文章与手记</strong>
+							<span>工程复盘、技术实践与思考记录</span>
+						</a>
+						<a href="/about/" aria-current={isAbout ? 'page' : undefined}>
+							<strong>关于 Xin</strong>
+							<span>我在做什么、工作方法与联系方式</span>
+						</a>
+					</nav>
+					<div class="mobile-nav-sub">
+						<a href="/archive/">时间归档</a>
+						<a href="/tags/">标签索引</a>
+						<a href="/links/">友链推荐</a>
+						<a href="/rss.xml">RSS 订阅</a>
+					</div>
+				</div>
+			</details>
+		</div>
+	</div>
 </header>
+
+<script>
+	const mobileNav = document.querySelector<HTMLDetailsElement>('[data-mobile-nav]');
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape' && mobileNav?.open) {
+			mobileNav.open = false;
+			mobileNav.querySelector<HTMLElement>('summary')?.focus();
+		}
+	});
+	document.addEventListener('click', (event) => {
+		if (mobileNav?.open && event.target instanceof Node && !mobileNav.contains(event.target)) {
+			mobileNav.open = false;
+		}
+	});
+</script>

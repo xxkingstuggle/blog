@@ -1,0 +1,273 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SOFTWARE_PRODUCTS, type SoftwareProduct } from '../../lib/software';
+
+export function getStaticPaths() {
+	return SOFTWARE_PRODUCTS.map((product) => ({
+		params: { slug: product.slug },
+		props: { product },
+	}));
+}
+
+interface Props {
+	product: SoftwareProduct;
+}
+
+const { product } = Astro.props;
+const otherProducts = SOFTWARE_PRODUCTS.filter((item) => item.slug !== product.slug);
+---
+
+<BaseLayout
+	title={`${product.name} — ${product.category}`}
+	description={`${product.name}：${product.tagline}。${product.availabilitySummary}`}
+	image={product.screenshot}
+>
+	<!-- 1. Product Hero & Acquisition Box -->
+	<header class="software-detail-hero">
+		<div class="shell">
+			<nav class="software-breadcrumb" aria-label="面包屑导航">
+				<a href="/">首页</a>
+				<span aria-hidden="true">/</span>
+				<a href="/software/">软件与工具</a>
+				<span aria-hidden="true">/</span>
+				<span aria-current="page">{product.name}</span>
+			</nav>
+
+			<div class="software-hero-top">
+				<div class="software-hero-copy">
+					<div class="software-identity-row">
+						<div class="software-hero-icon">
+							<Image src={product.icon} alt={`${product.name} 图标`} width={136} height={136} />
+						</div>
+						<div>
+							<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+								<span class="status-pill" data-tone={product.statusTone}>{product.statusBadge}</span>
+								<span class="platform-pill">{product.platformsLabel}</span>
+							</div>
+							<span style="font-size: 13px; color: var(--text-muted);">
+								{product.category} · 版本 {product.latestVersion} ({product.releaseDate})
+							</span>
+						</div>
+					</div>
+
+					<h1>{product.name}：{product.headline}</h1>
+					<p class="software-hero-summary">{product.summary}</p>
+
+					<div class="brand-hero-actions" style="margin-bottom: 0;">
+						{product.downloads[0] ? (
+							<a class="btn-primary" href={product.downloads[0].url} target="_blank" rel="noopener noreferrer">
+								<span>{product.downloads[0].label}</span>
+							</a>
+						) : (
+							<a class="btn-primary" href={`/posts/${product.articleSlug}/`}>
+								<span>阅读架构设计与实现长文</span>
+							</a>
+						)}
+						<a class="btn-secondary" href={`/posts/${product.articleSlug}/`}>
+							<span>配套工程手记</span>
+						</a>
+						{product.repoVisibility === 'public' && (
+							<a class="btn-secondary" href={product.repoUrl} target="_blank" rel="noopener noreferrer">
+								<span>GitHub 开源仓库</span>
+							</a>
+						)}
+					</div>
+				</div>
+
+				<!-- Acquisition / Release Panel -->
+				<aside class="acquisition-panel" aria-labelledby="acquisition-heading">
+					<div class="acquisition-panel-head">
+						<h2 id="acquisition-heading">获取与安装状态</h2>
+						<span class="status-pill" data-tone={product.statusTone}>{product.latestVersion}</span>
+					</div>
+					<p class="acquisition-summary">{product.availabilitySummary}</p>
+
+					{product.downloads.length > 0 ? (
+						<div class="download-list" role="list" aria-label="可下载发行包">
+							{product.downloads.map((item) => (
+								<a
+									class="download-item"
+									data-primary={item.primary ? 'true' : 'false'}
+									href={item.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									role="listitem"
+								>
+									<div class="download-item-main">
+										<strong>{item.label}</strong>
+										<span>{item.platform}{item.note ? ` · ${item.note}` : ''}</span>
+									</div>
+									<span class="download-item-meta">{item.format} · {item.size}</span>
+								</a>
+							))}
+						</div>
+					) : null}
+
+					<div class="acquisition-notice">
+						{product.availabilityNotice}
+					</div>
+
+					<div class="acquisition-links">
+						{product.releasesUrl && (
+							<a href={product.releasesUrl} target="_blank" rel="noopener noreferrer">GitHub Release 发行说明</a>
+						)}
+						{product.checksumsUrl && (
+							<a href={product.checksumsUrl} target="_blank" rel="noopener noreferrer">SHA256SUMS 校验文件</a>
+						)}
+						<a href={`/posts/${product.articleSlug}/`}>查看完整开发手记</a>
+					</div>
+				</aside>
+			</div>
+		</div>
+	</header>
+
+	<!-- 2. Real Product Interface Stage -->
+	<section class="software-stage-section" aria-label="真实软件界面预览">
+		<div class="shell">
+			<figure class="software-stage-figure">
+				<Image
+					src={product.screenshot}
+					alt={product.screenshotAlt}
+					width={1280}
+					height={820}
+				/>
+				<figcaption>{product.screenshotCaption}</figcaption>
+			</figure>
+		</div>
+	</section>
+
+	<!-- 3. Core Capabilities -->
+	<section class="software-section" aria-labelledby="capabilities-heading">
+		<div class="shell">
+			<div class="section-header-bar">
+				<div>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>核心能力与设计边界</span>
+					</div>
+					<h2 id="capabilities-heading">{product.name} 解决什么问题</h2>
+					<p>围绕真实使用中的高频动作设计，把复杂的底层协议与同步机制封装在直观的卡片界面之后。</p>
+				</div>
+			</div>
+
+			<div class="software-grid-2">
+				{product.highlights.map((item) => (
+					<div class="software-feature-card">
+						<h3>{item.title}</h3>
+						<p>{item.body}</p>
+					</div>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- 4. Scenario -> Outcome Breakdown -->
+	<section class="software-section" aria-labelledby="scenarios-heading">
+		<div class="shell">
+			<div class="section-header-bar">
+				<div>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>场景 → 结果 → 技术机制</span>
+					</div>
+					<h2 id="scenarios-heading">典型使用场景</h2>
+					<p>从日常遇到的具体痛点出发，说明它带来的实际体验改变与底层实现方式。</p>
+				</div>
+			</div>
+
+			<div class="software-grid-3">
+				{product.scenarios.map((item) => (
+					<article class="software-scenario-card">
+						<h3>{item.scenario}</h3>
+						<div class="scenario-row">
+							<div><strong>痛点：</strong><span>{item.pain}</span></div>
+							<div><strong>结果：</strong><span>{item.outcome}</span></div>
+							<div><strong>机制：</strong><span>{item.mechanism}</span></div>
+						</div>
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- 5. Workflow & Technical Specifications -->
+	<section class="software-section" aria-labelledby="workflow-heading">
+		<div class="shell">
+			<div class="section-header-bar">
+				<div>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>工作流程与系统规格</span>
+					</div>
+					<h2 id="workflow-heading">三步上手与环境要求</h2>
+				</div>
+			</div>
+
+			<div class="software-grid-3" style="margin-bottom: 36px;">
+				{product.workflow.map((step) => (
+					<div class="software-step-card">
+						<span class="step-badge">STEP {step.step}</span>
+						<h3>{step.title}</h3>
+						<p style="margin-bottom: 10px;">{step.description}</p>
+						<p style="font-size: 12.5px; color: var(--text-muted);">{step.detail}</p>
+					</div>
+				))}
+			</div>
+
+			<dl class="software-specs-grid" aria-label="技术与平台规格">
+				{product.specs.map((spec) => (
+					<div class="spec-card">
+						<dt>{spec.label}</dt>
+						<dd>{spec.value}</dd>
+					</div>
+				))}
+			</dl>
+		</div>
+	</section>
+
+	<!-- 6. FAQ & Engineering Deep-Dive Link -->
+	<section class="software-section" style="border-bottom: 0;" aria-labelledby="faq-heading">
+		<div class="shell">
+			<div class="section-header-bar">
+				<div>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>常见问题与工程深读</span>
+					</div>
+					<h2 id="faq-heading">常见疑问解答</h2>
+				</div>
+			</div>
+
+			<div class="faq-list" style="margin-bottom: 48px;">
+				{product.faq.map((item) => (
+					<div class="faq-item">
+						<h3>{item.question}</h3>
+						<p>{item.answer}</p>
+					</div>
+				))}
+			</div>
+
+			<div class="related-article-banner">
+				<div>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>配套工程长文</span>
+					</div>
+					<h3>{product.articleTitle}</h3>
+					<p>
+						想了解 {product.name} 在开发过程中经历的完整架构演进、踩坑排查与协议细节？阅读这篇第一手工程手记。
+					</p>
+				</div>
+				<div class="brand-hero-actions" style="margin-bottom: 0;">
+					<a class="btn-primary" href={`/posts/${product.articleSlug}/`}>阅读工程手记</a>
+					{otherProducts[0] && (
+						<a class="btn-secondary" href={`/software/${otherProducts[0].slug}/`}>
+							了解另一款软件：{otherProducts[0].name}
+						</a>
+					)}
+				</div>
+			</div>
+		</div>
+	</section>
+</BaseLayout>

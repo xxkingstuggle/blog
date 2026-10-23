@@ -777,3 +777,81 @@ test('10. 重新启动轮询时，旧的在途请求返回后核对编号和 com
 		globalThis.fetch = originalFetch;
 	}
 });
+
+test('11. 载入仓库已有文章（repo:<slug>）并保存后，currentId 正确切换为 D1 UUID 且显示“有未发布修改”与“更新文章”', async () => {
+	resetEditorDOM();
+	const originalFetch = globalThis.fetch;
+	const publishBtn = elementsMap.get('publish-draft')!;
+	const systemStatusText = elementsMap.get('field-systemStatusText') as any;
+
+	let savedPayload: any = null;
+	globalThis.fetch = async (input: any, init?: RequestInit) => {
+		const url = String(input?.url || input);
+		if (url.includes('/api/admin/drafts/repo%3Ausblinkmic-android-mac-bridge') && (!init?.method || init.method === 'GET')) {
+			return new Response(
+				JSON.stringify({
+					draft: {
+						id: 'repo:usblinkmic-android-mac-bridge',
+						slug: 'usblinkmic-android-mac-bridge',
+						title: 'USBLinkMic：把 Android 手机变成 Mac 的低延迟麦克风',
+						description: '低延迟音频桥接工具',
+						body: "import Callout from '../../components/mdx/Callout.astro';\n\n正文",
+						pub_date: '2026-03-28',
+						updated_date: '2026-04-02',
+						cover: '../../assets/blog-placeholder-3.jpg',
+						source_path: 'src/content/blog/usblinkmic-android-mac-bridge.mdx',
+						source_blob_sha: 'repo-blob-sha-001',
+						status: 'published',
+						has_mdx: true,
+						version: 1,
+					},
+				}),
+				{ status: 200, headers: { 'Content-Type': 'application/json' } },
+			);
+		}
+		if (url.includes('/api/admin/drafts/repo%3Ausblinkmic-android-mac-bridge') && init?.method === 'PUT') {
+			savedPayload = JSON.parse(String(init.body || '{}'));
+			return new Response(
+				JSON.stringify({
+					id: 'd1-uuid-usblinkmic',
+					status: 'draft',
+					version: 1,
+					sourceBlobSha: 'repo-blob-sha-001',
+					sourcePath: 'src/content/blog/usblinkmic-android-mac-bridge.mdx',
+				}),
+				{ status: 200, headers: { 'Content-Type': 'application/json' } },
+			);
+		}
+		return new Response(JSON.stringify({ drafts: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+	};
+
+	try {
+		await testHelpers.selectDraft({
+			id: 'repo:usblinkmic-android-mac-bridge',
+			slug: 'usblinkmic-android-mac-bridge',
+			title: 'USBLinkMic',
+			body: '',
+		});
+
+		assert.equal(testHelpers.getState().currentId, 'repo:usblinkmic-android-mac-bridge');
+		assert.equal(fieldSourcePath.value, 'src/content/blog/usblinkmic-android-mac-bridge.mdx');
+		assert.equal(fieldSourceBlobSha.value, 'repo-blob-sha-001');
+		assert.equal(publishBtn.textContent, '更新文章');
+		assert.equal(testHelpers.isFormDirty(), false);
+
+		// 修改正文并保存草稿
+		fieldBody.value = "import Callout from '../../components/mdx/Callout.astro';\n\n修订后的正文";
+		assert.equal(testHelpers.isFormDirty(), true);
+
+		await testHelpers.saveCurrentDraft(true);
+
+		assert.equal(savedPayload.sourcePath, 'src/content/blog/usblinkmic-android-mac-bridge.mdx');
+		assert.equal(testHelpers.getState().currentId, 'd1-uuid-usblinkmic', '保存后 currentId 切换为 D1 正式 UUID');
+		assert.equal(systemStatusText.value, '有未发布修改 (v1)');
+		assert.equal(publishBtn.textContent, '更新文章');
+		assert.equal(testHelpers.isFormDirty(), false);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+

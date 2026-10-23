@@ -1,0 +1,105 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SOFTWARE_PRODUCTS } from '../../lib/software';
+---
+
+<BaseLayout
+	title="软件与工具"
+	description="Xin 独立设计与维护的原生软件与跨设备工具：USBLinkMic v4.0.8（macOS · Android）与 HabitBloom（iOS · iPadOS · macOS）。"
+>
+	<header class="shell page-heading">
+		<div class="section-kicker">
+			<span class="kicker-dot" aria-hidden="true"></span>
+			<span>SOFTWARE STUDIO / 软件与工具官网</span>
+		</div>
+		<h1>为真实桌面与移动场景构建的工具</h1>
+		<p>
+			这里汇总我独立设计、开发并在日常高频使用的软件产品。我们清楚区分「已提供公开安装包」与「个人自用源码演进」状态，所有下载链接均指向经过 SHA-256 校验的真实发行版。
+		</p>
+	</header>
+
+	<section class="shell home-software-section" aria-label="软件产品目录">
+		<div class="software-showcase-stack">
+			{SOFTWARE_PRODUCTS.map((product) => (
+				<article class="software-flagship-card" id={product.slug} aria-labelledby={`hub-title-${product.slug}`}>
+					<div class="software-flagship-info">
+						<div class="software-card-top">
+							<div class="software-card-icon">
+								<Image src={product.icon} alt={`${product.name} 图标`} width={112} height={112} />
+							</div>
+							<div class="software-card-titles">
+								<h2 id={`hub-title-${product.slug}`} style="font-size: clamp(1.5rem, 2.5vw, 1.95rem); margin: 0 0 4px;">
+									<a href={`/software/${product.slug}/`}>{product.name}</a>
+								</h2>
+								<span>{product.category} · 更新于 {product.releaseDate}</span>
+							</div>
+							<div class="software-card-badges">
+								<span class="status-pill" data-tone={product.statusTone}>{product.statusBadge}</span>
+								<span class="platform-pill">{product.platformsLabel}</span>
+							</div>
+						</div>
+
+						<p class="software-card-headline">{product.headline}</p>
+						<p class="software-card-summary">{product.summary}</p>
+
+						<div class="acquisition-notice" style="margin: 4px 0;">
+							<strong>获取方式与当前状态：</strong>{product.availabilitySummary}
+						</div>
+
+						<ul class="software-feature-bullets">
+							{product.highlights.map((item) => (
+								<li>
+									<strong>{item.title}：</strong>
+									<span>{item.body}</span>
+								</li>
+							))}
+						</ul>
+
+						<div class="software-card-actions">
+							<a class="btn-primary" href={`/software/${product.slug}/`}>
+								<span>进入 {product.name} 完整产品页</span>
+							</a>
+							{product.downloads.map((dl) =>
+								dl.primary ? (
+									<a class="btn-secondary" href={dl.url} target="_blank" rel="noopener noreferrer">
+										<span>{dl.label} ({dl.size})</span>
+									</a>
+								) : null
+							)}
+							<a class="btn-secondary" href={`/posts/${product.articleSlug}/`}>
+								<span>阅读工程手记</span>
+							</a>
+						</div>
+					</div>
+
+					<div class="software-flagship-visual">
+						<a class="software-visual-frame" href={`/software/${product.slug}/`} aria-label={`查看 ${product.name} 产品详情`}>
+							<Image
+								src={product.screenshot}
+								alt={product.screenshotAlt}
+								width={960}
+								height={640}
+							/>
+						</a>
+						<p class="software-visual-caption">{product.screenshotCaption}</p>
+					</div>
+				</article>
+			))}
+		</div>
+	</section>
+
+	<section class="shell software-section" style="border-bottom: 0;" aria-labelledby="matrix-heading">
+		<div class="section-header-bar">
+			<div>
+				<div class="section-kicker">
+					<span class="kicker-dot" aria-hidden="true"></span>
+					<span>工程自动化与研发工作流</span>
+				</div>
+				<h2 id="matrix-heading">配套的研发实践：轻量多 Agent 编码回路</h2>
+				<p>除了终端用户软件，我也将日常使用 Claude、Codex 与 Gemini 构建和审查这些软件的工程约束整理成了可复用的最小闭环。</p>
+			</div>
+			<a class="btn-secondary" href="/posts/lightweight-multi-agent-coding-loop/">阅读完整实践笔记</a>
+		</div>
+	</section>
+</BaseLayout>

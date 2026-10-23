@@ -1,30 +1,132 @@
 ---
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { siteConfig } from '../config';
+import { SOFTWARE_PRODUCTS } from '../lib/software';
 ---
-<BaseLayout title="关于 Xin" description="做个人软件和工具，记录真实的开发过程。">
-  <header class="shell page-heading"><p class="eyebrow">ABOUT / 关于我</p><h1>你好，我是 Xin<span class="heading-dot">.</span></h1><p>做个人软件和工具，也写一点技术和生活里的想法。</p></header>
-  <section class="shell about-content">
-    <div class="article-prose">
-      <h2>最近在做什么</h2>
-      <p>我会从自己遇到的小问题开始做东西：想让习惯打卡更轻便，就做了 HabitBloom；想把手机的麦克风和网络用到 Mac 上，就做了 USBLinkMic。</p>
-      <p>我也在尝试用 AI 辅助开发。这里会记录它在哪些地方帮上了忙、哪些地方出了错，以及我怎么验证最后的结果。</p>
-      <h2>这里写什么</h2>
-      <p>项目记录里有做法、取舍和踩过的坑。文章里也会放一些还没想明白的事。不追求每篇都有结论，先把过程留下来。</p>
-      <p>这个站点用 Astro 构建。文章和项目会继续更新，你可以通过 RSS 订阅。</p>
-      <h2>找到我</h2>
-      <div class="about-links"><a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="/rss.xml">RSS 订阅 ↗</a><a href="https://github.com/xxkingstuggle/blog" target="_blank" rel="noopener noreferrer">本站源码 ↗</a></div>
-    </div>
-    <aside class="about-aside"><span class="eyebrow">在这里</span><a href="/#projects">我的作品 <span>↗</span></a><a href="/posts/">全部文章 <span>↗</span></a><a href="/links/">朋友们的网站 <span>↗</span></a><span class="about-signature" aria-hidden="true">Xin.</span></aside>
-  </section>
+
+<BaseLayout title="关于 Xin" description="我是 Xin，做真正解决具体问题的个人软件和工具，也记录真实的工程取舍与思考。">
+	<header class="shell page-heading">
+		<div class="section-kicker">
+			<span class="kicker-dot" aria-hidden="true"></span>
+			<span>ABOUT XIN / 关于我</span>
+		</div>
+		<h1>你好，我是 Xin</h1>
+		<p>从自己工作台上的真实问题出发做原生软件与跨设备工具，同时把工程实践、踩坑排查与日常思考留在这里。</p>
+	</header>
+
+	<section class="shell about-layout">
+		<div class="article-prose about-prose">
+			<h2>我在做什么</h2>
+			<p>
+				我习惯从自己每天都会遇到的具体摩擦开始动手做软件：当我想把桌面上闲置的 Android 手机直接变成 Mac 的低延迟麦克风和应急有线网卡，又不想在多个命令行脚本之间来回切换时，我写出了 <a href="/software/usblinkmic/">USBLinkMic</a>；当我想在 iPhone、iPad 和 Mac 上拥有一张安静、没有打卡焦虑的习惯卡片，并且突破个人免费签名对桌面小组件与多端同步的限制时，我做出了 <a href="/software/habitbloom/">HabitBloom</a>。
+			</p>
+			<p>
+				我也在持续探索多 Agent 协作编码的工作流——让不同的模型分别承担编码实现与独立对抗式审查，用真实的编译、单测和自动化验收脚本来兜底。这些经验整理在 <a href="/posts/lightweight-multi-agent-coding-loop/">《我怎样用一套轻量多 Agent 流程写代码》</a> 中。
+			</p>
+
+			<h2>我遵循的产品与写作原则</h2>
+			<ul>
+				<li><strong>真实可用优先：</strong>软件产品页只展示真实跑通的能力，只提供经过校验的安装包下载；尚处于个人自用签名阶段的项目会如实标注状态。</li>
+				<li><strong>克制且完整：</strong>每个工具只专注解决一个高频痛点，但把状态机恢复、断线重连和权限引导做扎实。</li>
+				<li><strong>留下可复盘的过程：</strong>文章里不仅记录最后选定的方案，也诚实保留走过的弯路与还没彻底想明白的问题。</li>
+			</ul>
+
+			<h2>联系与订阅</h2>
+			<p>
+				这个网站（<code>myzjx.com</code>）由 Astro 与 Cloudflare Workers 驱动，既是我的个人软件官网，也是长期维护的写作工作台。欢迎通过以下方式找到我：
+			</p>
+			<div class="brand-hero-actions" style="margin-top: 20px;">
+				<a class="btn-primary" href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">GitHub (@xxkingstuggle)</a>
+				<a class="btn-secondary" href="/rss.xml">RSS 订阅源</a>
+				<a class="btn-secondary" href="/links/">朋友与推荐站点</a>
+			</div>
+		</div>
+
+		<aside class="about-sidebar" aria-label="代表软件与快捷导航">
+			<div class="about-card">
+				<div class="section-kicker" style="margin-bottom: 10px;">
+					<span class="kicker-dot" aria-hidden="true"></span>
+					<span>当前维护的软件</span>
+				</div>
+				<div style="display: grid; gap: 14px;">
+					{SOFTWARE_PRODUCTS.map((product) => (
+						<a class="workbench-product-card" href={`/software/${product.slug}/`} style="padding: 12px;">
+							<div class="workbench-app-icon" style="width: 44px; height: 44px;">
+								<Image src={product.icon} alt={product.name} width={88} height={88} />
+							</div>
+							<div>
+								<strong style="display: block; font-size: 14.5px; color: var(--text);">{product.name}</strong>
+								<span style="display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px;">{product.statusBadge}</span>
+							</div>
+						</a>
+					))}
+				</div>
+			</div>
+
+			<div class="about-card">
+				<strong style="display: block; font-size: 14px; margin-bottom: 10px;">站点栏目导航</strong>
+				<nav class="about-quick-links" aria-label="快捷入口">
+					<a href="/software/"><span>软件与工具总览</span><span>→</span></a>
+					<a href="/posts/"><span>全部文章与手记</span><span>→</span></a>
+					<a href="/archive/"><span>时间归档</span><span>→</span></a>
+					<a href="/tags/"><span>标签索引</span><span>→</span></a>
+					<a href="https://github.com/xxkingstuggle/blog" target="_blank" rel="noopener noreferrer"><span>本站开源仓库</span><span>↗</span></a>
+				</nav>
+			</div>
+		</aside>
+	</section>
 </BaseLayout>
+
 <style>
-.about-content { display: grid; grid-template-columns: minmax(0,720px) 220px; gap: 80px; padding-bottom: 30px; }
-.about-content .article-prose { margin: 0; }
-.about-content h2:first-child { margin-top: 0; }
-.about-links { display: flex; flex-wrap: wrap; gap: 24px; font-family: var(--font-sans); font-size: 14px; }
-.about-aside { border-top: 1px solid var(--line); padding-top: 24px; display: flex; flex-direction: column; gap: 18px; font-size: 13px; align-self: start; }
-.about-aside > a { display: flex; justify-content: space-between; }
-.about-signature { font: italic 60px Georgia,serif; color: var(--accent); padding-top: 24px; }
-@media(max-width:900px) { .about-content { grid-template-columns: 1fr; gap: 48px; } .about-aside { max-width: 360px; } }
+	.about-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 700px) minmax(280px, 360px);
+		justify-content: space-between;
+		gap: 48px;
+		padding: 48px 0 64px;
+	}
+	.about-prose {
+		margin: 0;
+	}
+	.about-prose h2:first-child {
+		margin-top: 0;
+		padding-top: 0;
+		border-top: 0;
+	}
+	.about-sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		align-self: start;
+	}
+	.about-card {
+		padding: 22px;
+		border-radius: var(--radius-lg);
+		background: var(--surface);
+		border: 1px solid var(--line);
+	}
+	.about-quick-links {
+		display: grid;
+		gap: 8px;
+	}
+	.about-quick-links a {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 8px 10px;
+		border-radius: var(--radius-xs);
+		font-size: 13.5px;
+		color: var(--text-secondary);
+		background: var(--bg);
+	}
+	.about-quick-links a:hover {
+		color: var(--text);
+		background: var(--surface-subtle);
+	}
+	@media (max-width: 920px) {
+		.about-layout {
+			grid-template-columns: 1fr;
+		}
+	}
 </style>

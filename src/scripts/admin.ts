@@ -10,17 +10,23 @@ interface DraftRecord {
 	description?: string;
 	body: string;
 	pub_date?: string;
+	updated_date?: string | null;
 	tags_json?: string | string[];
 	kind?: string;
 	presentation?: string;
 	featured?: number | boolean;
 	kicker?: string;
+	cover?: string | null;
 	source_path?: string;
 	source_blob_sha?: string | null;
 	listed?: number | boolean;
 	aliases_json?: string;
 	aliases?: string[];
 	status?: string;
+	repo_draft?: boolean;
+	has_unpublished_changes?: boolean;
+	has_mdx?: boolean;
+	origin_source?: string;
 	publish_commit_sha?: string | null;
 	error_code?: string | null;
 	version?: number;
@@ -51,7 +57,16 @@ interface AdminOverview {
 	drafts: Record<string, number>;
 	comments: Record<string, number>;
 	links: Record<string, number>;
-	recent: Array<{ id: string; slug: string; title: string; status: string; updated_at: string; publish_commit_sha?: string | null }>;
+	recent: Array<{
+		id: string;
+		slug: string;
+		title: string;
+		status: string;
+		updated_at: string;
+		publish_commit_sha?: string | null;
+		has_unpublished_changes?: boolean;
+		repo_draft?: boolean;
+	}>;
 	commitSha?: string | null;
 	checkedAt: string;
 }
@@ -64,6 +79,8 @@ interface AutosaveRecord {
 
 const CHINESE_STATUS_MAP: Record<string, string> = {
 	draft: '草稿',
+	repo_draft: '仓库草稿',
+	unpublished_edits: '有未发布修改',
 	publishing: '提交中',
 	deploying: '部署中',
 	published: '已发布',
@@ -71,6 +88,17 @@ const CHINESE_STATUS_MAP: Record<string, string> = {
 	conflict: '冲突',
 	publish_failed: '发布失败',
 };
+
+function getDraftBadgeInfo(draft: Partial<DraftRecord>): { key: string; label: string } {
+	if (draft.status === 'draft' && draft.has_unpublished_changes) {
+		return { key: 'unpublished_edits', label: '有未发布修改' };
+	}
+	if (draft.status === 'draft' && draft.repo_draft) {
+		return { key: 'repo_draft', label: '仓库草稿' };
+	}
+	const status = String(draft.status || 'draft');
+	return { key: status, label: CHINESE_STATUS_MAP[status] || status };
+}
 
 const AUTOSAVE_PREFIX = 'xingx_admin_draft_';
 
@@ -118,6 +146,7 @@ let sourcePathInput: HTMLInputElement | null = null;
 let sourceBlobShaInput: HTMLInputElement | null = null;
 let publishCommitShaInput: HTMLInputElement | null = null;
 let systemStatusTextInput: HTMLInputElement | null = null;
+let mdxBannerEl: HTMLElement | null = null;
 
 function initDOMElements() {
 	if (typeof document === 'undefined') return;
@@ -145,6 +174,7 @@ function initDOMElements() {
 	sourceBlobShaInput = document.getElementById('field-sourceBlobSha') as HTMLInputElement | null;
 	publishCommitShaInput = document.getElementById('field-publishCommitSha') as HTMLInputElement | null;
 	systemStatusTextInput = document.getElementById('field-systemStatusText') as HTMLInputElement | null;
+	mdxBannerEl = document.getElementById('mdx-preserve-banner');
 }
 
 if (typeof document !== 'undefined') {
@@ -271,6 +301,12 @@ function getFormChecked(name: string): boolean {
 
 function extractEditableValues() {
 	if (!form) return null;
+	const hasOptionalMetaInputs = Boolean(
+		form.elements.namedItem('updatedDate') ||
+		form.elements.namedItem('cover') ||
+		document.getElementById('field-updatedDate') ||
+		document.getElementById('field-cover')
+	);
 	return {
 		slug: getFormValue('slug').trim(),
 		title: getFormValue('title').trim(),
@@ -284,6 +320,12 @@ function extractEditableValues() {
 		kicker: getFormValue('kicker').trim(),
 		aliases: getFormValue('aliases').split(',').map((v) => v.trim()).filter(Boolean),
 		listed: getFormChecked('listed'),
+		...(hasOptionalMetaInputs
+			? {
+					updatedDate: getFormValue('updatedDate').trim(),
+					cover: getFormValue('cover').trim(),
+				}
+			: {}),
 	};
 }
 
@@ -364,6 +406,16 @@ function restoreFormValues(values: NonNullable<ReturnType<typeof extractEditable
 	const aliasEl = form.elements.namedItem('aliases') as HTMLInputElement | null;
 	if (aliasEl && values.aliases !== undefined) {
 		aliasEl.value = Array.isArray(values.aliases) ? values.aliases.join(', ') : String(values.aliases);
+	}
+
+	const updatedDateEl = form.elements.namedItem('updatedDate') as HTMLInputElement | null;
+	if (updatedDateEl && (values as any).updatedDate !== undefined) {
+		updatedDateEl.value = String((values as any).updatedDate || '');
+	}
+
+	const coverEl = form.elements.namedItem('cover') as HTMLInputElement | null;
+	if (coverEl && (values as any).cover !== undefined) {
+		coverEl.value = String((values as any).cover || '');
 	}
 }
 
@@ -489,7 +541,9 @@ function fillDraft(draft: DraftRecord) {
 		description: draft.description,
 		body: draft.body,
 		pubDate: draft.pub_date,
+		updatedDate: draft.updated_date,
 		kicker: draft.kicker,
+		cover: draft.cover,
 	})) {
 		const input = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
 		if (input) input.value = String(value || '');
@@ -539,8 +593,16 @@ function fillDraft(draft: DraftRecord) {
 	if (sourceBlobShaInput) sourceBlobShaInput.value = String(draft.source_blob_sha || '');
 	if (publishCommitShaInput) publishCommitShaInput.value = String(draft.publish_commit_sha || '');
 	if (systemStatusTextInput) {
-		const statusText = CHINESE_STATUS_MAP[draft.status || 'draft'] || draft.status || '草稿';
-		systemStatusTextInput.value = `${statusText} (v${draft.version || 1})`;
+		const badgeInfo = getDraftBadgeInfo(draft);
+		systemStatusTextInput.value = `${badgeInfo.label} (v${draft.version || 1})`;
+	}
+	if (mdxBannerEl) {
+		const isMdx = Boolean(
+			draft.has_mdx ||
+			String(draft.source_path || '').endsWith('.mdx') ||
+			/^\s*import\s+.+from\s+['"].+['"]/m.test(String(draft.body || ''))
+		);
+		mdxBannerEl.hidden = !isMdx;
 	}
 
 	// Record server state baseline
@@ -572,6 +634,7 @@ function resetForm({ restoreAutosave = false } = {}) {
 	if (sourceBlobShaInput) sourceBlobShaInput.value = '';
 	if (publishCommitShaInput) publishCommitShaInput.value = '';
 	if (systemStatusTextInput) systemStatusTextInput.value = '未保存草稿';
+	if (mdxBannerEl) mdxBannerEl.hidden = true;
 	if (previewFrame) previewFrame.srcdoc = '';
 
 	// Baseline for blank form
@@ -620,9 +683,9 @@ async function loadDrafts() {
 			metaSpan.className = 'admin-draft-meta';
 
 			const statusBadge = document.createElement('span');
-			const status = String(draft.status || 'draft');
-			statusBadge.className = `admin-status-badge status-${status}`;
-			statusBadge.textContent = CHINESE_STATUS_MAP[status] || status;
+			const badgeInfo = getDraftBadgeInfo(draft);
+			statusBadge.className = `admin-status-badge status-${badgeInfo.key}`;
+			statusBadge.textContent = badgeInfo.label;
 
 			const slugText = document.createTextNode(` · ${draft.slug || ''}`);
 			metaSpan.append(statusBadge, slugText);
@@ -725,9 +788,10 @@ async function saveCurrentDraft(silent = false) {
 			...editableSnapshot,
 			...(isUpdate ? { version: targetVersion } : {}),
 			...(sourcePathInput?.value?.trim() ? { sourcePath: sourcePathInput.value.trim() } : {}),
+			...(sourceBlobShaInput?.value?.trim() ? { sourceBlobSha: sourceBlobShaInput.value.trim() } : {}),
 		};
 
-		const result = await api<{ id: string; status: string; version: number }>(url, {
+		const result = await api<{ id: string; status: string; version: number; sourceBlobSha?: string | null; sourcePath?: string }>(url, {
 			method,
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload),
@@ -742,7 +806,12 @@ async function saveCurrentDraft(silent = false) {
 
 			if (slugInput) slugInput.readOnly = true;
 			if (slugHelper) slugHelper.textContent = '已保存草稿已锁定 Slug，不可修改';
-			if (systemStatusTextInput) systemStatusTextInput.value = `草稿 (v${currentVersion})`;
+			if (result.sourcePath && sourcePathInput) sourcePathInput.value = result.sourcePath;
+			if (result.sourceBlobSha && sourceBlobShaInput) sourceBlobShaInput.value = result.sourceBlobSha;
+			const hasPublishedHistory = Boolean(sourceBlobShaInput?.value || publishCommitShaInput?.value);
+			if (systemStatusTextInput) {
+				systemStatusTextInput.value = `${hasPublishedHistory ? '有未发布修改' : '草稿'} (v${currentVersion})`;
+			}
 			updatePublishButtonLabel({
 				source_blob_sha: sourceBlobShaInput?.value,
 				publish_commit_sha: publishCommitShaInput?.value,
@@ -807,9 +876,10 @@ async function publishCurrentDraft() {
 			...editableSnapshot,
 			...(isUpdate ? { version: targetVersion } : {}),
 			...(sourcePathInput?.value?.trim() ? { sourcePath: sourcePathInput.value.trim() } : {}),
+			...(sourceBlobShaInput?.value?.trim() ? { sourceBlobSha: sourceBlobShaInput.value.trim() } : {}),
 		};
 
-		const saveResult = await api<{ id: string; status: string; version: number }>(saveUrl, {
+		const saveResult = await api<{ id: string; status: string; version: number; sourceBlobSha?: string | null; sourcePath?: string }>(saveUrl, {
 			method: saveMethod,
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload),
@@ -1534,8 +1604,9 @@ async function loadOverview() {
 				const meta = document.createElement('span');
 				meta.className = 'overview-recent-meta';
 				const status = document.createElement('span');
-				status.className = `admin-status-badge status-${entry.status}`;
-				status.textContent = CHINESE_STATUS_MAP[entry.status] || entry.status || '内容';
+				const badgeInfo = getDraftBadgeInfo(entry);
+				status.className = `admin-status-badge status-${badgeInfo.key}`;
+				status.textContent = badgeInfo.label;
 				const date = document.createElement('time');
 				date.textContent = formatOverviewDate(entry.updated_at);
 				meta.append(status, date);
@@ -1543,7 +1614,12 @@ async function loadOverview() {
 				row.addEventListener('click', async () => {
 					document.querySelector<HTMLButtonElement>('.admin-nav-button[data-tab="posts"]')?.click();
 					await loadDrafts();
-					draftList?.querySelector<HTMLButtonElement>(`[data-id="${CSS.escape(entry.id)}"]`)?.click();
+					const targetBtn =
+						draftList?.querySelector<HTMLButtonElement>(`[data-id="${CSS.escape(entry.id)}"]`) ||
+						Array.from(draftList?.querySelectorAll<HTMLButtonElement>('.admin-draft-item') ?? []).find((btn) =>
+							btn.textContent?.includes(`· ${entry.slug}`)
+						);
+					targetBtn?.click();
 				});
 				recentEl.append(row);
 			}
@@ -1784,6 +1860,12 @@ function initEventListeners() {
 async function start() {
 	try {
 		initDOMElements();
+		setupTabs();
+		initEventListeners();
+
+		// Page initialization restores local autosave for 'new' if present
+		resetForm({ restoreAutosave: true });
+
 		setStatus('正在建立安全连接…', 'loading');
 		const session = await api<{ email: string; csrfToken: string; environment?: 'local' | 'staging' | 'production'; publicOrigin?: string }>('/api/admin/session');
 		csrfToken = session.csrfToken;
@@ -1808,15 +1890,17 @@ async function start() {
 			}
 		}
 
-		setupTabs();
-		initEventListeners();
-
-		// Page initialization restores local autosave for 'new' if present
-		resetForm({ restoreAutosave: true });
-
 		await Promise.all([loadDrafts(), loadOverview()]);
 		setStatus('已就绪', 'info');
 	} catch (cause) {
+		setOverviewRelease('error', '未连接后台鉴权服务', '本地静态预览模式下未启动 Worker API，在受保护的 Worker 环境下将加载完整数据。');
+		const recentEl = document.getElementById('overview-recent-list');
+		if (recentEl) {
+			const errorItem = document.createElement('p');
+			errorItem.className = 'overview-empty';
+			errorItem.textContent = '当前未连接后台 Worker 接口，请通过 Worker 鉴权入口访问以读取实时数据。';
+			recentEl.replaceChildren(errorItem);
+		}
 		setStatus(cause instanceof Error ? cause.message : '后台连接失败', 'error');
 	}
 }

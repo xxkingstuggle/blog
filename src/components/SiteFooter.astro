@@ -1,11 +1,55 @@
 ---
 import { siteConfig } from '../config';
+
 const year = new Date().getFullYear();
 ---
+
 <footer class="site-footer">
-  <div class="shell footer-main">
-    <div><a class="footer-wordmark" href="/">Xin<span>.</span></a><p>做点东西，留点记录。</p></div>
-    <nav class="footer-links" aria-label="页脚导航"><a href="/archive/">归档</a><a href="/tags/">标签</a><a href="/links/">友链</a><a href="/rss.xml">RSS</a><a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav>
-  </div>
-  <div class="shell footer-bottom"><span>© {year} {siteConfig.author} · {siteConfig.name}</span><a href="/admin/">管理后台 <span aria-hidden="true">↗</span></a></div>
+	<div class="shell footer-grid">
+		<div class="footer-brand-col">
+			<a class="footer-brand" href="/">
+				<span class="footer-monogram" aria-hidden="true">X</span>
+				<div>
+					<strong>Xin · myzjx.com</strong>
+					<span>个人软件官网与工程开发手记</span>
+				</div>
+			</a>
+			<p class="footer-bio">
+				从自己真实遇到的具体问题出发，构建跨设备工具与原生应用，并把架构取舍、踩坑复盘和日常思考完整留存。
+			</p>
+		</div>
+
+		<nav class="footer-col" aria-label="软件产品导航">
+			<h2 class="footer-col-title">软件与作品</h2>
+			<a href="/software/">全部软件总览</a>
+			<a href="/software/usblinkmic/">USBLinkMic <span class="footer-pill">v4.0.8</span></a>
+			<a href="/software/habitbloom/">HabitBloom</a>
+			<a href="/posts/lightweight-multi-agent-coding-loop/">多 Agent 编码回路实践</a>
+		</nav>
+
+		<nav class="footer-col" aria-label="内容与栏目导航">
+			<h2 class="footer-col-title">文章与索引</h2>
+			<a href="/posts/">全部文章</a>
+			<a href="/archive/">按年份归档</a>
+			<a href="/tags/">按标签浏览</a>
+			<a href="/links/">友链与推荐</a>
+		</nav>
+
+		<nav class="footer-col" aria-label="连接与订阅">
+			<h2 class="footer-col-title">关于与连接</h2>
+			<a href="/about/">关于 Xin</a>
+			<a href="/rss.xml">RSS 订阅源</a>
+			<a href={siteConfig.social.github} target="_blank" rel="noopener noreferrer">GitHub (@xxkingstuggle)</a>
+			<a href="/admin/">内容管理后台</a>
+		</nav>
+	</div>
+
+	<div class="shell footer-bottom">
+		<span>© {year} {siteConfig.author} ({siteConfig.name}). 保留文章与软件著作权。</span>
+		<div class="footer-bottom-links">
+			<a href="https://github.com/xxkingstuggle/blog" target="_blank" rel="noopener noreferrer">站点源码</a>
+			<span aria-hidden="true">·</span>
+			<a href="/login/">管理员登录</a>
+		</div>
+	</div>
 </footer>
