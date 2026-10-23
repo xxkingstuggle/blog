@@ -12,6 +12,7 @@
 			"/auth/*",
 			"/admin/*",
 			"/media/*",
+			"/__content.json",
 			"/__health",
 			"/__build.json"
 		]

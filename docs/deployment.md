@@ -5,6 +5,8 @@
 ## 1. 先建 staging
 
 ```bash
+npm ci
+npm run build
 npx wrangler d1 create blog-staging
 npx wrangler d1 migrations apply blog-staging --remote --env staging
 npx wrangler deploy --env staging
@@ -36,7 +38,7 @@ GitHub Actions 仓库 Secrets 只需要：
 - `CLOUDFLARE_API_TOKEN`：单一 Cloudflare 账户范围，仅 `D1:编辑` 和 `Workers 脚本:编辑`。
 - `CLOUDFLARE_ACCOUNT_ID`：Cloudflare 账户 ID。
 
-推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产公开页面由 Vercel 自动部署 `main`；`/api/*`、`/auth/*`、`/admin/*` 和 `/media/*` 通过 `vercel.json` 代理到 production Worker。后台静态界面壳构建在 `/admin-shell/`；`/admin/` 必须保持没有同路径静态文件，让 Vercel 将入口请求交给 Worker 完成 session 校验，再由 Worker读取该界面壳。界面壳不含后台数据，所有数据和写操作仍由 Worker API 鉴权。`src/`、`public/`、`scripts/`、`astro.config.mjs`、`vercel.json` 和 Worker 配置变更会触发 production 工作流重新构建并部署 Worker 资产。工作流分别等待 Worker 与 Vercel 的 manifest 匹配本次 commit SHA；前端总览也会显示线上页面与后台版本的实际对照。
+推送到 `cms-staging` 后自动执行检查、测试、构建、D1 migration、部署和 commit SHA 验证。生产公开页面由 Vercel 自动部署 `main`；`/api/*`、`/auth/*`、`/admin/*` 和 `/media/*` 通过 `vercel.json` 代理到 production Worker。仓库文章清单在构建前生成到忽略目录 `worker/.generated/` 并编入 Worker，`dist/` 不包含完整文章或草稿正文；`/__content.json` 在 Worker 上明确返回 404。后台静态界面壳构建在 `/admin-shell/`；`/admin/` 必须保持没有同路径静态文件，让 Vercel 将入口请求交给 Worker 完成 session 校验，再由 Worker读取该界面壳。界面壳不含后台数据，所有数据和写操作仍由 Worker API 鉴权。`src/`、`public/`、`scripts/`、`astro.config.mjs`、`vercel.json` 和 Worker 配置变更会触发 production 工作流重新构建并部署 Worker 资产。工作流分别等待 Worker 与 Vercel 的 manifest 匹配本次 commit SHA；前端总览也会显示线上页面与后台版本的实际对照。
 
 ## 3. 大陆访客备用境外加速线路
 

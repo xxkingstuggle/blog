@@ -7,9 +7,10 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/generate-redirects.mjs && node scripts/write-build-manifest.mjs",
-    "check": "astro check && tsc --noEmit",
-    "test": "tsx --test tests/**/*.test.ts",
+    "build": "node scripts/generate-content-catalog.mjs && astro build && node scripts/generate-redirects.mjs && node scripts/write-build-manifest.mjs",
+    "check": "node scripts/generate-content-catalog.mjs && astro check && tsc --noEmit",
+    "test": "node scripts/generate-content-catalog.mjs && tsx --test tests/**/*.test.ts",
+    "worker:dev": "npm run build && wrangler dev",
     "preview": "astro preview",
     "astro": "astro"
   },

@@ -1,3 +1,5 @@
+import { REPO_CONTENT_CATALOG } from './.generated/repo-catalog';
+
 /**
  * Cloudflare Worker runtime for the static Astro release site.
  *
@@ -621,19 +623,11 @@ interface RepoArticleCatalogEntry {
 	has_mdx?: boolean;
 }
 
-async function loadRepoCatalog(env: Env): Promise<{ commitSha: string | null; articles: RepoArticleCatalogEntry[] }> {
-	try {
-		const catalogUrl = new URL('/__content.json', env.PUBLIC_ORIGIN);
-		const response = await env.ASSETS.fetch(new Request(catalogUrl, { headers: { 'Cache-Control': 'no-cache' } }));
-		if (!response.ok) return { commitSha: null, articles: [] };
-		const catalog = (await response.json()) as { commitSha?: string; articles?: RepoArticleCatalogEntry[] };
-		return {
-			commitSha: typeof catalog.commitSha === 'string' ? catalog.commitSha : null,
-			articles: Array.isArray(catalog.articles) ? catalog.articles : [],
-		};
-	} catch {
-		return { commitSha: null, articles: [] };
-	}
+async function loadRepoCatalog(_env: Env): Promise<{ commitSha: string | null; articles: RepoArticleCatalogEntry[] }> {
+	return {
+		commitSha: REPO_CONTENT_CATALOG.commitSha || null,
+		articles: REPO_CONTENT_CATALOG.articles as unknown as RepoArticleCatalogEntry[],
+	};
 }
 
 function repoEntryToDraftRecord(entry: RepoArticleCatalogEntry, catalogCommitSha: string | null): JsonRecord {
@@ -1575,6 +1569,7 @@ async function handle(request: Request, env: Env, ctx: ExecutionContextLike) {
 		if (env.HEALTH_TOKEN && request.headers.get('X-Health-Token') !== env.HEALTH_TOKEN) return error('health token required', 401);
 		return noStore(json({ ok: true, commitSha: await buildSha(env), checkedAt: new Date().toISOString() }));
 	}
+	if (url.pathname === '/__content.json') return noStore(error('Not found.', 404));
 	if (url.pathname.startsWith('/api/')) return api(request, env, ctx);
 	if (url.pathname.startsWith('/media/')) {
 		if (!env.MEDIA) return new Response('Media storage unavailable', { status: 503, headers: { 'Cache-Control': 'no-store' } });
@@ -1622,6 +1617,7 @@ export const testHelpers = {
 	deleteAdminLink,
 	markdownFileFromDraft,
 	checkLinks,
+	loadRepoCatalog,
 };
 
 export default {

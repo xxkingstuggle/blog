@@ -848,7 +848,8 @@ test('总览 API 只向已登录管理员提供真实汇总与内容元数据', 
 	const response = await worker.fetch(authedRequest('https://test.local/api/admin/overview'), env as any, ctx);
 	assert.equal(response.status, 200);
 	const result = await response.json() as any;
-	assert.equal(result.drafts.draft, 1);
+	const repoCatalog = await testHelpers.loadRepoCatalog(env as any);
+	assert.equal(result.drafts.draft, 1 + repoCatalog.articles.filter((article) => article.draft && article.slug !== 'overview-note').length);
 	assert.equal(result.comments.pending, 1);
 	assert.equal(result.links.active, 1);
 	assert.equal(result.recent[0].slug, 'overview-note');
@@ -1026,71 +1027,28 @@ VALUES ('draft-race', 'post-race', 'Race', 'Body v1', 'deploying', 'src/content/
 	}
 });
 
-test('仓库已有文章（含 .mdx 与 cover）支持列表合并、载入编辑、保存草稿与发布，不丢字段且不产生重复记录', async () => {
+test('public catalog is blocked while an authenticated admin can list and edit repository articles and drafts', async () => {
 	const { db, env, ctx, authedRequest } = await createTestEnv();
+	const repoCatalog = await testHelpers.loadRepoCatalog(env as any);
+	const publishedEntry = repoCatalog.articles.find((entry) => entry.slug === 'usblinkmic-android-mac-bridge');
+	const repoDraftEntry = repoCatalog.articles.find((entry) => entry.draft);
+	assert.ok(publishedEntry, '真实仓库文章应编入 Worker 管理清单');
+	assert.ok(repoDraftEntry, '真实仓库草稿应编入 Worker 管理清单');
+	assert.equal(fs.existsSync(path.resolve('public/__content.json')), false, '完整文章目录不能生成到公开静态目录');
 
-	const mockCatalog = {
-		commitSha: 'repo-head-sha-1234',
-		generatedAt: '2026-10-23T00:00:00Z',
-		articles: [
-			{
-				id: 'repo:usblinkmic-android-mac-bridge',
-				slug: 'usblinkmic-android-mac-bridge',
-				title: 'USBLinkMic：把 Android 手机变成 Mac 的低延迟麦克风',
-				description: '围绕 USB 调试链路、音频缓冲与系统输入桥接做的一套轻量工具。',
-				body: "import Callout from '../../components/mdx/Callout.astro';\n\n## 音频链路\n\n<Callout>保持原组件</Callout>",
-				pub_date: '2026-03-28',
-				updated_date: '2026-04-02',
-				tags: ['项目', 'Android', 'macOS'],
-				kind: 'project',
-				presentation: 'feature',
-				featured: 1,
-				kicker: 'PROJECT / AUDIO BRIDGE',
-				listed: 1,
-				draft: false,
-				aliases: ['/usblinkmic-bridge'],
-				cover: '../../assets/blog-placeholder-3.jpg',
-				extra_frontmatter: { customBadge: 'v4.0.8' },
-				source_path: 'src/content/blog/usblinkmic-android-mac-bridge.mdx',
-				source_blob_sha: 'repo-mdx-blob-sha-v1',
-				has_mdx: true,
-			},
-			{
-				id: 'repo:quiet-draft-note',
-				slug: 'quiet-draft-note',
-				title: '仓库内草稿文章',
-				description: '尚未公开的草稿',
-				body: '正文内容',
-				pub_date: '2026-02-10',
-				updated_date: null,
-				tags: ['随想'],
-				kind: 'thought',
-				presentation: 'article',
-				featured: 0,
-				kicker: null,
-				listed: 1,
-				draft: true,
-				aliases: [],
-				cover: null,
-				extra_frontmatter: {},
-				source_path: 'src/content/blog/quiet-draft-note.md',
-				source_blob_sha: 'repo-draft-blob-sha-v1',
-				has_mdx: false,
-			},
-		],
-	};
-
+	let publicCatalogAssetReads = 0;
 	(env as any).ASSETS = {
 		fetch: async (request: Request) => {
 			const pathname = new URL(request.url).pathname;
 			if (pathname === '/__content.json') {
-				return new Response(JSON.stringify(mockCatalog), {
+				publicCatalogAssetReads += 1;
+				return new Response(JSON.stringify(repoCatalog), {
 					status: 200,
 					headers: { 'Content-Type': 'application/json' },
 				});
 			}
 			if (pathname === '/__build.json') {
-				return new Response(JSON.stringify({ commitSha: 'repo-head-sha-1234', dirty: false }), {
+				return new Response(JSON.stringify({ commitSha: repoCatalog.commitSha, dirty: false }), {
 					status: 200,
 					headers: { 'Content-Type': 'application/json' },
 				});
@@ -1099,99 +1057,150 @@ test('仓库已有文章（含 .mdx 与 cover）支持列表合并、载入编�
 		},
 	};
 
-	// 1. 总览接口即使在 D1 为空时也能正确统计仓库已发布文章（绝不把已有公开文章显示为 0）
-	const overviewRes1 = await worker.fetch(authedRequest('https://test.local/api/admin/overview'), env as any, ctx);
-	assert.equal(overviewRes1.status, 200);
-	const overview1 = (await overviewRes1.json()) as any;
-	assert.equal(overview1.drafts.published, 1, '仓库中 1 篇非 draft 文章应计入已发布');
-	assert.equal(overview1.drafts.repo_draft, 1, '仓库中 1 篇 draft:true 文章应计入 repo_draft');
-	assert.equal(overview1.drafts.draft, 1, '仓库草稿计入待处理草稿');
+	// Even if a stale or mistakenly re-added static asset contains the catalog, Worker direct access must block it.
+	const leakedCatalogRes = await worker.fetch(new Request('https://test.local/__content.json'), env as any, ctx);
+	assert.equal(leakedCatalogRes.status, 404);
+	assert.equal((await leakedCatalogRes.text()).includes(repoDraftEntry.body), false);
+	assert.equal(publicCatalogAssetReads, 0, 'catalog request is denied before static assets can return it');
 
-	// 2. 列表接口返回仓库已有文章
-	const listRes1 = await worker.fetch(authedRequest('https://test.local/api/admin/drafts'), env as any, ctx);
-	assert.equal(listRes1.status, 200);
-	const list1 = ((await listRes1.json()) as any).drafts;
-	assert.equal(list1.length, 2);
-	const repoMdxItem = list1.find((d: any) => d.slug === 'usblinkmic-android-mac-bridge');
-	assert.equal(repoMdxItem.id, 'repo:usblinkmic-android-mac-bridge');
-	assert.equal(repoMdxItem.status, 'published');
-	assert.equal(repoMdxItem.has_mdx, true);
-	assert.equal(repoMdxItem.cover, '../../assets/blog-placeholder-3.jpg');
+	const anonymousListRes = await worker.fetch(new Request('https://test.local/api/admin/drafts'), env as any, ctx);
+	assert.equal(anonymousListRes.status, 401);
+	assert.equal((await anonymousListRes.text()).includes(repoDraftEntry.body), false);
 
-	// 3. 通过 repo:<slug> 获取单篇详情
+	const overviewRes = await worker.fetch(authedRequest('https://test.local/api/admin/overview'), env as any, ctx);
+	assert.equal(overviewRes.status, 200);
+	const overview = (await overviewRes.json()) as any;
+	assert.equal(overview.drafts.published, repoCatalog.articles.filter((entry) => !entry.draft).length);
+	assert.equal(overview.drafts.repo_draft, repoCatalog.articles.filter((entry) => entry.draft).length);
+
+	const listRes = await worker.fetch(authedRequest('https://test.local/api/admin/drafts'), env as any, ctx);
+	assert.equal(listRes.status, 200);
+	const list = ((await listRes.json()) as any).drafts;
+	assert.equal(list.length, repoCatalog.articles.length);
+	const publishedItem = list.find((item: any) => item.slug === publishedEntry.slug);
+	const repoDraftItem = list.find((item: any) => item.slug === repoDraftEntry.slug);
+	assert.equal(publishedItem.id, `repo:${publishedEntry.slug}`);
+	assert.equal(publishedItem.status, 'published');
+	assert.equal(publishedItem.has_mdx, true);
+	assert.equal(publishedItem.cover, publishedEntry.cover);
+	assert.equal(repoDraftItem.id, `repo:${repoDraftEntry.slug}`);
+	assert.equal(repoDraftItem.status, 'draft');
+	assert.equal(repoDraftItem.body, repoDraftEntry.body);
+
 	const detailRes = await worker.fetch(
-		authedRequest('https://test.local/api/admin/drafts/repo%3Ausblinkmic-android-mac-bridge'),
+		authedRequest(`https://test.local/api/admin/drafts/${encodeURIComponent(`repo:${publishedEntry.slug}`)}`),
 		env as any,
 		ctx,
 	);
 	assert.equal(detailRes.status, 200);
-	const detailDraft = ((await detailRes.json()) as any).draft;
-	assert.equal(detailDraft.source_path, 'src/content/blog/usblinkmic-android-mac-bridge.mdx');
-	assert.equal(detailDraft.source_blob_sha, 'repo-mdx-blob-sha-v1');
-	assert.equal(detailDraft.cover, '../../assets/blog-placeholder-3.jpg');
+	const detail = ((await detailRes.json()) as any).draft;
+	assert.equal(detail.body, publishedEntry.body);
+	assert.equal(detail.source_path, publishedEntry.source_path);
+	assert.match(detail.source_blob_sha, /^[a-f0-9]{40}$/);
+	assert.equal(detail.cover, publishedEntry.cover);
 
-	// 4. 在后台编辑该仓库文章并保存草稿（PUT /api/admin/drafts/repo:usblinkmic-android-mac-bridge）
-	const saveRepoRes = await worker.fetch(
-		authedRequest('https://test.local/api/admin/drafts/repo%3Ausblinkmic-android-mac-bridge', {
+	const editedBody = `${detail.body}\n\n后台编辑回归测试段落。`;
+	const savePublishedRes = await worker.fetch(
+		authedRequest(`https://test.local/api/admin/drafts/${encodeURIComponent(`repo:${publishedEntry.slug}`)}`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				slug: 'usblinkmic-android-mac-bridge',
-				title: 'USBLinkMic：把 Android 手机变成 Mac 的低延迟麦克风（修订版）',
-				description: detailDraft.description,
-				body: detailDraft.body + '\n\n新增一段修订说明。',
-				pubDate: '2026-03-28',
-				updatedDate: '2026-04-05',
-				kind: 'project',
-				presentation: 'feature',
-				featured: true,
-				listed: true,
-				tags: ['项目', 'Android', 'macOS'],
-				kicker: 'PROJECT / AUDIO BRIDGE',
-				aliases: ['/usblinkmic-bridge'],
-				cover: '../../assets/blog-placeholder-3.jpg',
-				sourcePath: 'src/content/blog/usblinkmic-android-mac-bridge.mdx',
-				sourceBlobSha: 'repo-mdx-blob-sha-v1',
+				slug: publishedEntry.slug,
+				title: `${detail.title}（回归测试）`,
+				description: detail.description,
+				body: editedBody,
+				pubDate: detail.pub_date,
+				updatedDate: '2026-10-23',
+				kind: detail.kind,
+				presentation: detail.presentation,
+				featured: detail.featured === 1,
+				listed: detail.listed !== 0,
+				tags: JSON.parse(detail.tags_json),
+				kicker: detail.kicker,
+				aliases: detail.aliases,
+				cover: detail.cover,
+				sourcePath: detail.source_path,
+				sourceBlobSha: 'client-cannot-set-this-value',
 				version: 1,
 			}),
 		}),
 		env as any,
 		ctx,
 	);
-	assert.equal(saveRepoRes.status, 200);
-	const savedRepoMeta = (await saveRepoRes.json()) as any;
-	assert.ok(savedRepoMeta.id && !savedRepoMeta.id.startsWith('repo:'), '保存后在 D1 生成正式 UUID 记录');
-	assert.equal(savedRepoMeta.sourceBlobSha, 'repo-mdx-blob-sha-v1');
-	assert.equal(savedRepoMeta.sourcePath, 'src/content/blog/usblinkmic-android-mac-bridge.mdx');
+	assert.equal(savePublishedRes.status, 200);
+	const savedPublished = (await savePublishedRes.json()) as any;
+	assert.ok(savedPublished.id && !savedPublished.id.startsWith('repo:'));
+	assert.equal(savedPublished.sourceBlobSha, publishedEntry.source_blob_sha, 'SHA is taken from the bundled source, not the client');
+	assert.equal(savedPublished.sourcePath, publishedEntry.source_path);
 
-	// 5. 再次拉取列表：同一个 slug 不会产生重复项，且状态标记为 has_unpublished_changes: true
-	const listRes2 = await worker.fetch(authedRequest('https://test.local/api/admin/drafts'), env as any, ctx);
-	const list2 = ((await listRes2.json()) as any).drafts;
-	assert.equal(list2.length, 2, '同一 slug 合并后仍为 2 篇文章，绝不重复');
-	const mergedItem = list2.find((d: any) => d.slug === 'usblinkmic-android-mac-bridge');
-	assert.equal(mergedItem.id, savedRepoMeta.id);
-	assert.equal(mergedItem.status, 'draft');
-	assert.equal(mergedItem.has_unpublished_changes, true, '已发布文章保存草稿后标记为有未发布修改');
+	const repoDraftDetailRes = await worker.fetch(
+		authedRequest(`https://test.local/api/admin/drafts/${encodeURIComponent(`repo:${repoDraftEntry.slug}`)}`),
+		env as any,
+		ctx,
+	);
+	assert.equal(repoDraftDetailRes.status, 200);
+	const repoDraftDetail = ((await repoDraftDetailRes.json()) as any).draft;
+	assert.equal(repoDraftDetail.body, repoDraftEntry.body);
+	const saveRepoDraftRes = await worker.fetch(
+		authedRequest(`https://test.local/api/admin/drafts/${encodeURIComponent(`repo:${repoDraftEntry.slug}`)}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				slug: repoDraftEntry.slug,
+				title: repoDraftDetail.title,
+				description: repoDraftDetail.description,
+				body: `${repoDraftDetail.body}\n\n草稿编辑回归测试段落。`,
+				pubDate: repoDraftDetail.pub_date,
+				updatedDate: repoDraftDetail.updated_date,
+				kind: repoDraftDetail.kind,
+				presentation: repoDraftDetail.presentation,
+				featured: repoDraftDetail.featured === 1,
+				listed: repoDraftDetail.listed !== 0,
+				tags: JSON.parse(repoDraftDetail.tags_json),
+				kicker: repoDraftDetail.kicker,
+				aliases: repoDraftDetail.aliases,
+				cover: repoDraftDetail.cover,
+				sourcePath: repoDraftDetail.source_path,
+				version: 1,
+			}),
+		}),
+		env as any,
+		ctx,
+	);
+	assert.equal(saveRepoDraftRes.status, 200, '仓库内 draft:true 文章可在后台保存编辑');
 
-	// 6. 检查 markdownFileFromDraft 序列化结果：保留 cover、updatedDate、extra_frontmatter、MDX import 与组件
-	const dbRow = db.prepare('SELECT * FROM drafts WHERE id=?').get(savedRepoMeta.id) as any;
-	const serialized = testHelpers.markdownFileFromDraft(dbRow);
-	assert.match(serialized, /updatedDate: "2026-04-05"/);
-	assert.match(serialized, /cover: "\.\.\/\.\.\/assets\/blog-placeholder-3\.jpg"/);
-	assert.match(serialized, /customBadge: "v4\.0\.8"/);
-	assert.match(serialized, /import Callout from '\.\.\/\.\.\/components\/mdx\/Callout\.astro';/);
-	assert.match(serialized, /<Callout>保持原组件<\/Callout>/);
+	const listAfterEditsRes = await worker.fetch(authedRequest('https://test.local/api/admin/drafts'), env as any, ctx);
+	const listAfterEdits = ((await listAfterEditsRes.json()) as any).drafts;
+	assert.equal(listAfterEdits.length, repoCatalog.articles.length, 'D1 编辑记录与仓库项合并后不重复');
+	const mergedPublished = listAfterEdits.find((item: any) => item.slug === publishedEntry.slug);
+	assert.equal(mergedPublished.id, savedPublished.id);
+	assert.equal(mergedPublished.status, 'draft');
+	assert.equal(mergedPublished.has_unpublished_changes, true);
+	const mergedRepoDraft = listAfterEdits.find((item: any) => item.slug === repoDraftEntry.slug);
+	assert.ok(!mergedRepoDraft.id.startsWith('repo:'));
+	assert.equal(mergedRepoDraft.repo_draft, true);
 
-	// 7. 尝试用 POST 新建同 slug 草稿应返回 409 slug_exists，防止冲突覆盖
+	const publishedRow = db.prepare('SELECT * FROM drafts WHERE id=?').get(savedPublished.id) as any;
+	const serialized = testHelpers.markdownFileFromDraft(publishedRow);
+	assert.match(serialized, /updatedDate: "2026-10-23"/);
+	assert.match(serialized, /cover: "\.\.\/\.\.\/assets\/projects\/usblinkmic-mac\.png"/);
+	assert.match(serialized, /import ArticleMedia from '\.\.\/\.\.\/components\/article\/ArticleMedia\.astro';/);
+	assert.match(serialized, /<ArticleMedia/);
+	const extraFrontmatterProbe = testHelpers.markdownFileFromDraft({
+		title: 'frontmatter probe',
+		pub_date: '2026-10-23',
+		body: '',
+		tags_json: '[]',
+		aliases_json: '[]',
+		extra_frontmatter_json: JSON.stringify({ customBadge: 'v4.0.8' }),
+	});
+	assert.match(extraFrontmatterProbe, /customBadge: "v4\.0\.8"/);
+
 	const dupRes = await worker.fetch(
 		authedRequest('https://test.local/api/admin/drafts', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				slug: 'usblinkmic-android-mac-bridge',
-				title: 'Duplicate',
-				body: 'Dup body',
-			}),
+			body: JSON.stringify({ slug: publishedEntry.slug, title: 'Duplicate', body: 'Dup body' }),
 		}),
 		env as any,
 		ctx,
