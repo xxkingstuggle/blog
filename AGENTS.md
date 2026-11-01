@@ -1,3 +1,12 @@
+# MYZJX
+
+Astro 静态个人作品与文章站，独立 Cloudflare Worker 提供后台与 API。项目结构和部署入口见 [README.md](README.md)。`CLAUDE.md` 软链到本文件，只编辑本文件。
+
+- 使用 `package-lock.json` 与 `npm ci`，Node.js >=22.12.0；检查命令为 `npm run check`、`npm test`、`npm run build`。
+- 产品资料与版本边界以 `src/lib/software.ts` 为准，文章 schema 见 `src/content.config.ts`；不将开发截图当公开版或设备验收证据。
+- 保留既有 `.agent-work/` 和本地验收材料；`PROGRESS.md` / `BLOCKED.md` 是历史记录，恢复任务时重新核对 Git 和运行态。
+- 推送 `main` 会触发网站部署，远端发布须有对应授权；Vercel 与 Worker 的发布 SHA 要分别验证。
+
 ## Development
 
 When starting the dev server, use background mode:

@@ -1,5 +1,7 @@
 # 上线前验收清单
 
+以下是发布要求，不代表已逐项验收；最近一次只读核对及未闭合项见 [部署文档](deployment.md#当前只读核对2026-11-01)。
+
 ## Staging
 
 - `npm run check`、`npm test`、`npm run build` 和 `git diff --check` 全部通过。
@@ -14,16 +16,17 @@
 ## Production 与线路切换
 
 - production 使用独立 D1、Secrets、GitHub 分支和可选 R2，不复用 staging 数据。
-- `origin.xingx.cc.cd` 已通过 Cloudflare Access Service Auth 保护；`cn` 与 `origin` 的 `/admin/*`、`/api/admin/*` 均拒绝访问。
+- 若要启用大陆备用线路，先验证 `origin.xingx.cc.cd` 通过 Cloudflare Access Service Auth 保护；`cn` 与 `origin` 的 `/admin/*`、`/api/admin/*` 均拒绝访问。
 - Cloudflare Redirect Rule 在 Worker 之前按中国大陆来源保留 path/query 跳转；备用线路故障时可一键关闭，默认不自动恢复。
 - 启用分流前完成电信、联通、移动以及海外访问检查；Vercel 原部署至少保留 7 天。
 - DNS 变更只添加必要记录，MX、TXT、SPF、DKIM、DMARC 原样保留。
 - R2 对象 URL 永久不变；发布历史引用过的对象不自动删除，草稿孤儿至少软删除 30 天，并有独立备份。
 
-## 2026-10-22 界面替换
+## 当前界面回归
 
-- 首页同一篇内容仅出现一次；项目卡片从公开内容集合读取，草稿与隐藏文章不进入首页。
+- 首页代表作和作品索引读取 `src/lib/software.ts`，工程文章读取公开内容集合；草稿与隐藏文章不进入公开文章索引。
+- 新增或调整产品顺序时检查首页和作品索引的前两项读取逻辑，以及全部产品详情路由。
 - 文章索引的分类、关键词搜索、空结果与恢复全部条目可用。
 - 桌面和 390px 手机宽度无横向溢出，项目图片、文章正文与页脚可访问。
 - 日间/夜间主题切换、刷新后的主题持久化可用。
-- 原有文章和素材文件哈希不变，后台与数据库协议不变。
+- 单纯界面改动不得暗改文章事实、素材来源、后台或数据库协议；按本次 diff 核对。
