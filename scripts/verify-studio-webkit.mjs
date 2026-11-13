@@ -94,11 +94,22 @@ async function run(){
   await ensureWithinViewport(mobile,'mobile homepage');
   await mobile.waitForTimeout(320);
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
+  await mobile.emulateMedia({colorScheme:'dark'});
+  await mobile.waitForTimeout(90);
+  const darkSurface = await mobile.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor);
+  assert.notEqual(darkSurface,'rgb(255, 255, 255)','system dark mode must not show a white canvas');
+  await mobile.screenshot({path:'artifacts/studio-home-mobile-dark.png',fullPage:false});
+  await mobile.emulateMedia({colorScheme:'light'});
   const narrowPage = await browser.newPage({viewport:{width:320,height:730},isMobile:true,hasTouch:true});
   await narrowPage.goto(origin+'/',{waitUntil:'networkidle'});
   await ensureWithinViewport(narrowPage,'320px Safari homepage');
   assert.equal(await narrowPage.locator('.studio-mobile-dock').evaluate(el=>getComputedStyle(el).display),'flex');
   await narrowPage.close();
+  const tablet = await browser.newPage({viewport:{width:768,height:900},isMobile:true,hasTouch:true});
+  await tablet.goto(origin+'/',{waitUntil:'networkidle'});
+  await ensureWithinViewport(tablet,'768px tablet homepage');
+  assert.equal(await tablet.locator('.studio-side-rail').evaluate(el=>getComputedStyle(el).position),'fixed');
+  await tablet.close();
 
   await desktop.goto(origin+'/admin-shell/apps/',{waitUntil:'networkidle'});
   assert.equal(await desktop.locator('.studio-app-card').count(),3);
