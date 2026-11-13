@@ -169,11 +169,11 @@
   border-radius: inherit;
   opacity: var(--pressure-opacity, 0);
   background:
-    radial-gradient(ellipse 104px 86px at var(--pressure-x) var(--pressure-y),
-      rgba(24,35,54,.042) 0%,
-      rgba(24,35,54,.038) 27%,
-      rgba(255,255,255,.13) 47%,
-      rgba(255,255,255,.10) 57%,
+    radial-gradient(ellipse 90px 72px at var(--pressure-x) var(--pressure-y),
+      transparent 0%,
+      rgba(255,255,255,.015) 30%,
+      rgba(255,255,255,.085) 49%,
+      rgba(255,255,255,.03) 64%,
       transparent 84%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
   transition: opacity .12s linear;
@@ -185,7 +185,7 @@
     transform: perspective(1100px)
       rotateX(var(--pressure-rotate-x,0deg))
       rotateY(var(--pressure-rotate-y,0deg))
-      scale(.998);
+      scale(.995);
     will-change: transform;
   }
   .front-body .gallery-card[data-cloth-active="true"]:active .gallery-card-visual {
@@ -197,19 +197,19 @@
 }
 :root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-visual::after {
   background:
-    radial-gradient(ellipse 104px 86px at var(--pressure-x) var(--pressure-y),
-      rgba(210,224,255,.012) 0%,
-      rgba(10,14,26,.036) 27%,
-      rgba(255,255,255,.09) 47%,
-      rgba(255,255,255,.035) 59%,
+    radial-gradient(ellipse 90px 72px at var(--pressure-x) var(--pressure-y),
+      transparent 0%,
+      rgba(225,236,255,.008) 30%,
+      rgba(225,236,255,.065) 49%,
+      rgba(225,236,255,.02) 65%,
       transparent 84%);
 }
 @media (prefers-color-scheme:dark) {
   :root[data-color-mode='system'] .front-body .gallery-card .gallery-card-visual::after {
     background:
-      radial-gradient(ellipse 104px 86px at var(--pressure-x) var(--pressure-y),
-        rgba(210,224,255,.012),rgba(10,14,26,.036) 27%,
-        rgba(255,255,255,.09) 47%,transparent 84%);
+      radial-gradient(ellipse 90px 72px at var(--pressure-x) var(--pressure-y),
+        transparent 0%,rgba(225,236,255,.008) 30%,
+        rgba(225,236,255,.065) 49%,transparent 84%);
   }
 }
 /* Article imagery also follows its source ratio and fills the frame. */
