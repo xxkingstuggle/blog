@@ -235,6 +235,7 @@
 .front-body .product-gallery.single {
   display: block;
   width: 100%;
+  border: 0; /* The image covers the complete frame, including the former 1px border. */
   aspect-ratio: var(--product-ratio, 16/9);
   padding: 0;
   overflow: hidden;

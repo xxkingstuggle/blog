@@ -293,6 +293,7 @@ async function run(){
   });
   assert.ok(productGlass.stageRadius>=12 && productGlass.palette,
     'product image preview should preserve its outer round frame and sampled colour');
+  console.log('Product geometry:',JSON.stringify(productGlass));
   assert.ok(productGlass.single
     ? productGlass.imgRadius<.2 &&
       Math.abs(productGlass.ratio-productGlass.actual)<.03 &&
