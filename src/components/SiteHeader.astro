@@ -1,58 +1,66 @@
 ---
-import { SOFTWARE_PRODUCTS } from '../lib/software';
 import ThemeSwitcher from './ThemeSwitcher.astro';
-
+import NavIcon from './NavIcon.astro';
 const path = Astro.url.pathname;
 const isHome = path === '/';
 const isWork = path.startsWith('/software');
 const isPosts = path.startsWith('/posts') || path.startsWith('/tags') || path.startsWith('/archive');
 const isAbout = path.startsWith('/about') || path.startsWith('/links');
 const items = [
-  { href: '/', label: '精选', sub: 'Overview', icon: '▦', current: isHome },
-  { href: '/software/', label: '作品', sub: 'Projects', icon: '◫', current: isWork },
-  { href: '/posts/', label: '文章', sub: 'Journal', icon: '▤', current: isPosts },
-  { href: '/about/', label: '关于', sub: 'About', icon: '◉', current: isAbout },
-];
+  { href:'/', label:'精选', icon:'home', current:isHome },
+  { href:'/software/', label:'软件与作品', icon:'grid', current:isWork },
+  { href:'/posts/', label:'文章与手记', icon:'journal', current:isPosts },
+  { href:'/about/', label:'关于 Xin', icon:'person', current:isAbout },
+] as const;
+const collections = [
+  {href:'/archive/',label:'时间归档',icon:'archive'},
+  {href:'/tags/',label:'文章标签',icon:'tag'},
+  {href:'/links/',label:'友链收藏',icon:'links'},
+] as const;
 ---
 <header class="site-header studio-side-rail" id="site-header">
   <a class="studio-rail-brand" href="/" aria-label="MYZJX 首页">
-    <span class="studio-brand-symbol" aria-hidden="true">X<span>.</span></span>
-    <span class="studio-brand-label"><strong>MYZJX</strong><small>Design & Engineering</small></span>
+    <span class="studio-brand-wordmark">MYZJX<span>.</span></span>
   </a>
   <div class="studio-rail-content">
-    <div class="studio-rail-section-label">EXPLORE <span>01</span></div>
     <nav class="studio-primary-nav" aria-label="主导航">
-      {items.map((item) => (
+      {items.map(item=>(
         <a href={item.href} aria-current={item.current ? 'page' : undefined}>
-          <span class="studio-nav-icon" aria-hidden="true">{item.icon}</span>
-          <span>{item.label}</span>
-          <span class="studio-nav-sub">{item.sub}</span>
+          <span class="studio-nav-icon"><NavIcon name={item.icon}/></span><span>{item.label}</span>
         </a>
       ))}
     </nav>
-    <div class="studio-rail-section-label studio-rail-section-label--collections">COLLECTIONS <span>02</span></div>
-    <nav class="studio-secondary-nav" aria-label="其他分类">
-      <a href="/archive/"><span aria-hidden="true">◷</span> 时间归档</a>
-      <a href="/tags/"><span aria-hidden="true">⌗</span> 文章标签</a>
-      <a href="/links/"><span aria-hidden="true">↗</span> 站点收藏</a>
+    <div class="studio-rail-divider" aria-hidden="true"></div>
+    <nav class="studio-secondary-nav" aria-label="内容索引">
+      {collections.map(item=>(
+        <a href={item.href}><span class="studio-nav-icon"><NavIcon name={item.icon}/></span>{item.label}</a>
+      ))}
     </nav>
     <div class="studio-rail-spacer"></div>
-    <a class="studio-sidebar-feature" href="/software/usblinkmic/">
-      <span class="studio-sidebar-feature-label">FEATURED WORK <span aria-hidden="true">↗</span></span>
-      <span class="studio-sidebar-feature-title">USBLinkMic</span>
-      <small>v{SOFTWARE_PRODUCTS[0].latestVersion.replace(/^v/i, '')} · macOS & Android</small>
-    </a>
   </div>
   <div class="studio-rail-bottom">
-    <span class="studio-rail-bottom-label">APPEARANCE</span>
-    <ThemeSwitcher />
-    <a href="/login/" class="studio-admin-access" title="私人管理后台"><span aria-hidden="true">⌁</span> 管理后台 <span aria-hidden="true">↗</span></a>
+    <div class="studio-rail-bottom-row"><ThemeSwitcher /><a href="/about/">关于本站</a></div>
+    <a href="/admin/apps/" class="studio-admin-access"><NavIcon name="lock" size={17}/> 私人应用中心 <span aria-hidden="true">↗</span></a>
   </div>
 </header>
 <nav class="studio-mobile-dock" aria-label="手机端主导航">
-  {items.map((item) => (
-    <a href={item.href} aria-current={item.current ? 'page' : undefined}>
-      <span aria-hidden="true">{item.icon}</span><small>{item.label}</small>
-    </a>
-  ))}
+  <a class="studio-dock-brand" href="/" aria-label="MYZJX 首页">X<span>.</span></a>
+  <div class="studio-dock-links">
+    <a href="/" aria-current={isHome ? 'page' : undefined}>精选</a>
+    <a href="/software/" aria-current={isWork ? 'page' : undefined}>作品</a>
+    <a href="/posts/" aria-current={isPosts ? 'page' : undefined}>文章</a>
+  </div>
+  <details class="studio-dock-menu">
+    <summary>菜单 <span aria-hidden="true">⌄</span></summary>
+    <div class="studio-dock-panel">
+      <nav aria-label="手机端更多导航">
+        <a href="/about/"><NavIcon name="person"/> 关于 Xin</a>
+        <a href="/archive/"><NavIcon name="archive"/> 时间归档</a>
+        <a href="/tags/"><NavIcon name="tag"/> 文章标签</a>
+        <a href="/links/"><NavIcon name="links"/> 友链收藏</a>
+        <a href="/admin/apps/"><NavIcon name="lock"/> 私人应用中心</a>
+      </nav>
+      <div class="studio-dock-panel-appearance"><span>主题</span><ThemeSwitcher /></div>
+    </div>
+  </details>
 </nav>
