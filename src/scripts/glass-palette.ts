@@ -37,6 +37,9 @@ function extractPalette(image: HTMLImageElement): Palette | null {
     if (!context) return null;
     context.drawImage(image, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     const pixels = context.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE).data;
+    // Neutral accumulators cover dark/monochrome interface screenshots where
+    // thin accent pixels disappear during the thumbnail downsampling.
+    const neutral: WeightedColor = { r:0, g:0, b:0, weight:0, hue:0 };
     const bins: WeightedColor[] = Array.from({ length: 12 }, (_, i) => ({
       r: 0, g: 0, b: 0, weight: 0, hue: i * 30,
     }));
@@ -49,6 +52,13 @@ function extractPalette(image: HTMLImageElement): Palette | null {
       const min = Math.min(r, g, b);
       const chroma = max - min;
       const light = (max + min) / 2;
+      if (light > 25 && light < 245) {
+        const n = (alpha / 255) * (0.4 + Math.min(1, chroma / 80));
+        neutral.r += r * n;
+        neutral.g += g * n;
+        neutral.b += b * n;
+        neutral.weight += n;
+      }
       // Near-white UI screenshots and black backgrounds should not dominate
       // an accent palette; use their actual coloured pixels instead.
       if (chroma < 18 || light < 34 || light > 234) continue;
@@ -61,7 +71,14 @@ function extractPalette(image: HTMLImageElement): Palette | null {
       bin.weight += weight;
     }
     const ranked = bins.filter(bin => bin.weight >= 1).sort((a, b) => b.weight - a.weight);
-    if (!ranked.length) return null;
+    if (!ranked.length) {
+      if (neutral.weight < 1) return null;
+      const base = [neutral.r, neutral.g, neutral.b].map(n => n / neutral.weight);
+      // Use a neutralized version of the actual screenshot colours.
+      const main = base.map(n => Math.round(n * 0.55 + 120 * 0.45));
+      const soft = base.map(n => Math.round(n * 0.35 + 186 * 0.65));
+      return [main.join(', '), soft.join(', ')];
+    }
 
     const primary = ranked[0];
     const second = ranked.find(bin => {
