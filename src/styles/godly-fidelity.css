@@ -284,3 +284,369 @@ body.front-body {
   .godly-detail-facts {grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px;padding:18px 0;}
   .godly-detail-facts dd{font-size:13px;}
 }
+
+
+/* 2026-11-13: audited content-shaped media and Chinese editorial layout.
+   Each preview uses its own image metadata; no fixed portrait frame or
+   simulated glass sweep. Keep one quiet hover affordance only. */
+.front-body .gallery-grid {
+  gap: 19px 18px;
+  align-items: start;
+}
+.front-body .gallery-item {
+  min-width: 0;
+  align-self: start;
+}
+.front-body .gallery-card {
+  padding: 7px;
+  border-radius: 13px;
+  transition: border-color 170ms ease, box-shadow 210ms ease;
+  transform: none;
+}
+.front-body .gallery-card-visual {
+  aspect-ratio: var(--visual-aspect, 1.15);
+  min-height: 0;
+  border-radius: 9px;
+  overflow: clip;
+}
+.front-body .gallery-card-visual::after {
+  content: none;
+  display: none;
+}
+.front-body .gallery-card .gallery-card-visual--has-image {
+  aspect-ratio: var(--visual-aspect, 1.15);
+  padding: 0;
+  background: #e9ebef;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.front-body .gallery-card .gallery-card-visual--has-image::before {
+  display: none;
+  content: none;
+}
+.front-body .gallery-card .gallery-card-visual--has-image .gallery-card-image {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  padding: clamp(9px, 2vw, 18px);
+  object-fit: contain;
+  object-position: center;
+  filter: none;
+  border-radius: 0;
+  transform: none;
+  transition: none;
+}
+.front-body .gallery-card-visual[data-aspect="portrait"] .gallery-card-image {
+  padding: clamp(10px, 1.5vw, 18px);
+}
+.front-body .gallery-card-visual[data-aspect="landscape"] .gallery-card-image {
+  padding: clamp(8px, 1.2vw, 14px);
+}
+.front-body .gallery-card .gallery-card-visual--text {
+  aspect-ratio: var(--visual-aspect, 1.15);
+  display: block;
+}
+.front-body .gallery-card-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(18px, 2vw, 29px);
+  gap: 18px;
+  background: #eef1f5;
+  color: #293748;
+}
+.front-body .gallery-card-visual--thinking .gallery-card-art {
+  background: #efeee9;
+  color: #35332f;
+}
+.front-body .gallery-card-visual--update .gallery-card-art {
+  background: #eaf0ed;
+  color: #304a3e;
+}
+.front-body .gallery-card-visual--tool .gallery-card-art {
+  background: #e7ebf1;
+  color: #29384d;
+}
+.front-body .gallery-card-art .gallery-art-eyebrow {
+  position: static;
+  z-index: auto;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 620;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+  opacity: .65;
+}
+.front-body .gallery-card .gallery-art-copy {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.5vw, 17px);
+  margin: auto 0;
+  min-width: 0;
+}
+.front-body .gallery-card .gallery-art-copy strong {
+  display: block;
+  margin: 0;
+  max-width: 100%;
+  font-size: clamp(21px, 2vw, 34px);
+  line-height: 1.27;
+  font-weight: 660;
+  letter-spacing: -.045em;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-wrap: balance;
+}
+.front-body .gallery-card .gallery-card-art--long .gallery-art-copy strong {
+  font-size: clamp(20px, 1.8vw, 29px);
+  line-height: 1.34;
+}
+.front-body .gallery-art-copy p {
+  margin: 0;
+  max-width: 35ch;
+  color: inherit;
+  opacity: .7;
+  font-size: clamp(11px, .96vw, 13px);
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.front-body .gallery-card .gallery-art-index {
+  position: static;
+  z-index: auto;
+  color: inherit;
+  opacity: .52;
+  font: 550 10px/1.4 var(--font-sans);
+  letter-spacing: .01em;
+}
+.front-body .gallery-art-index span {
+  margin: 0 3px;
+}
+.front-body .gallery-card .gallery-visual-action {
+  top: 12px;
+  right: 12px;
+  bottom: auto;
+  opacity: 0;
+  transform: none;
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+  border-radius: 50%;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 2px 9px rgb(20 26 40 / .08);
+  transition: opacity 180ms ease;
+}
+.front-body .gallery-card .gallery-card-info {
+  padding: 11px 6px 8px;
+  min-width: 0;
+}
+.front-body .gallery-card .gallery-card-caption h3 {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 650;
+  white-space: normal;
+  text-overflow: initial;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.front-body .gallery-card--image .gallery-card-info > p {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+.front-body .gallery-card .gallery-card-meta {
+  display: none;
+}
+@media (hover:hover) and (pointer:fine) {
+  .front-body .gallery-card:hover {
+    transform: none;
+    border-color: var(--line-strong);
+    box-shadow: 0 7px 24px rgb(16 24 37 / .085);
+  }
+  .front-body .gallery-card:hover .gallery-card-visual {
+    transform: none;
+    filter: none;
+  }
+  .front-body .gallery-card:hover .gallery-card-image {
+    transform: none !important;
+  }
+  .front-body .gallery-card:hover .gallery-visual-action {
+    opacity: 1;
+    transform: none;
+  }
+  .front-body .gallery-card:hover .gallery-card-arrow {
+    transform: none;
+  }
+}
+.front-body .gallery-card:active {
+  transform: none;
+  border-color: var(--line-strong);
+}
+.front-body .gallery-card:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+/* Article cover: same content-first treatment as index preview. */
+.front-body .gallery-detail-cover {
+  aspect-ratio: var(--detail-ratio, 1.72);
+  max-height: 760px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.front-body .gallery-detail-cover--image .gallery-detail-image {
+  display: block;
+  object-fit: contain;
+  padding: clamp(16px, 3vw, 32px);
+  width: 100%;
+  height: 100%;
+}
+.front-body .gallery-detail-cover--text .gallery-detail-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  justify-content: space-between;
+  padding: clamp(24px, 4.6vw, 68px);
+  background: #eef1f5;
+  color: #293748;
+}
+.front-body .gallery-detail-cover--thought .gallery-detail-art {
+  background: #efeee9;
+  color: #35332f;
+}
+.front-body .gallery-detail-cover--update .gallery-detail-art {
+  background: #eaf0ed;
+  color: #304a3e;
+}
+.front-body .gallery-detail-art-title {
+  font-size: clamp(30px, 4.3vw, 64px);
+  line-height: 1.26;
+  letter-spacing: -.05em;
+  font-weight: 670;
+  width: min(100%, 940px);
+  margin: auto 0 0;
+  overflow-wrap: anywhere;
+}
+.front-body .gallery-detail-summary {
+  font-size: clamp(13px, 1.2vw, 17px);
+  line-height: 1.7;
+  max-width: 64ch;
+  margin: 0 0 auto;
+  opacity: .72;
+  overflow-wrap: anywhere;
+}
+.front-body .gallery-detail-overline,
+.front-body .gallery-detail-art-foot {
+  font-family: var(--font-sans);
+  letter-spacing: .015em;
+  font-size: 12px;
+  opacity: .65;
+}
+
+/* The odd page bounce and multi-layer shimmer are replaced by a brief fade.
+   Shared element view transitions remain usable where supported. */
+::view-transition-old(root) {
+  animation: studio-polite-out 130ms ease-out both;
+}
+::view-transition-new(root) {
+  animation: studio-polite-in 190ms ease-out both;
+}
+::view-transition-group(*) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(.25,.7,.3,1);
+}
+@keyframes studio-polite-out { to { opacity: .6; } }
+@keyframes studio-polite-in { from { opacity: .4; } to { opacity: 1; } }
+
+/* Mobile: the wordmark is navigation, not an attention-grabbing icon. */
+@media(max-width:720px) {
+  .front-body .gallery-grid { gap: 17px; }
+  .front-body .gallery-card { padding: 7px; }
+  .front-body .gallery-card .gallery-card-visual {
+    aspect-ratio: var(--visual-aspect, 1.15);
+  }
+  .front-body .gallery-card .gallery-art-copy strong {
+    font-size: clamp(24px, 6vw, 34px);
+  }
+  .front-body .gallery-card .gallery-card-art--long .gallery-art-copy strong {
+    font-size: clamp(21px, 5.4vw, 29px);
+  }
+  .front-body .gallery-card .gallery-art-copy p { font-size: 12px; }
+  .front-body .gallery-card .gallery-card-caption h3 { font-size: 14px; }
+  .front-body .studio-mobile-dock {
+    padding: 7px 11px;
+    min-width: 0;
+    gap: 6px;
+    border-radius: 26px;
+  }
+  .studio-mobile-dock .studio-dock-brand {
+    width: auto;
+    height: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+    display: inline-flex;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--text);
+    font-size: clamp(12px, 3.25vw, 14px);
+    font-weight: 780;
+    line-height: 1.2;
+    letter-spacing: -.055em;
+    padding: 8px 4px;
+    box-shadow: none;
+  }
+  .studio-mobile-dock .studio-dock-brand span { color: var(--text); }
+  .front-body .studio-dock-links { gap: clamp(7px, 2.1vw, 16px); }
+  .front-body .studio-dock-links a {
+    font-size: clamp(12px, 3.3vw, 14px);
+    padding: 10px 1px;
+  }
+  .front-body .studio-dock-menu summary {
+    padding: 9px 10px;
+    min-height: 41px;
+    font-size: 12px;
+  }
+  .front-body .gallery-detail-cover {
+    aspect-ratio: var(--detail-ratio, 1.25);
+    max-height: none;
+  }
+  .front-body .gallery-detail-art-title { font-size: clamp(24px, 6.7vw, 40px); }
+  .front-body .gallery-detail-summary {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+}
+@media(max-width:360px) {
+  .front-body .studio-mobile-dock { width: calc(100% - 16px); padding: 6px; }
+  .studio-mobile-dock .studio-dock-brand { font-size: 11px; }
+  .front-body .studio-dock-links a { font-size: 12px; }
+  .front-body .studio-dock-menu summary { padding: 8px 8px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-group(*) { animation: none !important; }
+  .front-body .gallery-card,
+  .front-body .gallery-card-visual,
+  .front-body .gallery-card-image,
+  .front-body .gallery-visual-action { transition: none !important; }
+}
