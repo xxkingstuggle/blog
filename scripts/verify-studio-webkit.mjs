@@ -53,7 +53,10 @@ async function run(){
     viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true,reducedMotion:'reduce'
   });
   await mobile.goto(origin+'/',{waitUntil:'networkidle'});
-  assert.equal(await mobile.locator('.studio-mobile-dock').evaluate(el=>getComputedStyle(el).display),'grid');
+  assert.equal(await mobile.locator('.studio-mobile-dock').evaluate(el=>getComputedStyle(el).display),'flex');
+  await mobile.locator('.studio-dock-menu summary').click();
+  assert.equal(await mobile.locator('.studio-dock-menu').evaluate(el=>el.open),true);
+  await mobile.locator('.studio-dock-menu summary').click();
   await ensureWithinViewport(mobile,'mobile homepage');
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
 
