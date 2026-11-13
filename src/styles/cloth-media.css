@@ -1,0 +1,277 @@
+/*
+ * MYZJX / Cloth Surface + Two-layer Media v6
+ *
+ * NO floating cursor lights, spot shadows, black wake or ambient hover trail.
+ * Pointer physics changes only the media sheet under the cursor.
+ * Geometry: 1 outside frame + 1 inside media surface. The image itself
+ * has no padding, border, shadow or third radius.
+ */
+
+.front-body .studio-kinetic-field { display: none !important; }
+
+/* The old chrome-coloured hover bloom also needs to go: it otherwise looks
+   like a drop shadow even after removing the pointer-following field. */
+.front-body .gallery-item::before,
+.front-body .gallery-item::after,
+.front-body .gallery-item:hover::before,
+.front-body .gallery-item:hover::after,
+.front-body .gallery-item:focus-within::before,
+.front-body .gallery-item:focus-within::after,
+.front-body .gallery-item[data-ambient-active="true"]::before {
+  opacity: 0 !important;
+  display: none !important;
+  animation: none !important;
+}
+
+.front-body .gallery-card {
+  --card-radius: 24px;
+  --card-inset: 8px;
+  --stage-radius: calc(var(--card-radius) - var(--card-inset));
+  --pressure-x: 50%;
+  --pressure-y: 50%;
+  --pressure-opacity: 0;
+  --pressure-rotate-x: 0deg;
+  --pressure-rotate-y: 0deg;
+  padding: var(--card-inset);
+  border-radius: var(--card-radius);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid rgba(120, 138, 161, .16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42);
+  transform: none;
+  transition: border-color .25s ease, background .25s ease;
+}
+@media (hover:hover) and (pointer:fine) {
+  .front-body .gallery-card:hover,
+  .front-body .gallery-card:focus-visible,
+  .front-body .gallery-card--image:hover,
+  .front-body .gallery-card--software:hover {
+    transform: none;
+    border-color: rgba(120,138,161,.28);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.46);
+  }
+}
+.front-body .gallery-card .gallery-card-info {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Two layers only. The stage and the shell share the SAME concentric curve.
+   The media conforms to the stage clip; it does NOT acquire a third curve. */
+.front-body .gallery-card .gallery-card-visual,
+.front-body .gallery-card .gallery-card-visual--has-image,
+.front-body .gallery-card .gallery-card-visual--text {
+  border-radius: var(--stage-radius);
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(0 round var(--stage-radius));
+  box-shadow: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  position: relative;
+  transform: none;
+  transition: transform .24s cubic-bezier(.21,.8,.24,1);
+}
+
+.front-body .gallery-card--image .gallery-card-visual--has-image {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  /* Use image.width / image.height, or video 16 / 9, without prior 0.93
+     multiplier or maximum 1.64 clamp. Browser computes natural height. */
+  aspect-ratio: var(--visual-aspect, 16/9);
+  display: block;
+  padding: 0;
+  background: transparent;
+}
+
+/* The generated img element is only the visual content of the inner frame. */
+.front-body .gallery-card--image .gallery-card-visual--has-image .gallery-card-image,
+.front-body .gallery-card--poster .gallery-card-visual--has-image .gallery-card-image,
+.front-body .gallery-card--software .gallery-card-visual--has-image .gallery-card-image,
+.front-body .gallery-card--motion .gallery-card-visual--has-image .gallery-card-image {
+  display: block;
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0 !important;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none;
+  filter: none;
+  transform: none !important;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* The movie overlays exactly the same inner frame as the poster, not a
+   third inset rounded video pane. Both stay 16:9 and edge-to-edge. */
+.front-body .gallery-card--motion .gallery-card-video {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+  object-fit: cover;
+  transform: none;
+}
+.front-body .gallery-card--poster .gallery-poster-caption {
+  inset: auto 0 0;
+  border-radius: 0;
+}
+.front-body .gallery-card--motion .gallery-motion-caption {
+  inset: auto 0 0;
+  border-radius: 0;
+}
+.front-body .gallery-card--motion .gallery-motion-chip,
+.front-body .gallery-card--software .gallery-product-flag {
+  top: 13px;
+  left: 13px;
+}
+
+/* Remove the third visual treatment (an illuminated well beneath the
+   content). The image itself now occupies the whole inner rounded frame. */
+.front-body .gallery-card--software .gallery-card-visual,
+.front-body .gallery-card--poster .gallery-card-visual,
+.front-body .gallery-card--motion .gallery-card-visual {
+  background: transparent;
+}
+.front-body .gallery-card .gallery-card-visual::before,
+.front-body .gallery-card .gallery-card-visual--has-image::before,
+.front-body .gallery-card--motion[data-motion-playing='true'] .gallery-card-visual--has-image::before {
+  display: none !important;
+  content: none !important;
+  animation: none !important;
+}
+
+/* A tiny dimple in the surface, not a black halo following the cursor.
+   Inner centre = a little darker; outer rim = softly raised highlight.
+   The same local optical response works for image, video and text covers. */
+.front-body .gallery-card .gallery-card-visual::after,
+.front-body .gallery-card .gallery-card-visual--has-image::after,
+.front-body .gallery-card .gallery-card-visual--text::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  transform: none;
+  border-radius: inherit;
+  opacity: var(--pressure-opacity, 0);
+  background:
+    radial-gradient(ellipse 104px 86px at var(--pressure-x) var(--pressure-y),
+      rgba(24,35,54,.042) 0%,
+      rgba(24,35,54,.038) 27%,
+      rgba(255,255,255,.13) 47%,
+      rgba(255,255,255,.10) 57%,
+      transparent 84%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+  transition: opacity .12s linear;
+}
+/* The visual sheet flexes inwards by ~0.2%, and changes angle <= 0.6deg.
+   The surrounding shell remains stationary: that's what conveys pressure. */
+@media (hover:hover) and (pointer:fine) {
+  .front-body .gallery-card[data-cloth-active="true"] .gallery-card-visual {
+    transform: perspective(1100px)
+      rotateX(var(--pressure-rotate-x,0deg))
+      rotateY(var(--pressure-rotate-y,0deg))
+      scale(.998);
+    will-change: transform;
+  }
+  .front-body .gallery-card[data-cloth-active="true"]:active .gallery-card-visual {
+    transform: perspective(1100px)
+      rotateX(var(--pressure-rotate-x,0deg))
+      rotateY(var(--pressure-rotate-y,0deg))
+      scale(.991);
+  }
+}
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-visual::after {
+  background:
+    radial-gradient(ellipse 104px 86px at var(--pressure-x) var(--pressure-y),
+      rgba(210,224,255,.012) 0%,
+      rgba(10,14,26,.036) 27%,
+      rgba(255,255,255,.09) 47%,
+      rgba(255,255,255,.035) 59%,
+      transparent 84%);
+}
+@media (prefers-color-scheme:dark) {
+  :root[data-color-mode='system'] .front-body .gallery-card .gallery-card-visual::after {
+    background:
+      radial-gradient(ellipse 104px 86px at var(--pressure-x) var(--pressure-y),
+        rgba(210,224,255,.012),rgba(10,14,26,.036) 27%,
+        rgba(255,255,255,.09) 47%,transparent 84%);
+  }
+}
+/* Article imagery also follows its source ratio and fills the frame. */
+.front-body .gallery-detail-cover--image {
+  aspect-ratio: var(--detail-ratio, 16/9);
+  padding: 0;
+  display: block;
+  overflow: hidden;
+}
+.front-body .gallery-detail-cover--image .gallery-detail-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  object-fit: cover;
+  box-shadow: none;
+}
+/* A product page with one screenshot uses that screenshot's true ratio.
+   A multi-device comparison intentionally keeps its original composite grid. */
+.front-body .product-gallery.single {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--product-ratio, 16/9);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+.front-body .product-gallery.single::before,
+.front-body .product-gallery.single::after {
+  content: none;
+  display: none;
+}
+.front-body .product-gallery.single img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  object-fit: cover;
+  box-shadow: none;
+}
+
+@media(max-width:720px) {
+  .front-body .gallery-card {
+    --card-radius: 22px;
+    --card-inset: 7px;
+  }
+  .front-body .gallery-card--image .gallery-card-visual--has-image {
+    aspect-ratio: var(--visual-aspect, 16/9);
+  }
+}
+@media (prefers-reduced-motion:reduce), (forced-colors:active) {
+  .front-body .gallery-card .gallery-card-visual,
+  .front-body .gallery-card .gallery-card-visual::after {
+    transition: none !important;
+    transform: none !important;
+  }
+  .front-body .gallery-card .gallery-card-visual::after {display:none !important;}
+}

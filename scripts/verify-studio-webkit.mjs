@@ -110,29 +110,53 @@ async function run(){
   await motionCard.screenshot({path:'artifacts/studio-motion-card.png'});
 
 
-  // Three radii must be mathematically related. Never hard-code unrelated values.
-  const nestedRadius = await desktop.locator('.gallery-card--image').first().evaluate(card => {
-    const stage = card.querySelector('.gallery-card-visual');
-    const image = card.querySelector('.gallery-card-image');
-    const c = getComputedStyle(card);
-    const s = getComputedStyle(stage);
-    const i = getComputedStyle(image);
-    return {
-      outer: parseFloat(c.borderTopLeftRadius),
-      inset: parseFloat(c.paddingLeft),
-      stage: parseFloat(s.borderTopLeftRadius),
-      gap: (stage.getBoundingClientRect().width - image.getBoundingClientRect().width) / 2,
-      image: parseFloat(i.borderTopLeftRadius),
-      stageBox: stage.getBoundingClientRect().width,
-      imageBox: image.getBoundingClientRect().width
-    };
+
+  // Media geometry is now TWO concentric radii: shell + stage clip.
+  // The image has NO extra radius/inset and fills the stage exactly.
+  const mediaGeometry=await desktop.locator('.gallery-card--image').evaluateAll(cards =>
+    cards.map(card => {
+      const frame=card.querySelector('.gallery-card-visual');
+      const img=card.querySelector('.gallery-card-image');
+      const outer=getComputedStyle(card);
+      const inner=getComputedStyle(frame);
+      const pixels=getComputedStyle(img);
+      const a=frame.getBoundingClientRect();
+      const b=img.getBoundingClientRect();
+      return {
+        outer:parseFloat(outer.borderTopLeftRadius),
+        inset:parseFloat(outer.paddingLeft),
+        inner:parseFloat(inner.borderTopLeftRadius),
+        imageRadius:parseFloat(pixels.borderTopLeftRadius),
+        imagePadding:parseFloat(pixels.paddingLeft),
+        aspect:parseFloat(inner.aspectRatio),
+        actual:a.width/a.height,
+        widthDelta:Math.abs(a.width-b.width),
+        heightDelta:Math.abs(a.height-b.height),
+        leftDelta:Math.abs(a.left-b.left),
+        topDelta:Math.abs(a.top-b.top),
+        fit:pixels.objectFit
+      };
+    })
+  );
+  assert.ok(mediaGeometry.length >= 3,'multiple photo and video cards must be measured');
+  for (const media of mediaGeometry) {
+    assert.ok(Math.abs(media.outer-media.inset-media.inner)<.75,
+      'only shell and inner stage have concentric rounded corners');
+    assert.ok(media.imageRadius<.2 && media.imagePadding<.2,
+      'image cannot introduce a third rounded/padded frame');
+    assert.ok(Math.abs(media.aspect-media.actual)<.025,
+      'card height must follow the actual source aspect ratio');
+    assert.ok(media.widthDelta<1 && media.heightDelta<1 &&
+      media.leftDelta<1 && media.topDelta<1 && media.fit==='cover',
+      'media must fill its responsive frame edge-to-edge without letterboxing');
+  }
+  const videoRatio = await motionCard.locator('.gallery-card-visual').evaluate(el=>{
+    const r=el.getBoundingClientRect();
+    return r.width/r.height;
   });
-  assert.ok(Math.abs(nestedRadius.outer - nestedRadius.inset - nestedRadius.stage)<.6,
-    'middle radius must equal outer radius minus true shell inset');
-  const declaredMediaInset = await desktop.locator('.gallery-card--image').first()
-    .evaluate(card => parseFloat(getComputedStyle(card).getPropertyValue('--media-inset')));
-  assert.ok(Math.abs(nestedRadius.stage - declaredMediaInset - nestedRadius.image)<.6,
-    'image radius must be concentric with the stage radius and media inset');
+  assert.ok(Math.abs(videoRatio-16/9)<.025,'16:9 video must display in a 16:9 frame');
+  await motionCard.screenshot({path:'artifacts/studio-two-layer-video.png'});
+  await desktop.locator('.gallery-card--image').first().screenshot({path:'artifacts/studio-two-layer-image.png'});
 
   const editorialCards = desktop.locator('.gallery-card--editorial');
   assert.ok(await editorialCards.count()>=2,'text-only cards should have their own compositions');
@@ -141,94 +165,54 @@ async function run(){
   const ambient = desktop.locator('[data-ambient-stage]');
   await desktop.waitForFunction(() => Boolean(document.querySelector('[data-ambient-stage]')?.getAttribute('data-ambient-primary')));
   const productCards=desktop.locator('.gallery-card--image');
-  await productCards.first().hover();
+  await productCards.first().focus();
   const firstLight = await ambient.getAttribute('data-ambient-primary');
   const firstSource = await ambient.getAttribute('data-ambient-source');
-  await productCards.nth(1).hover();
+  await productCards.nth(1).focus();
   const secondLight = await ambient.getAttribute('data-ambient-primary');
   const secondSource = await ambient.getAttribute('data-ambient-source');
-  assert.ok(firstSource !== secondSource, 'hover should move the ambient field between works');
-  // Art-direction acceptance: the artwork must throw real coloured light
-  // beyond its own rectangle, not only a neutral drop shadow.
-  await productCards.first().hover({position:{x:44,y:42}});
-  await desktop.waitForTimeout(760);
-  const firstItem=productCards.first().locator('xpath=..');
-  const halo=await firstItem.evaluate(el=>{
-    const wide=getComputedStyle(el,'::before');
-    const refracted=getComputedStyle(el,'::after');
-    const card=el.querySelector('.gallery-card');
-    const a=el.getBoundingClientRect(),b=card.getBoundingClientRect();
-    return {
-      spreadOpacity:parseFloat(wide.opacity),
-      prismOpacity:parseFloat(refracted.opacity),
-      firstGlow:wide.backgroundImage,
-      secondGlow:refracted.backgroundImage,
-      offset:a.left-b.left,
-    };
-  });
-  assert.ok(halo.spreadOpacity>.55 && halo.spreadOpacity<.80 &&
-    halo.prismOpacity>.15 && halo.prismOpacity<.42 &&
-    halo.firstGlow.includes('radial-gradient') &&
-    halo.secondGlow.includes('conic-gradient'),
-    'hover must retain visible two-layer diffusion without overbright neon spill');
-  await productCards.first().hover({position:{x:65,y:65}});
-  await desktop.waitForTimeout(100);
-  const movingHighlightA=await productCards.first().evaluate(el=>el.style.getPropertyValue('--sheen-x'));
-  await productCards.first().hover({position:{x:170,y:125}});
-  await desktop.waitForTimeout(100);
-  const movingHighlightB=await productCards.first().evaluate(el=>el.style.getPropertyValue('--sheen-x'));
-  assert.ok(movingHighlightA && movingHighlightB && movingHighlightA!==movingHighlightB,
-    'specular highlight must move within the actual card under the cursor');
-  // Pointer physics acceptance: *approach* already lights the card; a quick
-  // swipe physically stretches the light and leaves a lagging wake; exiting
-  // produces a measurable afterglow instead of hover shadow snapping off.
-  await productCards.first().scrollIntoViewIfNeeded();
-  const kineticCardBox = await productCards.first().boundingBox();
-  assert.ok(kineticCardBox && kineticCardBox.width > 200,
-    'kinetic test needs a visible card of sufficient width');
-  const kineticStage = desktop.locator('[data-ambient-stage]');
-  assert.equal(await desktop.locator('.studio-kinetic-field').count(),1,
-    'desktop uses one pointer-driven field, not a light DOM per card');
-  const nearX=kineticCardBox.x - 45;
-  const nearY=kineticCardBox.y + kineticCardBox.height*.47;
-  await desktop.mouse.move(nearX,nearY);
-  await desktop.waitForTimeout(180);
-  assert.equal(await kineticStage.getAttribute('data-kinetic-target'),'near',
-    'light must detect proximity before the pointer actually enters the card');
-  const x1=kineticCardBox.x+kineticCardBox.width*.15;
-  const x2=kineticCardBox.x+kineticCardBox.width*.85;
-  const moveY=kineticCardBox.y+kineticCardBox.height*.47;
-  await desktop.mouse.move(x1,moveY);
-  await desktop.waitForTimeout(140);
-  const beforeSwipe=await kineticStage.getAttribute('data-kinetic-core-x');
-  await desktop.mouse.move(x2,moveY,{steps:1});
-  await desktop.waitForTimeout(70);
-  const kineticMotion=await kineticStage.evaluate(el=>({
-    core:Number(el.dataset.kineticCoreX),
-    wake:Number(el.dataset.kineticWakeX),
-    stretch:Number(el.dataset.kineticStretch),
-    opacity:Number(el.dataset.kineticOpacity),
-    target:el.dataset.kineticTarget,
-    lightCount:el.querySelectorAll('.studio-kinetic-core,.studio-kinetic-wake,.studio-kinetic-echo').length
-  }));
-  console.log('Kinetic swipe diagnostics:',JSON.stringify({kineticMotion,beforeSwipe}));
-  assert.ok(kineticMotion.lightCount===3 &&
-    kineticMotion.target==='near' && kineticMotion.opacity>.05,
-    'three-layer cursor light must remain visible while moving across a card');
-  assert.ok(Math.abs(kineticMotion.core-kineticMotion.wake)>3 &&
-    kineticMotion.stretch>1.02 && Math.abs(kineticMotion.core-Number(beforeSwipe))>14,
-    'fast pointer movement must stretch light with an inertial wake, not just toggle hover');
-  await desktop.screenshot({path:'artifacts/studio-kinetic-swipe.png',fullPage:false});
-  await desktop.mouse.move(15,15,{steps:1});
-  await desktop.waitForTimeout(90);
-  const residual=Number(await kineticStage.getAttribute('data-kinetic-opacity'));
-  await desktop.waitForTimeout(1250);
-  const faded=Number(await kineticStage.getAttribute('data-kinetic-opacity'));
-  assert.ok(residual>.015 && faded<residual && faded<.08,
-    'light must leave a short afterglow, then fade instead of snapping off or running forever');
-  await desktop.mouse.move(x2,moveY);
+  assert.ok(firstSource !== secondSource, 'keyboard focus moves accessible ambient scene between works');
+  await productCards.nth(1).evaluate(el=>el.blur());
+
+  // No global cursor lamp, black shadow, three-layer wake or proximity glow.
+  assert.equal(await desktop.locator('.studio-kinetic-field').count(),0,
+    'the floating pointer light and its three shadow blobs must be removed');
+  const touchCard=productCards.first();
+  await touchCard.hover({position:{x:42,y:45}});
   await desktop.waitForTimeout(280);
-  await desktop.screenshot({path:'artifacts/studio-kinetic-hover.png',fullPage:false});
+  const firstPress=await touchCard.evaluate(card=>({
+    active:card.dataset.clothActive,
+    x:card.style.getPropertyValue('--pressure-x'),
+    opacity:Number(card.style.getPropertyValue('--pressure-opacity')),
+    surface:getComputedStyle(card.querySelector('.gallery-card-visual'),'::after').opacity,
+    borderCount:parseFloat(getComputedStyle(card.querySelector('.gallery-card-image')).borderTopLeftRadius)
+  }));
+  await touchCard.hover({position:{x:174,y:112}});
+  await desktop.waitForTimeout(270);
+  const nextPress=await touchCard.evaluate(card=>({
+    x:card.style.getPropertyValue('--pressure-x'),
+    y:card.style.getPropertyValue('--pressure-y'),
+    opacity:Number(card.style.getPropertyValue('--pressure-opacity')),
+    transform:getComputedStyle(card.querySelector('.gallery-card-visual')).transform
+  }));
+  assert.ok(firstPress.active==='true' && firstPress.opacity>.32 &&
+    nextPress.opacity>.45 && firstPress.x!==nextPress.x,
+    'localized pressure must follow the mouse INSIDE its card, not trail globally');
+  assert.notEqual(nextPress.transform,'none',
+    'the card surface must respond mechanically with a shallow counter-tilt');
+  const outsideShadow=await touchCard.locator('xpath=..').evaluate(el=>({
+    a:getComputedStyle(el,'::before').display,
+    b:getComputedStyle(el,'::after').display
+  }));
+  assert.equal(outsideShadow.a,'none','no coloured ambient shadow outside the card');
+  assert.equal(outsideShadow.b,'none','no conic trailing shadow outside the card');
+  await touchCard.screenshot({path:'artifacts/studio-cloth-pressed.png'});
+  await desktop.screenshot({path:'artifacts/studio-cloth-hover-desktop.png',fullPage:false});
+  await desktop.mouse.move(12,12);
+  await desktop.waitForTimeout(1100);
+  const released=await touchCard.evaluate(el=>Number(el.style.getPropertyValue('--pressure-opacity')));
+  assert.ok(released<.04,'cloth rebounds and leaves no floating cursor shadow');
+  await desktop.screenshot({path:'artifacts/studio-cloth-released.png',fullPage:false});
 
   const fieldGlow=await ambient.locator('[data-ambient-layer]').first().evaluate(el=>getComputedStyle(el).backgroundImage);
   assert.ok(fieldGlow.includes('radial-gradient') && fieldGlow.includes('linear-gradient'),
@@ -239,8 +223,8 @@ async function run(){
   // Source palettes are allowed to be similar, but the live field must track
   // each real card, never a frozen global CSS gradient.
   assert.ok(firstLight && secondLight,'global ambient field must have content-derived colour');
-  const localGlow = await desktop.locator('.gallery-item').first().evaluate(el => getComputedStyle(el,'::before').backgroundImage);
-  assert.ok(localGlow.includes('radial-gradient'), 'nearby cards must illuminate their surrounding whitespace');
+  const noOldLight = await desktop.locator('.gallery-item').first().evaluate(el => getComputedStyle(el,'::before').display);
+  assert.equal(noOldLight,'none','permanent glow shadow stays disabled');
   await desktop.screenshot({path:'artifacts/studio-ambient-hover-desktop.png',fullPage:false});
   await editorialCards.first().screenshot({path:'artifacts/studio-editorial-card.png'});
   await desktop.waitForTimeout(320);
@@ -379,20 +363,33 @@ async function run(){
 
   assert.ok(await mobile.locator('[data-ambient-stage]').count() === 1,
     'touch devices should keep a single lightweight page background field');
-  const mobileRad = await mobile.locator('.gallery-card--image').first().evaluate(el => {
-    const stage=el.querySelector('.gallery-card-visual');
-    const img=el.querySelector('.gallery-card-image');
-    return [
-      parseFloat(getComputedStyle(el).borderTopLeftRadius),
-      parseFloat(getComputedStyle(el).paddingLeft),
-      parseFloat(getComputedStyle(stage).borderTopLeftRadius),
-      parseFloat(getComputedStyle(img).borderTopLeftRadius),
-      parseFloat(getComputedStyle(el).getPropertyValue('--media-inset'))
-    ];
+
+  assert.equal(await mobile.locator('.studio-kinetic-field').count(),0,
+    'coarse/touch devices must not create an invisible pointer field');
+  const mobileMedia=await mobile.locator('.gallery-card--image').first().evaluate(card=>{
+    const stage=card.querySelector('.gallery-card-visual');
+    const img=card.querySelector('.gallery-card-image');
+    const outer=getComputedStyle(card), inner=getComputedStyle(stage);
+    const pixels=getComputedStyle(img);
+    const a=stage.getBoundingClientRect(),b=img.getBoundingClientRect();
+    return {
+      outer:parseFloat(outer.borderTopLeftRadius),
+      inset:parseFloat(outer.paddingLeft),
+      inner:parseFloat(inner.borderTopLeftRadius),
+      imgRadius:parseFloat(pixels.borderTopLeftRadius),
+      imgPad:parseFloat(pixels.paddingLeft),
+      ratio:parseFloat(inner.aspectRatio),
+      actual:a.width/a.height,
+      widthDelta:Math.abs(a.width-b.width),
+      heightDelta:Math.abs(a.height-b.height)
+    };
   });
-  assert.ok(Math.abs(mobileRad[0]-mobileRad[1]-mobileRad[2])<.6 &&
-    Math.abs(mobileRad[2]-mobileRad[4]-mobileRad[3])<.6,
-    'mobile nested corners must follow the same concentric tokens');
+  assert.ok(Math.abs(mobileMedia.outer-mobileMedia.inset-mobileMedia.inner)<.75 &&
+    mobileMedia.imgRadius<.2 && mobileMedia.imgPad<.2 &&
+    Math.abs(mobileMedia.actual-mobileMedia.ratio)<.03 &&
+    mobileMedia.widthDelta<1 && mobileMedia.heightDelta<1,
+    'mobile must also have exactly two concentric surfaces and source-sized media');
+
   await mobile.waitForTimeout(320);
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
   await mobile.screenshot({path:'artifacts/studio-chromatic-mobile.png',fullPage:false});
