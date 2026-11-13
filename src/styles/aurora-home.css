@@ -354,7 +354,8 @@ body:has(.aurora-home) .header-cta {
   .aurora-float-bottom {animation:aurora-float-b 8s ease-in-out infinite alternate;}
   .aurora-headline-shine {animation:aurora-shimmer 9s linear infinite alternate;}
 }
-.aurora-home[data-ambient-paused="true"] :is(.aurora-haze,.aurora-orb,.aurora-orb::before,.aurora-orbit,.aurora-floating-panel,.aurora-headline-shine) {animation-play-state:paused!important}
+.aurora-home[data-ambient-paused="true"] :is(.aurora-haze,.aurora-orb,.aurora-orbit,.aurora-floating-panel,.aurora-headline-shine),
+.aurora-home[data-ambient-paused="true"] .aurora-orb::before { animation-play-state:paused !important; }
 @keyframes aurora-breathe-a{to{transform:translate3d(75px,-34px,0) scale(1.14);}}
 @keyframes aurora-breathe-b{to{transform:translate3d(-82px,52px,0) scale(1.2);}}
 @keyframes aurora-orb-drift{to{transform:translate3d(0,-17px,0) rotate(7deg);}}
