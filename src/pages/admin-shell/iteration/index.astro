@@ -3,34 +3,49 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 import '../../../styles/iteration.css';
 ---
 
-<AdminLayout title="个人迭代系统" description="仅管理员可访问的个人迭代画板与 Markdown 资料工作台。" context="个人迭代系统" canonicalPath="/admin/iteration/">
+<AdminLayout title="个人迭代系统" description="仅管理员可访问的个人迭代画板与 Markdown 资料工作台。" context="个人迭代系统" canonicalPath="/admin/iteration/" bodyClass="iteration-body">
   <main id="main-content" class="iteration-page">
     <div class="iteration-top">
-      <div>
-        <p class="iteration-kicker">PRIVATE WORKSPACE / ITERATION</p>
-        <h1>个人迭代系统</h1>
-        <p class="iteration-subtitle">用真实问题推动改变，让有用的经验留下来。</p>
-      </div>
+      <p class="iteration-kicker">MYZJX <span class="iteration-kicker-separator">/</span> PRIVATE WORKSPACE <span class="iteration-kicker-separator">/</span> 01</p>
       <div class="iteration-actions">
-        <a class="iteration-link" href="/admin/">返回管理后台</a>
-        <button id="iteration-reload" class="iteration-button secondary" type="button">重新读取</button>
+        <a class="iteration-link" href="/admin/">返回管理后台 <span aria-hidden="true">↗</span></a>
+        <button id="iteration-reload" class="iteration-button secondary" type="button">↻ 重新同步</button>
       </div>
     </div>
 
-    <div class="iteration-state" id="iteration-state" role="status" aria-live="polite">正在验证身份并读取私有资料…</div>
-
-    <section class="iteration-goal">
-      <p>我们正在靠近的方向</p>
-      <h2>把日子过成自己想要的样子</h2>
-      <span>“我想成为什么样的人？”尚待探索，不替自己预先编造答案。</span>
+    <section class="iteration-goal" aria-labelledby="iteration-hero-title">
+      <div class="iteration-hero-copy">
+        <p class="iteration-hero-overline"><span class="iteration-hero-overline-mark" aria-hidden="true"></span> A MORE INTENTIONAL LIFE</p>
+        <h1 id="iteration-hero-title" class="iteration-hero-index">个人迭代系统 <span>— a work in progress.</span></h1>
+        <h2>把日子过成<br /><em>自己想要的样子。</em></h2>
+        <span class="iteration-hero-lead">从一个真实的问题开始。想办法，去行动，带着结果回来。<br class="iteration-desktop-only" />每一次尝试，都让下一步更清楚一点。</span>
+        <a href="#iteration-explorer-title" class="iteration-hero-action">
+          <span>打开我的迭代记录</span>
+          <span class="iteration-hero-arrow" aria-hidden="true">↗</span>
+        </a>
+      </div>
+      <div class="iteration-hero-art" aria-hidden="true">
+        <div class="iteration-hero-disc">
+          <span class="iteration-hero-disc-ring iteration-hero-disc-ring-one"></span>
+          <span class="iteration-hero-disc-ring iteration-hero-disc-ring-two"></span>
+          <span class="iteration-hero-disc-mark iteration-hero-disc-mark-one"></span>
+          <span class="iteration-hero-disc-mark iteration-hero-disc-mark-two"></span>
+          <span class="iteration-hero-disc-mark iteration-hero-disc-mark-three"></span>
+          <span class="iteration-hero-disc-mark iteration-hero-disc-mark-four"></span>
+          <span class="iteration-hero-disc-center">↺</span>
+        </div>
+        <span class="iteration-hero-art-caption">REFLECT <span>·</span> REFINE <span>·</span> REPEAT</span>
+      </div>
     </section>
+
+    <div class="iteration-state" id="iteration-state" role="status" aria-live="polite">正在验证身份并读取私有资料…</div>
 
     <section class="iteration-explorer" aria-labelledby="iteration-explorer-title">
       <div class="iteration-explorer-head">
         <div>
-          <p class="iteration-eyebrow">LIVE ITERATION · GITHUB SOURCE</p>
-          <h2 id="iteration-explorer-title">正在迭代的问题</h2>
-          <p class="iteration-explorer-intro">点开任何问题，查看它在「问题 → 办法 → 行动 → 反馈」圆盘中的真实位置。</p>
+          <p class="iteration-eyebrow">01 / YOUR WORK IN PROGRESS</p>
+          <h2 id="iteration-explorer-title">正在推进的事情<span class="iteration-headline-period">.</span></h2>
+          <p class="iteration-explorer-intro">挑一件事，看看走到了哪一步。点开问题，沿着四步圆盘继续往前。</p>
         </div>
         <span class="iteration-pill" id="iteration-progress-count" aria-live="polite">等待同步</span>
       </div>
@@ -58,9 +73,9 @@ import '../../../styles/iteration.css';
     <section class="iteration-panel iteration-editor-panel" aria-labelledby="iteration-editor-heading">
       <div class="iteration-panel-heading">
         <div>
-          <p class="iteration-eyebrow">SOURCE OF TRUTH</p>
-          <h2 id="iteration-editor-heading">编辑长期记录</h2>
-          <p class="iteration-muted">直接修改私有仓库中的 MD；保存后会生成 Git 提交。编辑前先检查最新版本。</p>
+          <p class="iteration-eyebrow">02 / THE LONG VIEW</p>
+          <h2 id="iteration-editor-heading">留下真实的记录<span class="iteration-headline-period">.</span></h2>
+          <p class="iteration-muted">不是每次都要重新开始。修改这里，保存到私有 GitHub，让经验留得下来。</p>
         </div>
         <a class="iteration-link" id="iteration-github-link" href="https://github.com" target="_blank" rel="noopener noreferrer" hidden>在 GitHub 查看历史 ↗</a>
       </div>
@@ -80,7 +95,7 @@ import '../../../styles/iteration.css';
         </div>
       </div>
     </section>
-    <footer class="iteration-footer">私有数据只通过管理员 API 获取；网页本身不包含个人记录。未经你反馈，不自动把计划写成完成。</footer>
+    <footer class="iteration-footer"><span>MYZJX / THE ITERATION PROJECT</span><span>真实发生的事，才值得被记住。私人记录仅通过受保护接口读取。</span></footer>
   </main>
 </AdminLayout>
 
