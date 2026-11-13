@@ -12,6 +12,8 @@ on:
       - 'src/styles/ambient-editorial.css'
       - 'src/styles/optical-system.css'
       - 'src/styles/chromatic-atmosphere.css'
+      - 'src/styles/kinetic-light.css'
+      - 'src/scripts/kinetic-light.ts'
       - 'src/scripts/gallery-video.ts'
       - 'src/pages/lab/**'
       - 'src/content.config.ts'

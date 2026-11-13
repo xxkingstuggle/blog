@@ -1,0 +1,84 @@
+/*
+ * Kinetic light: follow -> directional stretch -> lingering wake.
+ * Three small transformed composited surfaces. The page-wide ambient field
+ * remains the same subdued image-aware glass; we do not add a bright overlay
+ * or shadow to every card on every pointer frame.
+ */
+.front-body .studio-kinetic-field {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+  --kinetic-primary-rgb: 126, 144, 191;
+  --kinetic-secondary-rgb: 165, 151, 188;
+}
+.front-body .studio-kinetic-field[hidden] { display: none; }
+.front-body .studio-kinetic-core,
+.front-body .studio-kinetic-wake,
+.front-body .studio-kinetic-echo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+.front-body .studio-kinetic-core {
+  width: 252px;
+  height: 194px;
+  background:
+    radial-gradient(ellipse 50% 49% at 48% 51%,
+      rgba(var(--kinetic-primary-rgb), .40),
+      rgba(var(--kinetic-primary-rgb), .14) 48%,
+      transparent 93%),
+    radial-gradient(ellipse 55% 51% at 69% 64%,
+      rgba(var(--kinetic-secondary-rgb), .24),transparent 90%);
+  filter: blur(10px);
+}
+.front-body .studio-kinetic-wake {
+  width: 328px;
+  height: 180px;
+  background:
+    radial-gradient(ellipse 52% 46% at 48% 48%,
+      rgba(var(--kinetic-primary-rgb), .25),
+      rgba(var(--kinetic-secondary-rgb), .15) 43%,
+      transparent 94%);
+  filter: blur(17px);
+}
+.front-body .studio-kinetic-echo {
+  width: 288px;
+  height: 216px;
+  background:
+    radial-gradient(ellipse 54% 52% at 52% 50%,
+      rgba(var(--kinetic-secondary-rgb), .19),
+      transparent 88%);
+  filter: blur(21px);
+}
+
+/* The nearest card already has two gradient surfaces. Light their region
+   before the cursor reaches the card: the falloff remains outside its frame. */
+.front-body .gallery-item[data-kinetic-near="true"]::before {
+  opacity: .61;
+  transform: scale(1.055);
+}
+.front-body .gallery-item[data-kinetic-near="true"]::after {
+  opacity: .21;
+  transform: scale(1.035) rotate(2deg);
+}
+
+/* The physical spotlight is behind card content; only the existing glass
+   specular reflection follows the smoothed cursor, never the screenshot. */
+.front-body .gallery-card .gallery-card-visual--has-image::after {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .front-body .studio-kinetic-field { display: none; }
+}
+@media (hover: none), (pointer: coarse) {
+  .front-body .studio-kinetic-field { display: none; }
+}

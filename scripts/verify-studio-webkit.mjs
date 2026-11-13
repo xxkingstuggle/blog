@@ -179,6 +179,57 @@ async function run(){
   const movingHighlightB=await productCards.first().evaluate(el=>el.style.getPropertyValue('--sheen-x'));
   assert.ok(movingHighlightA && movingHighlightB && movingHighlightA!==movingHighlightB,
     'specular highlight must move within the actual card under the cursor');
+  // Pointer physics acceptance: *approach* already lights the card; a quick
+  // swipe physically stretches the light and leaves a lagging wake; exiting
+  // produces a measurable afterglow instead of hover shadow snapping off.
+  await productCards.first().scrollIntoViewIfNeeded();
+  const kineticCardBox = await productCards.first().boundingBox();
+  assert.ok(kineticCardBox && kineticCardBox.width > 200,
+    'kinetic test needs a visible card of sufficient width');
+  const kineticStage = desktop.locator('[data-ambient-stage]');
+  assert.equal(await desktop.locator('.studio-kinetic-field').count(),1,
+    'desktop uses one pointer-driven field, not a light DOM per card');
+  const nearX=kineticCardBox.x - 45;
+  const nearY=kineticCardBox.y + kineticCardBox.height*.47;
+  await desktop.mouse.move(nearX,nearY);
+  await desktop.waitForTimeout(180);
+  assert.equal(await kineticStage.getAttribute('data-kinetic-target'),'near',
+    'light must detect proximity before the pointer actually enters the card');
+  const x1=kineticCardBox.x+kineticCardBox.width*.15;
+  const x2=kineticCardBox.x+kineticCardBox.width*.85;
+  const moveY=kineticCardBox.y+kineticCardBox.height*.47;
+  await desktop.mouse.move(x1,moveY);
+  await desktop.waitForTimeout(140);
+  const beforeSwipe=await kineticStage.getAttribute('data-kinetic-core-x');
+  await desktop.mouse.move(x2,moveY,{steps:1});
+  await desktop.waitForTimeout(70);
+  const kineticMotion=await kineticStage.evaluate(el=>({
+    core:Number(el.dataset.kineticCoreX),
+    wake:Number(el.dataset.kineticWakeX),
+    stretch:Number(el.dataset.kineticStretch),
+    opacity:Number(el.dataset.kineticOpacity),
+    target:el.dataset.kineticTarget,
+    lightCount:el.querySelectorAll('.studio-kinetic-core,.studio-kinetic-wake,.studio-kinetic-echo').length
+  }));
+  console.log('Kinetic swipe diagnostics:',JSON.stringify({kineticMotion,beforeSwipe}));
+  assert.ok(kineticMotion.lightCount===3 &&
+    kineticMotion.target==='near' && kineticMotion.opacity>.05,
+    'three-layer cursor light must remain visible while moving across a card');
+  assert.ok(Math.abs(kineticMotion.core-kineticMotion.wake)>3 &&
+    kineticMotion.stretch>1.02 && Math.abs(kineticMotion.core-Number(beforeSwipe))>14,
+    'fast pointer movement must stretch light with an inertial wake, not just toggle hover');
+  await desktop.screenshot({path:'artifacts/studio-kinetic-swipe.png',fullPage:false});
+  await desktop.mouse.move(15,15,{steps:1});
+  await desktop.waitForTimeout(90);
+  const residual=Number(await kineticStage.getAttribute('data-kinetic-opacity'));
+  await desktop.waitForTimeout(1250);
+  const faded=Number(await kineticStage.getAttribute('data-kinetic-opacity'));
+  assert.ok(residual>.015 && faded<residual && faded<.08,
+    'light must leave a short afterglow, then fade instead of snapping off or running forever');
+  await desktop.mouse.move(x2,moveY);
+  await desktop.waitForTimeout(280);
+  await desktop.screenshot({path:'artifacts/studio-kinetic-hover.png',fullPage:false});
+
   const fieldGlow=await ambient.locator('[data-ambient-layer]').first().evaluate(el=>getComputedStyle(el).backgroundImage);
   assert.ok(fieldGlow.includes('radial-gradient') && fieldGlow.includes('linear-gradient'),
     'chromatic atmosphere must use multiple lights rather than a single generic shadow');
@@ -285,6 +336,8 @@ async function run(){
     viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true,reducedMotion:'reduce'
   });
   await mobile.goto(origin+'/',{waitUntil:'networkidle'});
+  assert.equal(await mobile.locator('.studio-kinetic-field').count(),0,
+    'touch/reduced-motion devices must not allocate pointer-light surfaces');
   assert.equal(await mobile.locator('.studio-mobile-dock').evaluate(el=>getComputedStyle(el).display),'flex');
   const mobileLogo = await mobile.locator('.studio-dock-brand').evaluate(el=>({
     text: el.textContent, bg: getComputedStyle(el).backgroundColor
