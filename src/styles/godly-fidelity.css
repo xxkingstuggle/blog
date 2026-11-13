@@ -831,3 +831,18 @@ body.front-body {
   .front-body .gallery-section { padding-top: 4px; }
   .front-body .gallery-index-count { margin-bottom: 13px; }
 }
+
+
+/* Comfortable Safari touch targets without inflating the dock artwork. */
+@media (max-width:720px) and (pointer:coarse) {
+  .front-body .studio-mobile-dock .studio-dock-brand,
+  .front-body .studio-mobile-dock .studio-dock-links a,
+  .front-body .studio-mobile-dock .studio-dock-menu > summary {
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .front-body .gallery-view-tabs button { min-height:42px; }
+  .front-body .studio-dock-panel nav a { min-height:44px; }
+}
