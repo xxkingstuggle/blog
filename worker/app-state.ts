@@ -8,11 +8,13 @@
  */
 export interface AppDbResult {
   results?: unknown[];
-  meta?: { changes?: number };
+  meta?: Record<string, unknown>;
 }
 export interface AppDbStatement {
   bind(...values: unknown[]): AppDbStatement;
   first<T>(): Promise<T | null>;
+  all<T>(): Promise<{ results: T[] }>;
+  run(): Promise<AppDbResult>;
 }
 export interface AppDb {
   prepare(sql: string): AppDbStatement;
@@ -102,7 +104,7 @@ async function save(db: AppDb, owner: string, app: string, key: string, input: {
       history,
     ]);
   }
-  if (results[0]?.meta?.changes !== 1) {
+  if (Number(results[0]?.meta?.changes) !== 1) {
     const latest = await load(db, owner, app, key);
     return respond({ ...decode(latest), error: '其他设备已经修改了这个文档，请先查看新版本。', code: 'revision_conflict' }, 409);
   }
@@ -124,8 +126,7 @@ export async function handleAppState(request: Request, env: AppStateEnv, owner: 
     const result = await env.DB.prepare('SELECT revision, content_json, saved_at FROM app_document_history ' +
       'WHERE owner=? AND app_id=? AND doc_key=? ORDER BY revision DESC LIMIT 50')
       .bind(owner, app, key);
-    // AppDbStatement may have .all on the actual Worker D1 adapter.
-    const rows = await (result as AppDbStatement & { all<T>(): Promise<{ results: T[] }> }).all<HistoryRow>();
+    const rows = await result.all<HistoryRow>();
     return respond({ history: rows.results.map(row => ({
       revision: row.revision, savedAt: row.saved_at,
       content: JSON.parse(row.content_json),
