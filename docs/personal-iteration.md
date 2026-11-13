@@ -11,25 +11,25 @@
 
 ## 必需配置
 
-必须先创建新的 **Private** GitHub 仓库。当前 GitHub 连接只能操作现有仓库，无法通过连接器新建仓库，因此不能把仅有网页代码的状态称为已部署可用。
+**已完成（2026-11-13）：**用户已创建 Private 仓库 `xxkingstuggle/personal-iteration-system`。V0.6 的正式规则、进度、方法历史、交接说明和原 HTML 画板均已迁到根目录，且通过 GitHub 读回核验；旧归档未改动。
 
-将原归档目录 `系统/个人迭代系统/` 中的文件复制到**新私有仓库根目录**，必须包含：
+已迁移的正式文档（**新仓库根目录**）：
 
 - `START-HERE.md`
 - `personal-iteration-system.md`
 - `iteration-current.md`
 - `iteration-methods.md`
 
-`visual-board.html` 可选保存为历史原型，不由 API 提供；站点的新可视化视图由 Astro 实现。迁移前先在新的私有仓库做检查，不修改旧归档。
+`visual-board.html` 已保存作历史原型，不由 API 提供；站点的新可视化视图由 Astro 实现。旧归档保持不变。
 
-Cloudflare Worker 环境变量：
+下列 Cloudflare Worker 变量已经写入 `wrangler.jsonc` 的 production 和 staging 配置（不是秘密）：
 
 ```text
 ITERATION_GITHUB_OWNER=xxkingstuggle
 ITERATION_GITHUB_REPO=personal-iteration-system
 ITERATION_GITHUB_BRANCH=main
-# 如果私有仓库对应另一 GitHub App 安装 ID，配置：
-ITERATION_GITHUB_INSTALLATION_ID=<安装 ID>
+# 若使用另一个 GitHub App 安装 ID，另设 Secret/环境变量：
+# ITERATION_GITHUB_INSTALLATION_ID=<实际安装 ID>
 ```
 
 Worker 现有 `GITHUB_APP_ID`、`GITHUB_PRIVATE_KEY` 必须能从对应安装拿到访问新私有仓库的 token。GitHub App 至少要有该仓库的 Contents 读写权限；若此 App 仅被授权访问博客仓库，需把新私有仓库加入它的安装授权范围。不要给网页 JS 传入 token，也不要把 token 写入代码或仓库。
@@ -52,4 +52,4 @@ Worker 现有 `GITHUB_APP_ID`、`GITHUB_PRIVATE_KEY` 必须能从对应安装拿
 5. 用其他文件名请求写入应被拒绝，尤其是根目录的 `AI行为规则.md`。
 6. 运行 `npm run check`、`npm test`、`npm run build`，验收 Worker 和 Vercel 构建 SHA 一致后才可宣布上线。
 
-当前工作分支：`feature/private-iteration-workspace`。在新的私有仓库和安装权限未落实前，不应把功能描述为“可以在线保存”。
+当前工作分支：`feature/private-iteration-workspace`。独立仓库和配置已经完成，**尚未确认网站现有 GitHub App 安装已授权访问新私有仓库**；未通过登录后读写验收前，不得声称已经在线保存成功。
