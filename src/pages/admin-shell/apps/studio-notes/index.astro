@@ -189,7 +189,28 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
     }catch(e){setStatus(e instanceof Error?e.message:'读取失败','error');}
   });
   document.querySelector('#note-close-history')?.addEventListener('click',()=>historyPanel.hidden=true);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&dirty)void save();});
+  // Pull remote changes after device switching. Never overwrite unsaved local input.
+  let checkingRemote = false;
+  async function pullIfClean() {
+    if (!token || dirty || sending || checkingRemote || document.visibilityState !== 'visible') return;
+    checkingRemote = true;
+    try {
+      const response = await request(BASE);
+      if (!response.ok) return;
+      const remote = await response.json() as CloudDocument;
+      if (remote.revision > revision && !dirty && !sending) {
+        setDocument(remote);
+        setStatus('已同步另一台设备上的更新');
+      }
+    } catch { /* Network will be retried on focus or next poll. */ }
+    finally { checkingRemote = false; }
+  }
+  window.setInterval(() => void pullIfClean(), 25000);
+  window.addEventListener('focus',()=>void pullIfClean());
+  document.addEventListener('visibilitychange',()=>{
+    if (document.visibilityState === 'hidden' && dirty) void save();
+    if (document.visibilityState === 'visible') void pullIfClean();
+  });
   window.addEventListener('beforeunload',(event)=>{if(dirty){event.preventDefault();event.returnValue='';}});
   void initialize();
 </script>
