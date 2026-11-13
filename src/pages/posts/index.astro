@@ -4,6 +4,13 @@ import GalleryCard from '../../components/GalleryCard.astro';
 import { getListedPosts, KIND_LABELS, formatDate, getReadingTime } from '../../lib/posts';
 
 const posts = await getListedPosts();
+const usedCoverSources = new Set<string>();
+function previewForPost(post: (typeof posts)[number]) {
+  const cover = post.data.cover;
+  if (!cover || usedCoverSources.has(cover.src)) return undefined;
+  usedCoverSources.add(cover.src);
+  return cover;
+}
 const filters = ['all', 'project', 'thought', 'update'] as const;
 ---
 
@@ -61,7 +68,7 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 						title={post.data.title}
 						description={post.data.description}
 						category={KIND_LABELS[post.data.kind]}
-						image={post.data.cover}
+						image={previewForPost(post)}
 						tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
 						meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
 						index={index}
