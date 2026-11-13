@@ -31,8 +31,11 @@ function el<K extends keyof HTMLElementTagNameMap>(
 export function parseIterationIssues(markdown: string): IterationIssue[] {
   const issues: IterationIssue[] = [];
   const lines = markdown.split(/\r?\n/);
+  let inRelationships = false;
   for (const line of lines) {
-    if (!/^\|\s*P\d{2}\s*\|/.test(line)) continue;
+    if (/^##\s+问题关系（供画板读取）/.test(line)) { inRelationships = true; continue; }
+    if (inRelationships && /^##\s+/.test(line)) inRelationships = false;
+    if (inRelationships || !/^\|\s*P\d{2}(?:\.\d+)*\s*\|/.test(line)) continue;
     const cells = line.split('|').slice(1, -1).map(x => x.trim());
     if (cells.length !== 4 && cells.length !== 5) continue;
     const [id, title] = cells;
@@ -56,8 +59,53 @@ export interface IterationIssueRelation {
   parentId: string | null;
   chain: string;
   depth: number;
+  focus?: boolean;
 }
+/** Canonical parent links live in the private relationship table. */
+function parseRelationshipTable(markdown: string): IterationIssueRelation[] {
+  const rows: Array<{ id: string; parentId: string | null; chain: string; focus: boolean }> = [];
+  let inSection = false;
+  for (const line of markdown.split(/\r?\n/)) {
+    if (/^##\s+问题关系（供画板读取）/.test(line)) { inSection = true; continue; }
+    if (inSection && /^##\s+/.test(line)) break;
+    if (!inSection || !/^\|\s*P\d{2}(?:\.\d+)*\s*\|/.test(line)) continue;
+    const cells = line.split('|').slice(1, -1).map(cell => cell.trim());
+    if (cells.length !== 4 || rows.some(row => row.id === cells[0])) continue;
+    const [id, rawParent, chain, focus] = cells;
+    rows.push({
+      id,
+      parentId: /^P\d{2}(?:\.\d+)*$/.test(rawParent) && id !== rawParent ? rawParent : null,
+      chain: chain || '其他独立问题',
+      focus: focus === '当前'
+    });
+  }
+  const lookup = new Map(rows.map(row => [row.id, row]));
+  return rows.map(row => {
+    let depth = 0;
+    let parentId = row.parentId;
+    let cursor = parentId;
+    const seen = new Set([row.id]);
+    while (cursor) {
+      const parent = lookup.get(cursor);
+      if (!parent || parent.chain !== row.chain || seen.has(cursor)) {
+        parentId = null;
+        depth = 0;
+        break;
+      }
+      depth++;
+      seen.add(cursor);
+      cursor = parent.parentId;
+    }
+    return {
+      id: row.id, parentId, chain: row.chain, depth,
+      ...(row.focus ? { focus: true } : {})
+    };
+  });
+}
+
 export function parseIterationIssueTree(markdown: string): IterationIssueRelation[] {
+  const relationships = parseRelationshipTable(markdown);
+  if (relationships.length) return relationships;
   const header = /^## 当前问题链[^\r\n]*$/m.exec(markdown);
   if (!header) return [];
   const remaining = markdown.slice(header.index + header[0].length);
@@ -70,7 +118,7 @@ export function parseIterationIssueTree(markdown: string): IterationIssueRelatio
   let chain = '未命名问题链';
   const seen = new Set<string>();
   for (const line of fenced[1].split(/\r?\n/)) {
-    const match = /^([ \t│]*)(?:├|└)─\s*(P\d{2})\b/.exec(line);
+    const match = /^([ \t│]*)(?:├|└)─\s*(P\d{2}(?:\.\d+)*)\b/.exec(line);
     if (!match) {
       const name = line.trim();
       if (name && !/[└├│]/.test(name)) {
@@ -346,8 +394,9 @@ export function mountIssueBoard(root: HTMLElement) {
         ancestor = nodes.get(ancestor)?.parentId ?? null;
       }
     }
-    const focus = [...nodes.values()].filter(n => n.inTree)
-      .sort((a, b) => b.depth - a.depth)[0]?.issue.id ?? null;
+    const focus = relations.find(relation => relation.focus && nodes.has(relation.id))?.id
+      ?? [...nodes.values()].filter(n => n.inTree)
+        .sort((a, b) => b.depth - a.depth)[0]?.issue.id ?? null;
 
     function buildNode(node: IssueNode): HTMLElement {
       const outer = el('div', 'iteration-tree-node');
@@ -429,7 +478,7 @@ export function mountIssueBoard(root: HTMLElement) {
       }
       root.append(forest);
       if (opened) {
-        const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened);
+        const expanded = root.querySelector<HTMLElement>('[id="iteration-issue-details-' + opened + '"]');
         if (expanded && !expanded.hidden) awakenOrbit(expanded);
       }
     }
