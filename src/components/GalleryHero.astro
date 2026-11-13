@@ -10,8 +10,6 @@ const ratio = image?.width && image?.height
   ? Math.max(1.08, Math.min(2.05, image.width / image.height))
   : 1.72;
 ---
-// A real image earns a preview stage. Text-only essays should not repeat
-// their headline in a fabricated full-page hero.
 {image && (
   <div class="gallery-detail-cover gallery-detail-cover--image" style={transitionStyle + '; --detail-ratio: ' + ratio.toFixed(3)}>
     <Image src={image} alt={post.data.title + ' 的文章封面'} widths={[760, 1200, 1800]} sizes="(max-width: 780px) 95vw, 1000px" format="webp" class="gallery-detail-image" />
