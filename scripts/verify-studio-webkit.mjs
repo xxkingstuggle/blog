@@ -166,11 +166,11 @@ async function run(){
       offset:a.left-b.left,
     };
   });
-  assert.ok(halo.spreadOpacity>.78 &&
-    halo.prismOpacity>.40 &&
+  assert.ok(halo.spreadOpacity>.55 && halo.spreadOpacity<.80 &&
+    halo.prismOpacity>.15 && halo.prismOpacity<.42 &&
     halo.firstGlow.includes('radial-gradient') &&
     halo.secondGlow.includes('conic-gradient'),
-    'artwork light must diffuse into surrounding space with a second prismatic shape');
+    'hover must retain visible two-layer diffusion without overbright neon spill');
   await productCards.first().hover({position:{x:65,y:65}});
   await desktop.waitForTimeout(100);
   const movingHighlightA=await productCards.first().evaluate(el=>el.style.getPropertyValue('--sheen-x'));

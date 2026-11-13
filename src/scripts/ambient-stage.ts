@@ -59,7 +59,7 @@ function bootAmbientStage(): void {
       return fallback.map(v => Math.round(v + shift)).join(', ');
     }
     const average = values.reduce((a,b)=>a+b,0)/3;
-    const boost = span < 80 ? 1.62 : 1.35;
+    const boost = span < 80 ? 1.30 : 1.18;
     const center = 154 + (average - 154) * .18;
     return values.map(v => Math.max(42,Math.min(235,
       Math.round(center + (v-average)*boost)))).join(', ');
