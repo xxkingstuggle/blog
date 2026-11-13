@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+
 interface Props {
   href: string;
   title: string;
@@ -12,27 +13,52 @@ interface Props {
   index?: number;
   transitionKey?: string;
 }
+
 const { href, title, description, category, meta, image, tone = 'project', index = 0, transitionKey } = Astro.props;
-const transitionStyle = transitionKey ? 'view-transition-name: ' + transitionKey.replace(/[^a-zA-Z0-9_-]/g, '-') : undefined;
+const imageAspect = image?.width && image?.height ? image.width / image.height : null;
+// Give screenshots, portraits and text covers frames shaped by their content.
+const stageAspect = imageAspect === null
+  ? (title.length > 22 ? 0.96 : title.length > 12 ? 1.12 : 1.27)
+  : Math.max(0.82, Math.min(1.64, imageAspect * 0.93));
+const aspectStyle = '--visual-aspect: ' + stageAspect.toFixed(3);
+const sharedName = transitionKey ? 'view-transition-name: ' + transitionKey.replace(/[^a-zA-Z0-9_-]/g, '-') : '';
+const visualStyle = [aspectStyle, sharedName].filter(Boolean).join('; ');
+const isLong = title.length > 22;
 ---
-<a href={href} class="gallery-card" data-gallery-card aria-label={title}>
-  <div class:list={['gallery-card-visual', 'gallery-card-visual--' + tone]} style={transitionStyle}>
+<a href={href} class:list={['gallery-card', image ? 'gallery-card--image' : 'gallery-card--editorial']} data-gallery-card aria-label={title}>
+  <div
+    class:list={['gallery-card-visual', 'gallery-card-visual--' + tone, image ? 'gallery-card-visual--has-image' : 'gallery-card-visual--text']}
+    style={visualStyle}
+    data-aspect={imageAspect === null ? 'editorial' : imageAspect > 1.2 ? 'landscape' : imageAspect < 0.88 ? 'portrait' : 'square'}
+  >
     {image ? (
-      <Image src={image} alt={title + ' 项目预览'} widths={[480, 760, 1120]} sizes="(max-width: 620px) 92vw, (max-width: 1100px) 45vw, 30vw" format="webp" class="gallery-card-image" loading={index < 3 ? 'eager' : 'lazy'} />
+      <Image
+        src={image}
+        alt={title + ' 的作品预览'}
+        widths={[420, 680, 960]}
+        sizes="(max-width: 720px) calc(100vw - 46px), (max-width: 1300px) 40vw, 30vw"
+        format="webp"
+        class="gallery-card-image"
+        loading={index < 3 ? 'eager' : 'lazy'}
+      />
     ) : (
-      <div class="gallery-card-art" aria-hidden="true">
-        <span class="gallery-art-eyebrow">MYZJX / {category}</span>
-        <div class="gallery-art-shape"><span></span><span></span><span></span></div>
-        <strong>{title}</strong>
-        <span class="gallery-art-index">{String(index + 1).padStart(2, '0')} / STUDIO</span>
+      <div class:list={['gallery-card-art', isLong && 'gallery-card-art--long']}>
+        <span class="gallery-art-eyebrow">{category}</span>
+        <div class="gallery-art-copy">
+          <strong>{title}</strong>
+          <p>{description}</p>
+        </div>
+        <span class="gallery-art-index">{String(index + 1).padStart(2, '0')} <span aria-hidden="true">/</span> XIN 的记录</span>
       </div>
     )}
-    <span class="gallery-visual-category">{category}</span>
     <span class="gallery-visual-action" aria-hidden="true">↗</span>
   </div>
   <div class="gallery-card-info">
-    <div class="gallery-card-caption"><h3>{title}</h3><span class="gallery-card-arrow" aria-hidden="true">↗</span></div>
-    <p>{description}</p>
+    <div class="gallery-card-caption">
+      <h3>{title}</h3>
+      <span class="gallery-card-arrow" aria-hidden="true">↗</span>
+    </div>
+    {image && <p>{description}</p>}
     {meta && <span class="gallery-card-meta">{meta}</span>}
   </div>
 </a>
