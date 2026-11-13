@@ -1,0 +1,21 @@
+---
+import { Image } from 'astro:assets';
+import type { BlogPost } from '../lib/posts';
+import { KIND_LABELS } from '../lib/posts';
+
+interface Props { post: BlogPost; }
+const { post } = Astro.props;
+const transitionStyle = 'view-transition-name: article-' + post.id.replace(/[^a-zA-Z0-9_-]/g, '-');
+---
+<div class:list={['gallery-detail-cover', 'gallery-detail-cover--' + post.data.kind]} style={transitionStyle}>
+  {post.data.cover ? (
+    <Image src={post.data.cover} alt={post.data.title + ' 的封面'} widths={[760, 1200, 1800]} sizes="(max-width: 780px) 95vw, 1000px" format="webp" class="gallery-detail-image" />
+  ) : (
+    <div class="gallery-detail-art" aria-hidden="true">
+      <span class="gallery-detail-overline">MYZJX / {KIND_LABELS[post.data.kind]}</span>
+      <span class="gallery-detail-ornament"><span></span><span></span><span></span></span>
+      <span class="gallery-detail-art-title">{post.data.title}</span>
+      <span class="gallery-detail-art-foot">STUDIO JOURNAL — XIN</span>
+    </div>
+  )}
+</div>

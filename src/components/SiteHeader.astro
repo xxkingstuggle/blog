@@ -2,71 +2,57 @@
 import { SOFTWARE_PRODUCTS } from '../lib/software';
 import ThemeSwitcher from './ThemeSwitcher.astro';
 
-const currentPath = Astro.url.pathname;
-const isHome = currentPath === '/';
-const isSoftware = currentPath.startsWith('/software');
-const isPosts = currentPath.startsWith('/posts') || currentPath.startsWith('/archive') || currentPath.startsWith('/tags');
-const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/links');
+const path = Astro.url.pathname;
+const isHome = path === '/';
+const isWork = path.startsWith('/software');
+const isPosts = path.startsWith('/posts') || path.startsWith('/tags') || path.startsWith('/archive');
+const isAbout = path.startsWith('/about') || path.startsWith('/links');
+const items = [
+  { href: '/', label: '精选', sub: 'Overview', icon: '▦', current: isHome },
+  { href: '/software/', label: '作品', sub: 'Projects', icon: '◫', current: isWork },
+  { href: '/posts/', label: '文章', sub: 'Journal', icon: '▤', current: isPosts },
+  { href: '/about/', label: '关于', sub: 'About', icon: '◉', current: isAbout },
+];
 ---
-
-<header class="site-header" id="site-header">
-	<div class="shell header-inner">
-		<a class="brand" href="/" aria-label="Xin · myzjx.com 首页">
-			<span class="brand-monogram" aria-hidden="true">X</span>
-			<span class="brand-identity">
-				<span class="brand-name">MYZJX</span>
-				<span class="brand-domain">myzjx.com</span>
-			</span>
-		</a>
-
-		<nav class="site-nav" aria-label="主导航">
-			<a href="/" aria-current={isHome ? 'page' : undefined}>首页</a>
-			<a href="/software/" aria-current={isSoftware ? 'page' : undefined}>软件与工具</a>
-			<a href="/posts/" aria-current={isPosts ? 'page' : undefined}>文章与手记</a>
-			<a href="/about/" aria-current={isAbout ? 'page' : undefined}>关于</a>
-		</nav>
-
-		<div class="header-actions">
-			<a class="header-cta" href="/software/usblinkmic/">
-				<span>获取 USBLinkMic</span>
-				<span class="header-cta-badge">{SOFTWARE_PRODUCTS[0].latestVersion}</span>
-			</a>
-			<ThemeSwitcher />
-			<details class="mobile-nav" data-mobile-nav>
-				<summary class="mobile-nav-trigger" aria-label="站点导航菜单" aria-controls="mobile-nav-panel">
-					<span class="mobile-nav-bars" aria-hidden="true">
-						<span></span>
-						<span></span>
-					</span>
-					<span class="mobile-nav-label">菜单</span>
-				</summary>
-				<div class="mobile-nav-panel" id="mobile-nav-panel" role="dialog" aria-label="站点导航">
-					<nav class="mobile-nav-links" aria-label="移动端主导航">
-						<a href="/" aria-current={isHome ? 'page' : undefined}>
-							<strong>首页</strong>
-							<span>个人品牌、代表软件与近期手记</span>
-						</a>
-						<a href="/software/" aria-current={isSoftware ? 'page' : undefined}>
-							<strong>软件与工具</strong>
-							<span>公开作品、个人原型与工程实践</span>
-						</a>
-						<a href="/posts/" aria-current={isPosts ? 'page' : undefined}>
-							<strong>文章与手记</strong>
-							<span>工程复盘、技术实践与思考记录</span>
-						</a>
-						<a href="/about/" aria-current={isAbout ? 'page' : undefined}>
-							<strong>关于 Xin</strong>
-							<span>我在做什么、工作方法与联系方式</span>
-						</a>
-					</nav>
-					<div class="mobile-nav-sub">
-						<a href="/archive/">时间归档</a>
-						<a href="/tags/">标签索引</a>
-						<a href="/links/">友链推荐</a>
-						<a href="/rss.xml">RSS 订阅</a>
-					</div>
-				</div>
-			</details>
-		</div>
-	</div>
+<header class="site-header studio-side-rail" id="site-header">
+  <a class="studio-rail-brand" href="/" aria-label="MYZJX 首页">
+    <span class="studio-brand-symbol" aria-hidden="true">X<span>.</span></span>
+    <span class="studio-brand-label"><strong>MYZJX</strong><small>Design & Engineering</small></span>
+  </a>
+  <div class="studio-rail-content">
+    <div class="studio-rail-section-label">EXPLORE <span>01</span></div>
+    <nav class="studio-primary-nav" aria-label="主导航">
+      {items.map((item) => (
+        <a href={item.href} aria-current={item.current ? 'page' : undefined}>
+          <span class="studio-nav-icon" aria-hidden="true">{item.icon}</span>
+          <span>{item.label}</span>
+          <span class="studio-nav-sub">{item.sub}</span>
+        </a>
+      ))}
+    </nav>
+    <div class="studio-rail-section-label studio-rail-section-label--collections">COLLECTIONS <span>02</span></div>
+    <nav class="studio-secondary-nav" aria-label="其他分类">
+      <a href="/archive/"><span aria-hidden="true">◷</span> 时间归档</a>
+      <a href="/tags/"><span aria-hidden="true">⌗</span> 文章标签</a>
+      <a href="/links/"><span aria-hidden="true">↗</span> 站点收藏</a>
+    </nav>
+    <div class="studio-rail-spacer"></div>
+    <a class="studio-sidebar-feature" href="/software/usblinkmic/">
+      <span class="studio-sidebar-feature-label">FEATURED WORK <span aria-hidden="true">↗</span></span>
+      <span class="studio-sidebar-feature-title">USBLinkMic</span>
+      <small>v{SOFTWARE_PRODUCTS[0].latestVersion.replace(/^v/i, '')} · macOS & Android</small>
+    </a>
+  </div>
+  <div class="studio-rail-bottom">
+    <span class="studio-rail-bottom-label">APPEARANCE</span>
+    <ThemeSwitcher />
+    <a href="/login/" class="studio-admin-access" title="私人管理后台"><span aria-hidden="true">⌁</span> 管理后台 <span aria-hidden="true">↗</span></a>
+  </div>
 </header>
+<nav class="studio-mobile-dock" aria-label="手机端主导航">
+  {items.map((item) => (
+    <a href={item.href} aria-current={item.current ? 'page' : undefined}>
+      <span aria-hidden="true">{item.icon}</span><small>{item.label}</small>
+    </a>
+  ))}
+</nav>
