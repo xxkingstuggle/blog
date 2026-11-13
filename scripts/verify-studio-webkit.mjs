@@ -60,6 +60,14 @@ async function run(){
   const mediaCards = desktop.locator('.gallery-card--image');
   assert.ok(await mediaCards.count() >= 2,'two original product images must remain present');
   await mediaCards.last().scrollIntoViewIfNeeded();
+  const sampledMedia = await mediaCards.evaluateAll(cards => cards.map(card => {
+    const stage=card.querySelector('.gallery-card-visual');
+    const img=card.querySelector('img');
+    return {hasAttribute:stage?.hasAttribute('data-glass-media'),
+      state:stage?.dataset.glassState,complete:img?.complete,naturalWidth:img?.naturalWidth,
+      src:img?.currentSrc?.slice(-90)};
+  }));
+  console.log('Glass surface diagnostics:',JSON.stringify(sampledMedia));
   await desktop.waitForFunction(() => {
     const media = [...document.querySelectorAll('.gallery-card--image [data-glass-media]')];
     return media.length >= 2 && media.every(el => el.dataset.glassState === 'sampled');
