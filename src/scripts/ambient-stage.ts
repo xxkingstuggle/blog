@@ -70,9 +70,9 @@ function bootAmbientStage(): void {
     target.style.setProperty('--ambient-x', scene.x + '%');
     target.style.setProperty('--ambient-y', scene.y + '%');
 
-    field.dataset.ambientSource = card.getAttribute('href') ??
+    field!.dataset.ambientSource = card.getAttribute('href') ??
       card.className.split(' ')[0] ?? 'media';
-    field.dataset.ambientPrimary = scene.primary;
+    field!.dataset.ambientPrimary = scene.primary;
     if (didRender) layers[active].style.opacity = '0';
     target.style.opacity = '1';
     active = next;
