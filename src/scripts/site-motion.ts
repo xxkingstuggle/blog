@@ -13,7 +13,7 @@ type VisualFrame = {
 	transform: string;
 };
 
-const REVEAL_SELECTOR = '[data-reveal]';
+const REVEAL_SELECTOR = '[data-reveal]:not(.gallery-item)';
 const DETAILS_SELECTOR = 'details.mobile-nav, details.faq-item';
 const DETAILS_DURATION = 240;
 const DETAILS_EASING = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
@@ -204,7 +204,7 @@ function installSiteMotion(): void {
 			(child) => child instanceof HTMLElement && child.matches(REVEAL_SELECTOR),
 		);
 		const index = siblings.indexOf(element);
-		return Math.min(Math.max(index, 0) * 55, 165);
+		return Math.min(Math.max(index, 0) * 22, 70);
 	}
 
 	function initializeReveals(): void {
@@ -220,11 +220,11 @@ function installSiteMotion(): void {
 			try {
 				const animation = element.animate(
 					[
-						{ opacity: 0, transform: 'translateY(20px)' },
+						{ opacity: .35, transform: 'translateY(7px)' },
 						{ opacity: 1, transform: 'translateY(0px)' },
 					],
 					{
-						duration: 500,
+						duration: 260,
 						delay: revealDelay(element),
 						easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
 						fill: 'backwards',
