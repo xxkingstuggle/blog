@@ -8,6 +8,12 @@
  * extra video downloads or infinite paint animations.
  */
 
+/* Artwork light may extend beyond the rightmost card, but it must never
+   create a horizontal scrollbar. Clip at the viewport, not at the main
+   column: clipping the column would cut the colour before the glass rail. */
+:root:has(> body.front-body),
+body.front-body { overflow-x: clip; }
+
 /* One atmosphere shared by the entire page (including beneath the sidebar).
    The soft gradient stops themselves do the scattering: no costly blur on
    a full-viewport compositor. Cross-fade existing two layers on source change. */
