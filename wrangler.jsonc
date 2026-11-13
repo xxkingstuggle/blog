@@ -48,6 +48,9 @@
 		"GITHUB_OWNER": "xxkingstuggle",
 		"GITHUB_REPO": "blog",
 		"GITHUB_BRANCH": "main",
+		"ITERATION_GITHUB_OWNER": "xxkingstuggle",
+		"ITERATION_GITHUB_REPO": "personal-iteration-system",
+		"ITERATION_GITHUB_BRANCH": "main",
 		"ORIGIN_BUILD_URL": "https://myzjx.com/__build.json",
 		"CN_HEALTH_URL": "https://cn.xingx.cc.cd/__health",
 		"CF_RULE_API_URL": "REPLACE_WITH_SINGLE_REDIRECT_RULE_API_URL"
@@ -83,6 +86,9 @@
 				"GITHUB_OWNER": "xxkingstuggle",
 				"GITHUB_REPO": "blog",
 				"GITHUB_BRANCH": "cms-staging",
+				"ITERATION_GITHUB_OWNER": "xxkingstuggle",
+				"ITERATION_GITHUB_REPO": "personal-iteration-system",
+				"ITERATION_GITHUB_BRANCH": "main",
 				"ORIGIN_BUILD_URL": "https://blog-staging.guozhongeba.workers.dev/__build.json",
 				"CN_HEALTH_URL": "https://cn-staging.xingx.cc.cd/__health",
 				"CF_RULE_API_URL": "REPLACE_WITH_STAGING_SINGLE_REDIRECT_RULE_API_URL"
