@@ -650,3 +650,23 @@ body.front-body {
   .front-body .gallery-card-image,
   .front-body .gallery-visual-action { transition: none !important; }
 }
+
+
+/* Opt-in measured masonry; the CSS Grid fallback is unchanged. */
+.front-body .gallery-grid[data-masonry="true"] {
+  grid-auto-flow: row;
+  grid-auto-rows: 6px;
+  row-gap: 18px;
+}
+.front-body .gallery-grid[data-masonry="true"] > .gallery-item {
+  min-width: 0;
+  align-self: start;
+}
+@media (max-width: 720px) {
+  .front-body .gallery-grid[data-masonry="true"] {
+    grid-auto-rows: auto;
+  }
+  .front-body .gallery-grid[data-masonry="true"] > .gallery-item {
+    grid-row-end: auto !important;
+  }
+}
