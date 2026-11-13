@@ -1,0 +1,36 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+const apps = [
+  {href:'/admin/',name:'内容工作台',label:'CONTENT STUDIO',icon:'▤',text:'文章、草稿、发布与审核。管理公开网站的全部内容。',info:'已接入 / GitHub + D1',state:'online'},
+  {href:'/admin/iteration/',name:'个人迭代系统',label:'ITERATION SYSTEM',icon:'◎',text:'从问题、办法、行动到反馈，让经验持续积累和更新。',info:'已接入 / 私有 GitHub',state:'online'},
+  {href:'/admin/apps/studio-notes/',name:'云端便笺',label:'CLOUD NOTES',icon:'✳',text:'记录想法，自动保存到 D1。支持跨设备同步、历史版本和导出。',info:'已接入 / D1 文档存储',state:'online'},
+];
+---
+<AdminLayout title="私人应用中心" description="MYZJX 个人 Web 应用中心。仅管理员可访问。" context="私人应用中心" canonicalPath="/admin/apps/" bodyClass="studio-private-body">
+  <main class="studio-private-shell" id="main-content">
+    <header class="studio-private-hero">
+      <div class="studio-private-hero-meta"><span class="studio-private-label">MYZJX / PRIVATE WORKSPACE</span><span class="studio-private-live">PRIVATE · AUTHENTICATED</span></div>
+      <h1>给自己的，<br/><em>数字工作空间。</em></h1>
+      <p>把常用工具放在一起，不用安装、不用维护服务器。每个应用拥有独立的页面和数据，界面、逻辑与 API 可以继续由 AI 迭代。</p>
+      <div class="studio-private-hero-footer"><span>01 / APPS</span><span>03 个应用</span></div>
+    </header>
+    <div class="studio-private-section-head"><h2>我的应用</h2><span>只显示已接入的工具</span></div>
+    <div class="studio-app-grid">
+      {apps.map((app,index)=>(
+        <a href={app.href} class:list={['studio-app-card', 'studio-app-card-'+index]}>
+          <div class="studio-app-visual">
+            <span class="studio-app-label">{app.label}</span>
+            <span class="studio-app-emblem" aria-hidden="true">{app.icon}</span>
+            <span class="studio-app-visual-foot">MYZJX / {String(index+1).padStart(2,'0')}</span>
+            <span class="studio-app-go" aria-hidden="true">↗</span>
+          </div>
+          <div class="studio-app-info"><div><h3>{app.name}</h3><span aria-hidden="true">↗</span></div><p>{app.text}</p><small><i aria-hidden="true"></i>{app.info}</small></div>
+        </a>
+      ))}
+    </div>
+    <section class="studio-private-roadmap">
+      <div><span class="studio-private-label">THE PLATFORM / ARCHITECTURE</span><h2>下一件工具，<br/>从这里开始。</h2></div>
+      <p>新增 Web 应用时，沿用管理员身份验证、统一视觉组件和版本化文档 API。代码由 GitHub 管理，数据保存在 D1。这里不提供在线运行任意上传的 HTML，以免私人数据被不受信任的脚本读取。</p>
+    </section>
+  </main>
+</AdminLayout>
