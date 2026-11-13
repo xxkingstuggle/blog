@@ -744,7 +744,7 @@ const ITERATION_DOCUMENTS = [
   'iteration-methods.md',
   'START-HERE.md',
 ] as const;
-const ITERATION_DIRECTORY = '系统/个人迭代系统';
+const ITERATION_DIRECTORY = ''; // Dedicated repository: Markdown lives at the root.
 
 function iterationRepositoryEnv(env: Env): Env | null {
   const owner = (env.ITERATION_GITHUB_OWNER ?? env.GITHUB_OWNER ?? '').trim();
@@ -759,6 +759,10 @@ function iterationRepositoryEnv(env: Env): Env | null {
     GITHUB_BRANCH: branch,
     GITHUB_INSTALLATION_ID: env.ITERATION_GITHUB_INSTALLATION_ID ?? env.GITHUB_INSTALLATION_ID,
   };
+}
+
+function iterationFilePath(filename: string) {
+  return ITERATION_DIRECTORY ? `${ITERATION_DIRECTORY}/${filename}` : filename;
 }
 
 function readIterationMarkdown(raw: { content?: string }) {
@@ -787,7 +791,7 @@ async function iterationApi(request: Request, env: Env) {
     const token = await githubAppToken(config);
     if (isList) {
       const entries = await Promise.all(ITERATION_DOCUMENTS.map(async (name) => {
-        const entry = await githubFile(config, token, `${ITERATION_DIRECTORY}/${name}`);
+        const entry = await githubFile(config, token, iterationFilePath(name));
         if (!entry?.sha || !entry.content) throw new Error('missing_iteration_file');
         return [name, { sha: entry.sha, content: readIterationMarkdown(entry) }] as const;
       }));
@@ -813,7 +817,7 @@ async function iterationApi(request: Request, env: Env) {
     if (!input.content.trim() || new TextEncoder().encode(input.content).length > 100000) {
       return error('Markdown 不能为空或超过 100 KB。', 400, 'invalid_content');
     }
-    const filePath = `${ITERATION_DIRECTORY}/${filename}`;
+    const filePath = iterationFilePath(filename);
     const current = await githubFile(config, token, filePath);
     if (!current?.sha) return error('文档不存在；不自动新建文件。', 404, 'file_missing');
     if (current.sha !== input.sha) return error('其他位置已经更新此文档。请重新读取后再修改。', 409, 'source_changed');
