@@ -2,11 +2,12 @@
 function installMobileDock() {
   const dock = document.querySelector<HTMLElement>('.studio-mobile-dock');
   if (!dock) return;
+  const nav: HTMLElement = dock;
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let lastY = window.scrollY;
   let raf = 0;
   let reopenTimer = 0;
-  function show() {dock.classList.remove('is-hidden');}
+  function show() {nav.classList.remove('is-hidden');}
   function onScroll() {
     if(raf) return;
     raf = requestAnimationFrame(() => {
@@ -14,14 +15,14 @@ function installMobileDock() {
       const y = window.scrollY;
       const delta = y - lastY;
       if(y < 130 || delta < -8) show();
-      else if(delta > 9 && !motion.matches && !dock.matches(':focus-within')) dock.classList.add('is-hidden');
+      else if(delta > 9 && !motion.matches && !nav.matches(':focus-within')) nav.classList.add('is-hidden');
       if(reopenTimer) clearTimeout(reopenTimer);
       reopenTimer = window.setTimeout(show, 1200);
       lastY = y;
     });
   }
   window.addEventListener('scroll',onScroll,{passive:true});
-  dock.addEventListener('focusin',show);
+  nav.addEventListener('focusin',show);
   window.addEventListener('pageshow',()=>{lastY=window.scrollY;show();});
   motion.addEventListener?.('change',show);
 }
