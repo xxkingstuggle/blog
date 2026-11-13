@@ -105,12 +105,14 @@ function extractPalette(image: HTMLImageElement): Palette | null {
 
 function applyPalette(surface: HTMLElement, palette: Palette): void {
   const card = surface.closest<HTMLElement>('.gallery-card');
-  const elements = card ? [card, surface] : [surface];
+  const item = card?.closest<HTMLElement>('.gallery-item');
+  const elements = card ? [card, surface, ...(item ? [item] : [])] : [surface];
   for (const element of elements) {
     element.style.setProperty('--glass-primary-rgb', palette[0]);
     element.style.setProperty('--glass-secondary-rgb', palette[1]);
     element.dataset.glassState = 'sampled';
   }
+  surface.dispatchEvent(new CustomEvent('glass-palette-ready', { bubbles: true }));
 }
 
 function attachSurface(surface: HTMLElement): void {
