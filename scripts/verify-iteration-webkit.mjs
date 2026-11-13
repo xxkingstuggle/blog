@@ -10,10 +10,18 @@ import { webkit } from 'playwright';
 
 const origin = 'http://127.0.0.1:4372';
 const md = [
+  '## 问题关系（供画板读取）',
+  '| 编号 | 父问题 | 问题链 | 焦点 |',
+  '|---|---|---|---|',
+  '| P01 | — | Alpha chain | |',
+  '| P03 | P01 | Alpha chain | 当前 |',
+  '| P02 | — | Beta chain | |',
+  '## 当前各问题',
   '| 编号 | 要解决什么 | 当前阶段 | 当前真实进度 | 下次关注 |',
   '|---|---|---|---|---|',
   '| P01 | 示例：休息 | 行动 | 已决定先按时放下电脑，未反馈实际结果 | 是否执行？ |',
   '| P02 | 示例：提醒 | 反馈 | 已设置提醒，效果尚未报告 | 提醒是否有帮助？ |',
+  '| P03 | 示例：执行卡点 | 问题 | 当前阻碍尚待检验 | 下一步怎么试？ |',
 ].join('\n');
 const fakeSha = 'a'.repeat(40);
 const files = Object.fromEntries(
@@ -59,7 +67,15 @@ async function run() {
   await prepare(desktop);
   mkdirSync('artifacts', { recursive: true });
   await desktop.screenshot({ path: 'artifacts/iteration-editorial-desktop.png', fullPage: true });
-  assert.equal(await desktop.locator('.iteration-issue-card').count(), 2);
+  assert.equal(await desktop.locator('.iteration-issue-card').count(), 3);
+  assert.equal(await desktop.locator('.iteration-tree-group').count(), 2);
+  assert.equal(await desktop.locator('.iteration-tree-trail-link').count(), 2);
+  assert.equal(await desktop.locator('[data-issue-id="P03"] .iteration-tree-active-marker').count(), 1);
+  await desktop.locator('.iteration-tree-fold').first().click();
+  assert.equal(await desktop.locator('#iteration-tree-children-P01').isHidden(), true);
+  await desktop.locator('.iteration-tree-trail-link').last().click();
+  assert.equal(await desktop.locator('#iteration-tree-children-P01').isVisible(), true);
+  assert.equal(await desktop.locator('[data-issue-id="P03"] .iteration-orbit-center-phase').textContent(), '问题');
   const heroDesign = await desktop.locator('.iteration-hero-disc-center').evaluate(el => ({
     size: parseFloat(getComputedStyle(el).fontSize),
     caption: getComputedStyle(document.querySelector('.iteration-hero-art-caption')).display,
