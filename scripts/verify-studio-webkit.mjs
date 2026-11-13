@@ -102,6 +102,17 @@ async function run(){
   await mobile.waitForFunction(()=>document.querySelector('#note-title')?.value==='Another device',
     null,{timeout:6000});
   assert.equal(await mobile.locator('#note-body').inputValue(),'Remote changes were saved');
+  mobile.on('dialog',dialog=>dialog.accept());
+  await mobile.locator('#note-import-file').setInputFiles({
+    name:'studio-backup.json',mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify({
+      format:'myzjx-private-app/v1',appId:'studio-notes',
+      documentKey:'main',content:{title:'Restored backup',body:'Imported safely from JSON'}
+    }))
+  });
+  await mobile.waitForFunction(()=>document.querySelector('#note-status')?.textContent?.includes('所有修改已保存'),
+    null,{timeout:8000});
+  assert.equal(saved.title,'Restored backup');
   await ensureWithinViewport(mobile,'mobile notes');
   await mobile.screenshot({path:'artifacts/studio-notes-mobile.png',fullPage:true});
 
