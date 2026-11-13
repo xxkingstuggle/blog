@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
 import { webkit } from 'playwright';
 
 const origin = 'http://127.0.0.1:4372';
@@ -56,6 +57,8 @@ async function run() {
   // macOS-style Safari WebKit behavior: expansion, phase animation, inspection and filtering.
   const desktop = await browser.newPage({ viewport: { width: 1280, height: 860 } });
   await prepare(desktop);
+  mkdirSync('artifacts', { recursive: true });
+  await desktop.screenshot({ path: 'artifacts/iteration-editorial-desktop.png', fullPage: true });
   assert.equal(await desktop.locator('.iteration-issue-card').count(), 2);
   const card = desktop.locator('[data-issue-id="P01"]');
   await card.locator('.iteration-issue-trigger').click();
@@ -82,6 +85,7 @@ async function run() {
     deviceScaleFactor: 3, isMobile: true, hasTouch: true, reducedMotion: 'reduce'
   });
   await prepare(mobile);
+  await mobile.screenshot({ path: 'artifacts/iteration-editorial-mobile.png', fullPage: true });
   const inputSize = await mobile.locator('#iteration-search').evaluate(element => getComputedStyle(element).fontSize);
   const editorSize = await mobile.locator('#iteration-editor').evaluate(element => getComputedStyle(element).fontSize);
   assert.ok(parseFloat(inputSize) >= 16, 'iPhone Safari focus would otherwise zoom search field');
