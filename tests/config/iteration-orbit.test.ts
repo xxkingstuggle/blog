@@ -43,7 +43,7 @@ test('interactive UI source includes disclosure, orbit inspect and reduced motio
   assert.match(ts, /aria-controls/);
   assert.match(ts, /iteration-orbit-pointer/);
   assert.match(ts, /function awakenOrbit/);
-  assert.match(ts, /currentIndex < 0/);
+  assert.match(ts, /idx < 0/);
   assert.match(ts, /不(?:会|要)修改问题的实际进度/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /iteration-orbit-spin/);
