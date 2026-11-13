@@ -62,7 +62,8 @@ async function run(){
   await desktop.goto(origin+'/posts/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/posts/*/');
-  await desktop.locator('.gallery-detail-cover').waitFor();
+  await desktop.locator('.article-prose').waitFor();
+  assert.equal(await desktop.locator('h1').count()>=1,true);
   await desktop.waitForTimeout(380);
   await desktop.screenshot({path:'artifacts/studio-article-desktop.png',fullPage:true});
 
