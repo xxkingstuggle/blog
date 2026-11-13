@@ -21,7 +21,7 @@ function bootAmbientStage(): void {
 
   const cards = Array.from(document.querySelectorAll<HTMLElement>('.gallery-card'));
   const covers = Array.from(document.querySelectorAll<HTMLElement>(
-    '.gallery-detail-cover--image, .product-gallery[data-glass-media]'
+    '.gallery-detail-cover--image, .product-gallery[data-glass-media], .studio-motion-well[data-glass-media]'
   ));
   const sources = [...cards, ...covers];
   if (sources.length === 0) {
@@ -62,6 +62,7 @@ function bootAmbientStage(): void {
   function render(card: HTMLElement, force = false): void {
     if (!force && current === card) return;
     current = card;
+    field!.dataset.ambientScene = 'active';
     const scene = sceneFor(card);
     const next = didRender ? 1 - active : 0;
     const target = layers[next];
@@ -98,7 +99,9 @@ function bootAmbientStage(): void {
   function updateScroll(): void {
     queued = false;
     if (pinned && visible(pinned)) return;
-    render(closestVisible() ?? sources[0]);
+    const closest = closestVisible();
+    if (closest) render(closest);
+    else field!.dataset.ambientScene = 'rest';
   }
 
   function requestUpdate(): void {
@@ -149,7 +152,7 @@ function bootAmbientStage(): void {
     const node = event.target;
     if (!(node instanceof HTMLElement)) return;
     const affected = node.closest<HTMLElement>('.gallery-card') ??
-      (node.matches('.gallery-detail-cover--image, .product-gallery') ? node : null);
+      (node.matches('.gallery-detail-cover--image, .product-gallery, .studio-motion-well') ? node : null);
     if (affected && current === affected) render(affected, true);
   });
 

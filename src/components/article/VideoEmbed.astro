@@ -31,6 +31,7 @@ const isDirectVideo = src.endsWith('.mp4') || src.endsWith('.webm');
 				<video
 					src={src}
 					poster={poster}
+					preload={autoplay ? 'metadata' : 'none'}
 					controls
 					autoplay={autoplay}
 					loop={loop}
@@ -43,6 +44,7 @@ const isDirectVideo = src.endsWith('.mp4') || src.endsWith('.webm');
 					src={src}
 					title={title}
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+					loading="lazy"
 					allowfullscreen
 				></iframe>
 			)}

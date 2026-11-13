@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="光的练习 · Motion Study" description="MYZJX 原创短视频玻璃与环境光实验，支持 Safari 和节省数据播放。">
+  <article class="shell studio-motion-lab">
+    <span class="studio-motion-kicker">EXPERIMENT 001 / MOVING GLASS</span>
+    <h1>光的练习<span style="color:var(--text-muted)">.</span></h1>
+    <p>视频不需要被关在不透明方框里。画面中流动的蓝色和紫色，可以成为周围玻璃的光源。</p>
+    <section class="studio-motion-well" data-glass-media aria-label="原创动态玻璃展示">
+      <video src="/media/motion-study.mp4" poster="/media/motion-study-poster.svg"
+        data-video-light preload="metadata" controls playsinline muted loop
+        width="480" height="270" aria-label="MYZJX 四秒动态玻璃演示视频">
+        当前浏览器不支持播放该视频。
+      </video>
+    </section>
+    <p>这是原创的四秒、无声 H.264 MP4 演示素材，不是某款软件的真实界面。首页卡片会在进入视野且设备允许动效时才加载；离开可视区域即暂停，视频光色从很小的帧采样获得。这里保留原生播放控件，便于手动验证。</p>
+    <p><a href="/#explore">← 返回作品与手记</a></p>
+  </article>
+</BaseLayout>

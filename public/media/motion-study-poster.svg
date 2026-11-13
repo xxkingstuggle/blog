@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270" role="img" aria-label="MYZJX Light in Motion 原创视频海报">
+<defs>
+<linearGradient id="base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#192642"/><stop offset=".54" stop-color="#404a83"/><stop offset="1" stop-color="#553a78"/></linearGradient>
+<radialGradient id="p" cx="31%" cy="29%" r="68%"><stop stop-color="#a8baff" stop-opacity=".78"/><stop offset=".42" stop-color="#8a83ff" stop-opacity=".34"/><stop offset="1" stop-color="#6c67a8" stop-opacity="0"/></radialGradient>
+<radialGradient id="q" cx="74%" cy="68%" r="68%"><stop stop-color="#e4a4e0" stop-opacity=".7"/><stop offset=".48" stop-color="#ac87cb" stop-opacity=".25"/><stop offset="1" stop-color="#ad78c4" stop-opacity="0"/></radialGradient>
+<linearGradient id="glass" x1=".15" x2=".8" y1="0" y2="1"><stop stop-color="#e8efff" stop-opacity=".37"/><stop offset=".5" stop-color="#ffffff" stop-opacity=".055"/><stop offset="1" stop-color="#e4d0ff" stop-opacity=".22"/></linearGradient>
+<linearGradient id="bar" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#c8c1ff" stop-opacity="0"/><stop offset=".36" stop-color="#e8dbff"/><stop offset=".72" stop-color="#b0cfff"/><stop offset="1" stop-color="#aaa6ff" stop-opacity="0"/></linearGradient>
+<filter id="blur"><feGaussianBlur stdDeviation="22"/></filter>
+<filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="13" flood-color="#070c24" flood-opacity=".35"/></filter>
+</defs>
+<rect width="480" height="270" fill="url(#base)"/><rect width="480" height="270" fill="url(#p)"/><rect width="480" height="270" fill="url(#q)"/>
+<circle cx="190" cy="124" r="85" fill="#b1a5ff" opacity=".36" filter="url(#blur)"/>
+<circle cx="332" cy="166" r="89" fill="#e5a7dc" opacity=".30" filter="url(#blur)"/>
+<g filter="url(#shadow)">
+<rect x="82" y="62" width="316" height="149" rx="24" fill="url(#glass)" stroke="#e4e9ff" stroke-opacity=".52"/>
+<rect x="100" y="80" width="280" height="113" rx="18" fill="#d0d2ff" fill-opacity=".10" stroke="#f2efff" stroke-opacity=".23"/>
+<path d="M112 166h260" stroke="url(#bar)" stroke-width="5" stroke-linecap="round"/>
+<path d="M118 99h86" stroke="#f5f0ff" stroke-opacity=".28" stroke-width="1.5" stroke-linecap="round"/>
+</g>
+<text x="30" y="32" fill="#f4f3ff" opacity=".75" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="2">MYZJX / STUDIO</text>
+<text x="30" y="242" fill="#f6f4ff" font-family="Arial,sans-serif" font-size="29" letter-spacing="-1.2" font-weight="700">LIGHT IN MOTION</text>
+<text x="450" y="241" text-anchor="end" fill="#f3efff" font-family="Arial,sans-serif" font-size="10" letter-spacing="2" opacity=".77">04 SEC / LOOP</text>
+</svg>

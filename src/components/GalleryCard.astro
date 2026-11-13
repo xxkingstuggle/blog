@@ -9,13 +9,17 @@ interface Props {
   category: string;
   meta?: string;
   image?: ImageMetadata;
+  video?: string;
+  videoPoster?: string;
   tone?: 'tool' | 'thinking' | 'project' | 'update';
   index?: number;
   transitionKey?: string;
 }
 
-const { href, title, description, category, meta, image, tone = 'project', index = 0, transitionKey } = Astro.props;
-const imageAspect = image?.width && image?.height ? image.width / image.height : null;
+const { href, title, description, category, meta, image, video, videoPoster, tone = 'project', index = 0, transitionKey } = Astro.props;
+const isMotion = Boolean(video && videoPoster);
+const hasVisual = Boolean(image) || isMotion;
+const imageAspect = isMotion ? 16 / 9 : image?.width && image?.height ? image.width / image.height : null;
 // Give screenshots, portraits and text covers frames shaped by their content.
 const stageAspect = imageAspect === null
   ? (title.length > 22 ? 0.96 : title.length > 12 ? 1.12 : 1.27)
@@ -24,17 +28,30 @@ const aspectStyle = '--visual-aspect: ' + stageAspect.toFixed(3);
 const sharedName = transitionKey ? 'view-transition-name: ' + transitionKey.replace(/[^a-zA-Z0-9_-]/g, '-') : '';
 const visualStyle = [aspectStyle, sharedName].filter(Boolean).join('; ');
 const isLong = title.length > 22;
-const isPoster = Boolean(image) && tone !== 'tool';
+const isPoster = Boolean(image) && !isMotion && tone !== 'tool';
 const editorialLayout = index % 3;
 ---
-<a href={href} class:list={['gallery-card', image ? 'gallery-card--image' : 'gallery-card--editorial', isPoster && 'gallery-card--poster', image && tone === 'tool' && 'gallery-card--software', 'gallery-card--tone-' + tone]} data-gallery-card aria-label={title}>
+<a href={href} class:list={['gallery-card', hasVisual ? 'gallery-card--image' : 'gallery-card--editorial', isMotion && 'gallery-card--motion', isPoster && 'gallery-card--poster', image && tone === 'tool' && 'gallery-card--software', 'gallery-card--tone-' + tone]} data-gallery-card aria-label={title}>
   <div
-    data-glass-media={image ? '' : undefined}
-    class:list={['gallery-card-visual', 'gallery-card-visual--' + tone, image ? 'gallery-card-visual--has-image' : 'gallery-card-visual--text', isPoster && 'gallery-card-visual--poster']}
+    data-glass-media={hasVisual ? '' : undefined}
+    class:list={['gallery-card-visual', 'gallery-card-visual--' + tone, hasVisual ? 'gallery-card-visual--has-image' : 'gallery-card-visual--text', isPoster && 'gallery-card-visual--poster']}
     style={visualStyle}
     data-aspect={imageAspect === null ? 'editorial' : imageAspect > 1.2 ? 'landscape' : imageAspect < 0.88 ? 'portrait' : 'square'}
   >
-    {image ? (
+    {isMotion ? (
+      <>
+        <img src={videoPoster} alt={title + ' 的视频封面'} width="480" height="270"
+          loading="lazy" decoding="async" class="gallery-card-image" />
+        <video data-motion-video data-src={video} poster={videoPoster}
+          class="gallery-card-video" preload="none" playsinline muted loop
+          aria-label={title + ' 的动态预览'}></video>
+        <span class="gallery-motion-chip" aria-hidden="true">MOTION / 04 SEC</span>
+        <span class="gallery-motion-caption" aria-hidden="true">
+          <small>LIGHT / MOTION</small>
+          <strong>每一帧，<br/>都是光源。</strong>
+        </span>
+      </>
+    ) : image ? (
       <Image
         src={image}
         alt={title + ' 的作品预览'}
@@ -70,7 +87,7 @@ const editorialLayout = index % 3;
       <h3>{title}</h3>
       <span class="gallery-card-arrow" aria-hidden="true">↗</span>
     </div>
-    {image && <p>{description}</p>}
+    {hasVisual && <p>{description}</p>}
     {meta && <span class="gallery-card-meta">{meta}</span>}
   </div>
 </a>

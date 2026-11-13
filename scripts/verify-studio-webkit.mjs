@@ -54,6 +54,61 @@ async function run(){
   assert.equal(await desktop.locator('.gallery-grid').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
   await desktop.waitForFunction(() => document.querySelector('.gallery-grid')?.dataset.masonry === 'true');
   await ensureWithinViewport(desktop,'desktop homepage');
+  // The left rail must refract the SAME full-viewport light as the gallery,
+  // instead of hiding it behind a fully opaque rectangle.
+  const navigationGlass=await desktop.locator('.studio-side-rail').evaluate(el=>{
+    const computed=getComputedStyle(el);
+    return {background:computed.backgroundColor,
+      blur:computed.backdropFilter || computed.webkitBackdropFilter,
+      width:el.getBoundingClientRect().width};
+  });
+  assert.ok(navigationGlass.background.startsWith('rgba(') &&
+    parseFloat(navigationGlass.background.split(',').at(-1)) < .87,
+    'side rail must be physically translucent rather than opaque');
+  assert.match(navigationGlass.blur,/blur\(/,'side rail must use real backdrop filtering');
+  const opticalField=await desktop.locator('[data-ambient-stage]').evaluate(el=>el.getBoundingClientRect().toJSON());
+  console.log('Optical rail:',JSON.stringify({navigationGlass,opticalField}));
+  assert.ok(opticalField.x<=1 && opticalField.width>=1439,
+    'ambient light must cover the rail as well as main content');
+  const railTheme=desktop.locator('.studio-side-rail .theme-menu-trigger');
+  await railTheme.click();
+  const floatedMenu=desktop.locator('body > .theme-menu-popover[data-theme-floating]');
+  await floatedMenu.waitFor({state:'visible'});
+  const menuBounds=await floatedMenu.evaluate(el=>el.getBoundingClientRect().toJSON());
+  console.log('Desktop popup:',JSON.stringify(menuBounds));
+  assert.ok(menuBounds.x>=5 && menuBounds.right<=1440-5 &&
+    menuBounds.y>=5 && menuBounds.bottom<=900-5,
+    'theme menu must stay wholly inside desktop viewport');
+  await desktop.screenshot({path:'artifacts/studio-theme-popover-desktop.png',fullPage:false});
+  await floatedMenu.locator('[data-theme-value="dark"]').click();
+  await desktop.waitForFunction(()=>document.documentElement.dataset.colorMode==='dark');
+  const darkRail=await desktop.locator('.studio-side-rail').evaluate(el=>getComputedStyle(el).backgroundColor);
+  assert.match(darkRail,/rgba\(/,'dark navigation must stay translucent');
+  await railTheme.click();
+  await desktop.locator('body > .theme-menu-popover[data-theme-floating] [data-theme-value="light"]').click();
+  await desktop.waitForFunction(()=>document.documentElement.dataset.colorMode==='light');
+  await railTheme.click();
+  await desktop.locator('body > .theme-menu-popover[data-theme-floating] [data-theme-value="system"]').click();
+  assert.equal(await desktop.evaluate(()=>document.documentElement.dataset.colorMode),'system');
+
+  const motionCard=desktop.locator('.gallery-card--motion');
+  assert.equal(await motionCard.count(),1,'one original motion demo belongs in homepage gallery');
+  const motionEmbed=motionCard.locator('video[data-motion-video]');
+  const playPreload = await motionEmbed.getAttribute('preload');
+  assert.ok(playPreload==='none' || playPreload==='metadata',
+    'video starts unloaded; near-viewport playback may upgrade to metadata');
+  assert.equal(await motionEmbed.getAttribute('data-src'),'/media/motion-study.mp4');
+  const motionBudget=await Promise.all([
+    desktop.request.get(origin+'/media/motion-study.mp4'),
+    desktop.request.get(origin+'/media/motion-study-poster.svg')
+  ]);
+  assert.ok(motionBudget.every(response=>response.ok()),'local poster and demo video must be served');
+  assert.ok((await motionBudget[0].body()).length<24*1024,
+    'small silent demo must stay under 24 KiB');
+  await motionCard.scrollIntoViewIfNeeded();
+  await desktop.waitForTimeout(350);
+  await motionCard.screenshot({path:'artifacts/studio-motion-card.png'});
+
 
   // Three radii must be mathematically related. Never hard-code unrelated values.
   const nestedRadius = await desktop.locator('.gallery-card--image').first().evaluate(card => {
@@ -159,6 +214,20 @@ async function run(){
   });
   assert.ok(productGlass.stageRadius>=12 && productGlass.imgRadius>=9 && productGlass.palette,
     'product detail screenshot must keep rounded corners and its own image-colour palette');
+
+  await desktop.goto(origin+'/lab/motion/',{waitUntil:'networkidle'});
+  const labVideo=desktop.locator('.studio-motion-well video[data-video-light]');
+  assert.equal(await labVideo.count(),1,'demo page must use native video player');
+  assert.ok(await labVideo.getAttribute('controls')!==null,'demo player should have controls');
+  await desktop.waitForFunction(() => document.querySelector('.studio-motion-well')?.getBoundingClientRect().width>0);
+  await desktop.screenshot({path:'artifacts/studio-motion-lab-desktop.png',fullPage:false});
+  // WebKit's headless gstreamer may have limited decoders. Verify the
+  // browser receives a real 4-second H.264 MP4 rather than a fake CSS animation.
+  const labBuffer=await desktop.request.get(origin+'/media/motion-study.mp4');
+  assert.ok(labBuffer.ok());
+  const length=(await labBuffer.body()).length;
+  assert.ok(length>1000 && length<24*1024,'real test video emitted in production build');
+
   await desktop.goto(origin+'/posts/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/posts/*/');
@@ -202,6 +271,21 @@ async function run(){
   assert.equal(await mobile.locator('.gallery-grid').first().getAttribute('data-masonry'), null,
     'single-column mobile layout must retain natural document order');
   await ensureWithinViewport(mobile,'mobile homepage');
+  assert.equal(await mobile.locator('.gallery-card--motion video').getAttribute('src'),null,
+    'reduced-motion mobile must not eagerly fetch or autoplay test video');
+  await mobile.locator('.studio-dock-menu > summary').click();
+  await mobile.locator('.studio-dock-panel-appearance .theme-menu-trigger').click();
+  const mobilePopup=mobile.locator('body > .theme-menu-popover[data-theme-floating]');
+  await mobilePopup.waitFor({state:'visible'});
+  const safeRect=await mobilePopup.evaluate(el=>el.getBoundingClientRect().toJSON());
+  const viewport=await mobile.evaluate(()=>({width:innerWidth,height:innerHeight}));
+  assert.ok(safeRect.x>=5 && safeRect.right<=viewport.width-5 &&
+    safeRect.y>=5 && safeRect.bottom<=viewport.height-5,
+    'mobile theme popover must not exit viewport');
+  await mobile.screenshot({path:'artifacts/studio-theme-popover-mobile.png',fullPage:false});
+  await mobilePopup.locator('[data-theme-value="system"]').click();
+  await mobile.locator('.studio-dock-menu > summary').click();
+
   assert.ok(await mobile.locator('[data-ambient-stage]').count() === 1,
     'touch devices should keep a single lightweight page background field');
   const mobileRad = await mobile.locator('.gallery-card--image').first().evaluate(el => {
@@ -221,7 +305,8 @@ async function run(){
   await mobile.waitForTimeout(320);
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
   await mobile.emulateMedia({colorScheme:'dark'});
-  await mobile.waitForTimeout(90);
+  await mobile.waitForFunction(()=>getComputedStyle(document.body).backgroundColor!=='rgb(255, 255, 255)',
+    null,{timeout:5000});
   const darkSurface = await mobile.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor);
   assert.notEqual(darkSurface,'rgb(255, 255, 255)','system dark mode must not show a white canvas');
   await mobile.screenshot({path:'artifacts/studio-home-mobile-dark.png',fullPage:false});

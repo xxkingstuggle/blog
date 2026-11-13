@@ -19,6 +19,8 @@ const blog = defineCollection({
 			kind: z.enum(['thought', 'project', 'update']).default('thought'),
 			presentation: z.enum(['article', 'feature']).default('article'),
 			cover: image().optional(),
+			video: z.string().optional(),
+			videoPoster: z.string().optional(),
 		}),
 });
 
