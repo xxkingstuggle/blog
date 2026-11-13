@@ -123,7 +123,7 @@ export async function handleAppState(request: Request, env: AppStateEnv, owner: 
     return respond(decode(await load(env.DB, owner, app, key)));
   }
   if (action === 'history' && request.method === 'GET') {
-    const result = await env.DB.prepare('SELECT revision, content_json, saved_at FROM app_document_history ' +
+    const result = env.DB.prepare('SELECT revision, content_json, saved_at FROM app_document_history ' +
       'WHERE owner=? AND app_id=? AND doc_key=? ORDER BY revision DESC LIMIT 50')
       .bind(owner, app, key);
     const rows = await result.all<HistoryRow>();
