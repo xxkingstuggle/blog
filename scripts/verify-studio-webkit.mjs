@@ -263,14 +263,14 @@ async function run(){
       mediaBG:getComputedStyle(stage).backgroundImage,
     };
   }));
-  assert.ok(glassMeasurements.every(x=>x && x.imageRadius>=9 && x.stageRadius>=x.imageRadius-2),
-    'actual picture pixels and inner stage need coherent rounded corners');
+  assert.ok(glassMeasurements.every(x=>x && x.imageRadius<.2 && x.stageRadius>=10),
+    'the clipped stage is rounded but the edge-to-edge image MUST NOT add a third radius');
   assert.ok(glassMeasurements.every(x=>x && x.imagePadding===0 && x.imageInside),
     'painted image cannot be square inside a rounded padded image or overflow its stage');
   assert.ok(new Set(glassMeasurements.map(x=>x.palette)).size >= 2,
     'different local product images should produce different sampled glass colours');
-  assert.ok(glassMeasurements.every(x=>x?.mediaBG.includes('radial-gradient')),
-    'colour palette must diffuse through an ambient gradient');
+  assert.ok(glassMeasurements.every(x=>x?.mediaBG==='none'),
+    'media stage must no longer have a coloured third-layer well behind the image');
   await mediaCards.last().screenshot({path:'artifacts/studio-glass-card.png'});
   await desktop.evaluate(()=>window.scrollTo(0,0));
   await desktop.locator('.gallery-card').first().click();
@@ -310,8 +310,19 @@ async function run(){
   if(await articleImage.count()) {
     await desktop.waitForFunction(() => document.querySelector('.gallery-detail-cover--image')?.dataset.glassState === 'sampled',
       null,{timeout:8000});
-    const coverRadius=await articleImage.locator('img').evaluate(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius));
-    assert.ok(coverRadius>=9,'article cover image itself must have a rounded border');
+    const coverGeometry=await articleImage.evaluate(el=>{
+      const img=el.querySelector('img');
+      const r=el.getBoundingClientRect(), p=img.getBoundingClientRect();
+      return {radius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
+        imgRadius:parseFloat(getComputedStyle(img).borderTopLeftRadius),
+        ratio:parseFloat(getComputedStyle(el).aspectRatio),
+        actual:r.width/r.height,
+        widthDelta:Math.abs(r.width-p.width),heightDelta:Math.abs(r.height-p.height)};
+    });
+    assert.ok(coverGeometry.radius>=10 && coverGeometry.imgRadius<.2 &&
+      Math.abs(coverGeometry.ratio-coverGeometry.actual)<.03 &&
+      coverGeometry.widthDelta<1 && coverGeometry.heightDelta<1,
+      'article covers also fill their source-sized rounded frame without a third image inset');
   }
   await desktop.waitForTimeout(380);
   await desktop.screenshot({path:'artifacts/studio-article-desktop.png',fullPage:true});
