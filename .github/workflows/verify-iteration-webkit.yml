@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'src/styles/iteration.css'
+      - 'src/styles/iteration-editorial.css'
+      - 'src/layouts/AdminLayout.astro'
       - 'src/scripts/iteration-wheel.ts'
       - 'src/pages/admin-shell/iteration/index.astro'
       - 'scripts/verify-iteration-webkit.mjs'
@@ -32,3 +34,11 @@ jobs:
           npx playwright install --with-deps webkit
       - name: Exercise iteration UI in WebKit
         run: node scripts/verify-iteration-webkit.mjs
+      - name: Upload mocked desktop and mobile snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iteration-editorial-webkit-snapshots
+          path: artifacts/*.png
+          if-no-files-found: ignore
+          retention-days: 3

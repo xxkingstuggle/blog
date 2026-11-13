@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
 import { webkit } from 'playwright';
 
 const origin = 'http://127.0.0.1:4372';
@@ -56,7 +57,21 @@ async function run() {
   // macOS-style Safari WebKit behavior: expansion, phase animation, inspection and filtering.
   const desktop = await browser.newPage({ viewport: { width: 1280, height: 860 } });
   await prepare(desktop);
+  mkdirSync('artifacts', { recursive: true });
+  await desktop.screenshot({ path: 'artifacts/iteration-editorial-desktop.png', fullPage: true });
   assert.equal(await desktop.locator('.iteration-issue-card').count(), 2);
+  const heroDesign = await desktop.locator('.iteration-hero-disc-center').evaluate(el => ({
+    size: parseFloat(getComputedStyle(el).fontSize),
+    caption: getComputedStyle(document.querySelector('.iteration-hero-art-caption')).display,
+    linkColor: getComputedStyle(document.querySelector('.iteration-hero-action')).color,
+    linkChildColor: getComputedStyle(document.querySelector('.iteration-hero-action span')).color,
+    searchLabelWidth: getComputedStyle(document.querySelector('.iteration-search-wrap .sr-only')).width
+  }));
+  assert.ok(heroDesign.size >= 95, 'hero center glyph should be large');
+  assert.equal(heroDesign.caption, 'flex', 'hero caption must stay horizontal');
+  assert.equal(heroDesign.linkColor, heroDesign.linkChildColor, 'CTA text must inherit readable contrast');
+  assert.equal(heroDesign.searchLabelWidth, '1px', 'accessible search label must stay visually hidden');
+  assert.equal(await desktop.locator('#iteration-records').evaluate(el => el.open), false);
   const card = desktop.locator('[data-issue-id="P01"]');
   await card.locator('.iteration-issue-trigger').click();
   await card.locator('.iteration-orbit-center-phase').waitFor({ state: 'visible' });
@@ -72,6 +87,10 @@ async function run() {
   assert.match(await card.locator('.iteration-orbit-inspection-title').textContent(), /查看 · 反馈/);
   assert.equal(await card.locator('.iteration-orbit-center-phase').textContent(), '行动',
     'Inspecting another step must not rewrite actual phase');
+  await card.locator('.iteration-issue-details').screenshot({ path: 'artifacts/iteration-editorial-orbit-desktop.png' });
+  await card.locator('.iteration-detail-edit').click();
+  assert.equal(await desktop.locator('#iteration-records').evaluate(el => el.open), true,
+    'Edit issue should reveal the collapsed Markdown archive');
   await desktop.locator('[data-iteration-filter="反馈"]').click();
   assert.equal(await desktop.locator('.iteration-issue-card').count(), 1);
   assert.equal(await desktop.locator('.iteration-issue-card').getAttribute('data-issue-id'), 'P02');
@@ -82,6 +101,10 @@ async function run() {
     deviceScaleFactor: 3, isMobile: true, hasTouch: true, reducedMotion: 'reduce'
   });
   await prepare(mobile);
+  await mobile.screenshot({ path: 'artifacts/iteration-editorial-mobile.png', fullPage: true });
+  const mobileArt = await mobile.locator('.iteration-hero-art')
+    .evaluate(el => getComputedStyle(el).display);
+  assert.equal(mobileArt, 'none', 'mobile hero art should not displace the work list');
   const inputSize = await mobile.locator('#iteration-search').evaluate(element => getComputedStyle(element).fontSize);
   const editorSize = await mobile.locator('#iteration-editor').evaluate(element => getComputedStyle(element).fontSize);
   assert.ok(parseFloat(inputSize) >= 16, 'iPhone Safari focus would otherwise zoom search field');
@@ -89,6 +112,7 @@ async function run() {
   await mobile.locator('[data-issue-id="P01"] .iteration-issue-trigger').click();
   const orbit = mobile.locator('[data-issue-id="P01"]');
   await orbit.locator('.iteration-orbit-step').first().waitFor({ state: 'visible' });
+  await orbit.screenshot({ path: 'artifacts/iteration-editorial-orbit-mobile.png' });
   const touchHeight = await orbit.locator('.iteration-orbit-step').first()
     .evaluate(element => parseFloat(getComputedStyle(element).minHeight));
   assert.ok(touchHeight >= 44, 'mobile orbit touch targets should be at least 44px high');
