@@ -35,7 +35,7 @@ export function parseIterationIssues(markdown: string): IterationIssue[] {
   for (const line of lines) {
     if (/^##\s+问题关系（供画板读取）/.test(line)) { inRelationships = true; continue; }
     if (inRelationships && /^##\s+/.test(line)) inRelationships = false;
-    if (inRelationships || !/^\|\s*P\d{2}\s*\|/.test(line)) continue;
+    if (inRelationships || !/^\|\s*P\d{2}(?:\.\d+)*\s*\|/.test(line)) continue;
     const cells = line.split('|').slice(1, -1).map(x => x.trim());
     if (cells.length !== 4 && cells.length !== 5) continue;
     const [id, title] = cells;
@@ -75,11 +75,11 @@ export function parseIterationRelationships(markdown: string): IterationRelation
   for (const line of markdown.split(/\r?\n/)) {
     if (/^##\s+问题关系（供画板读取）/.test(line)) { inSection = true; continue; }
     if (inSection && /^##\s+/.test(line)) break;
-    if (!inSection || !/^\|\s*P\d{2}\s*\|/.test(line)) continue;
+    if (!inSection || !/^\|\s*P\d{2}(?:\.\d+)*\s*\|/.test(line)) continue;
     const cells = line.split('|').slice(1, -1).map(value => value.trim());
     if (cells.length !== 4 || result.some(x => x.id === cells[0])) continue;
     const [id, rawParent, rawChain, rawFocus] = cells;
-    const parentId = /^P\d{2}$/.test(rawParent) && rawParent !== id ? rawParent : null;
+    const parentId = /^P\d{2}(?:\.\d+)*$/.test(rawParent) && rawParent !== id ? rawParent : null;
     result.push({
       id,
       parentId,
@@ -462,7 +462,7 @@ export function mountIssueBoard(root: HTMLElement) {
     }
     if (!groupCount) root.append(el('p', 'iteration-issues-empty', issues.length ? '没有符合条件的问题，试试清除搜索或切换阶段。' : '暂无可读取的问题记录。'));
     if (opened) {
-      const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened);
+      const expanded = root.querySelector<HTMLElement>('[id="iteration-issue-details-' + opened + '"]');
       if (expanded && !expanded.hidden) awakenOrbit(expanded);
     }
     if (count) count.textContent = '显示 ' + visibleCount + ' / ' + issues.length + ' 个 · ' + groupCount + ' 条问题链';
