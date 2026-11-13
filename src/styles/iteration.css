@@ -645,7 +645,7 @@
 }
 .iteration-orbit-pointer-dot {
   position: absolute;
-  top: calc(50% - 119px);
+  top: 18.125%;
   left: 50%;
   width: 12px;
   height: 12px;
@@ -830,11 +830,9 @@
   .iteration-issue-summary { font-size: 11px; }
   .iteration-issue-details { padding: 20px 14px; }
   .iteration-orbit { max-width: 318px; }
-  .iteration-orbit-pointer-dot { top: calc(50% - 108px); }
 }
 @media (max-width: 360px) {
   .iteration-orbit { max-width: 275px; }
-  .iteration-orbit-pointer-dot { top: calc(50% - 93px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .iteration-orbit-ambient,
