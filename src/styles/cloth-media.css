@@ -259,6 +259,32 @@
   box-shadow: none;
 }
 
+/* Final visual gate: no circular shading of any colour can follow the
+   pointer. Pressure is conveyed only by a shallow shift of the media surface
+   against the stationary frame. */
+.front-body .gallery-card .gallery-card-visual::after,
+.front-body .gallery-card .gallery-card-visual--has-image::after,
+.front-body .gallery-card .gallery-card-visual--text::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+@media (hover:hover) and (pointer:fine) {
+  .front-body .gallery-card[data-cloth-active="true"] .gallery-card-visual {
+    transform-origin: var(--pressure-x, 50%) var(--pressure-y, 50%);
+    transform: perspective(1100px)
+      rotateX(var(--pressure-rotate-x,0deg))
+      rotateY(var(--pressure-rotate-y,0deg))
+      scale(.992);
+  }
+  .front-body .gallery-card[data-cloth-active="true"]:active .gallery-card-visual {
+    transform: perspective(1100px)
+      rotateX(var(--pressure-rotate-x,0deg))
+      rotateY(var(--pressure-rotate-y,0deg))
+      scale(.985);
+  }
+}
 @media(max-width:720px) {
   .front-body .gallery-card {
     --card-radius: 22px;
