@@ -450,3 +450,21 @@ body.front-body :where(h1,h2,h3) { letter-spacing: -.04em; text-wrap: balance; }
   .studio-footer-wordmark {font-size:clamp(75px,19vw,150px);margin-top:55px;letter-spacing:-.108em;}
   .studio-footer-bottom {font-size:9px;gap:14px;}
 }
+
+/* Optical fixes after WebKit viewport review. */
+.studio-brand-symbol{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;}
+.studio-brand-symbol span{margin-left:1px;}
+.studio-mobile-dock {
+  transition:opacity .28s ease,transform .4s cubic-bezier(.2,.7,.2,1),box-shadow .25s ease;
+}
+.studio-mobile-dock.is-hidden {opacity:0;pointer-events:none;transform:translate(-50%,calc(110% + env(safe-area-inset-bottom)));}
+.gallery-status-light{white-space:nowrap;}
+@media(max-width:720px){
+  .gallery-hero-topline{gap:10px;}
+  .gallery-hero-topline > span:first-child{min-width:0;max-width:70%;overflow-wrap:anywhere;}
+  .gallery-hero-topline .gallery-status-light{flex-shrink:0;align-self:flex-start;font-size:10px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .studio-mobile-dock{transition:none;}
+  .studio-mobile-dock.is-hidden{opacity:1;pointer-events:auto;transform:translateX(-50%);}
+}
