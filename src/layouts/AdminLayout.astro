@@ -9,9 +9,10 @@ interface Props {
 	description: string;
 	context?: string;
 	canonicalPath?: string;
+	bodyClass?: string;
 }
 
-const { title, description, context = '内容后台', canonicalPath = Astro.url.pathname } = Astro.props;
+const { title, description, context = '内容后台', canonicalPath = Astro.url.pathname, bodyClass = '' } = Astro.props;
 const pageTitle = `${title} · ${siteConfig.name}`;
 const canonical = new URL(canonicalPath, siteConfig.url).toString();
 ---
@@ -34,7 +35,7 @@ const canonical = new URL(canonicalPath, siteConfig.url).toString();
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{pageTitle}</title>
 	</head>
-	<body class="admin-body">
+	<body class:list={["admin-body", bodyClass]}>
 		<a class="skip-link" href="#main-content">跳到主要内容</a>
 		<header class="admin-topbar">
 			<a class="admin-brand" href="/" aria-label="Xin · myzjx.com 首页">
