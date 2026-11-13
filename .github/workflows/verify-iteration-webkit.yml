@@ -10,6 +10,12 @@ on:
       - 'src/styles/godly-fidelity.css'
       - 'src/styles/glass-media.css'
       - 'src/styles/ambient-editorial.css'
+      - 'src/styles/optical-system.css'
+      - 'src/scripts/gallery-video.ts'
+      - 'src/pages/lab/**'
+      - 'src/content.config.ts'
+      - 'public/media/**'
+      - 'scripts/verify-media-budget.mjs'
       - 'src/scripts/ambient-stage.ts'
       - 'src/styles/admin-glass.css'
       - 'src/scripts/glass-palette.ts'
@@ -51,6 +57,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - run: node scripts/verify-media-budget.mjs
       - name: Install WebKit browser test dependencies
         run: |
           npm install --no-save playwright@1.57.0

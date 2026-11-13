@@ -8,7 +8,7 @@ const posts = (await getListedPosts()).slice(0, 7);
 const usb = SOFTWARE_PRODUCTS[0];
 const habit = SOFTWARE_PRODUCTS[1];
 const workbench = WORKBENCH_PROJECTS.slice(0, 3);
-const total = posts.length + 2 + workbench.length;
+const total = posts.length + 3 + workbench.length;
 // Keep a real product screenshot only once on the homepage. Articles that
 // reuse the same image receive a typographic cover instead of a duplicate.
 const usedImages = new Set<string>([usb.screenshot.src, habit.screenshot.src]);
@@ -56,35 +56,42 @@ function previewForPost(post: (typeof posts)[number]) {
           category="软件 / macOS + Android" meta={usb.statusBadge}
           image={usb.screenshot} tone="tool" index={0} transitionKey="work-usblinkmic" />
       </div>
+      <div class="gallery-item" data-gallery-kind="work" data-reveal>
+        <GalleryCard href="/lab/motion/" title="光的练习 / Motion Study"
+          description="一段原创的 4 秒循环视频：观察画面颜色如何穿过不同的玻璃层，并影响周围空间。"
+          category="实验室 / 动态媒介" meta="4 秒 · 无声音 · 本地视频"
+          video="/media/motion-study.mp4" videoPoster="/media/motion-study-poster.svg"
+          tone="tool" index={1} transitionKey="studio-motion-test" />
+      </div>
       {posts.slice(0, 2).map((post, index) => (
         <div class="gallery-item" data-gallery-kind="writing" data-reveal>
           <GalleryCard href={'/posts/' + post.id + '/'} title={post.data.title}
             description={post.data.description} category={KIND_LABELS[post.data.kind]}
             meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
             tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
-            image={previewForPost(post)} index={index + 1} transitionKey={'article-' + post.id} />
+            image={previewForPost(post)} video={post.data.video} videoPoster={post.data.videoPoster} index={index + 2} transitionKey={'article-' + post.id} />
         </div>
       ))}
       <div class="gallery-item" data-gallery-kind="work" data-reveal>
         <GalleryCard href="/software/habitbloom/" title="HabitBloom"
           description="从一张愿意每天打开的习惯卡片开始，探索 Widget 和本地交互的真实边界。"
           category="软件 / 个人原型" meta={habit.statusBadge}
-          image={habit.screenshot} tone="tool" index={3} transitionKey="work-habitbloom" />
+          image={habit.screenshot} tone="tool" index={4} transitionKey="work-habitbloom" />
       </div>
       {posts.slice(2).map((post, index) => (
         <div class="gallery-item" data-gallery-kind="writing" data-reveal>
           <GalleryCard href={'/posts/' + post.id + '/'} title={post.data.title}
             description={post.data.description} category={KIND_LABELS[post.data.kind]}
             meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
-            image={previewForPost(post)} tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
-            index={index + 4} transitionKey={'article-' + post.id} />
+            image={previewForPost(post)} video={post.data.video} videoPoster={post.data.videoPoster} tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
+            index={index + 5} transitionKey={'article-' + post.id} />
         </div>
       ))}
       {workbench.map((project, index) => (
         <div class="gallery-item" data-gallery-kind="work" data-reveal>
           <GalleryCard href={project.href} title={project.name} description={project.summary}
             category="工作台 / 项目实践" meta={project.status} tone="tool"
-            index={index + 4 + posts.length} />
+            index={index + 5 + posts.length} />
         </div>
       ))}
     </div>

@@ -69,6 +69,8 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 						description={post.data.description}
 						category={KIND_LABELS[post.data.kind]}
 						image={previewForPost(post)}
+						video={post.data.video}
+						videoPoster={post.data.videoPoster}
 						tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
 						meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
 						index={index}

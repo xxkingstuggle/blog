@@ -18,56 +18,150 @@
 </details>
 
 <script>
-	const menus = [...document.querySelectorAll<HTMLDetailsElement>('[data-theme-menu]')];
-	const options = [...document.querySelectorAll<HTMLButtonElement>('[data-theme-value]')];
-	const root = document.documentElement;
-	const cookieName = 'xingx-color-mode';
-	type ColorMode = 'system' | 'light' | 'dark';
+  const menus = [...document.querySelectorAll<HTMLDetailsElement>('[data-theme-menu]')];
+  const options = [...document.querySelectorAll<HTMLButtonElement>('[data-theme-value]')];
+  const root = document.documentElement;
+  const cookieName = 'xingx-color-mode';
+  type ColorMode = 'system' | 'light' | 'dark';
+  let floating: HTMLDetailsElement | null = null;
 
-	function readMode(): ColorMode {
-		const match = document.cookie.match(new RegExp(`(?:^|; )${cookieName}=([^;]+)`));
-		const value = match?.[1];
-		return value === 'light' || value === 'dark' ? value : 'system';
-	}
+  function readMode(): ColorMode {
+    const match = document.cookie.match(/(?:^|; )xingx-color-mode=([^;]+)/);
+    const value = match?.[1];
+    return value === 'light' || value === 'dark' ? value : 'system';
+  }
 
-	function readCachedMode(): ColorMode {
-		const cookieMode = readMode();
-		if (cookieMode !== 'system' || document.cookie.includes(`${cookieName}=system`)) return cookieMode;
-		try {
-			const cached = localStorage.getItem(cookieName);
-			return cached === 'light' || cached === 'dark' ? cached : 'system';
-		} catch { return 'system'; }
-	}
+  function readCachedMode(): ColorMode {
+    const mode = readMode();
+    if (mode !== 'system' || document.cookie.includes(cookieName + '=system')) return mode;
+    try {
+      const cached = localStorage.getItem(cookieName);
+      return cached === 'light' || cached === 'dark' ? cached : 'system';
+    } catch { return 'system'; }
+  }
 
-	function setMode(mode: ColorMode) {
-		root.dataset.colorMode = mode;
-		const sharedDomain = location.hostname === 'myzjx.com' || location.hostname.endsWith('.myzjx.com')
-			? ' Domain=myzjx.com;'
-			: '';
-		document.cookie = `${cookieName}=${mode}; Path=/;${sharedDomain} Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
-		try { localStorage.setItem(cookieName, mode); } catch { /* storage can be disabled */ }
-		options.forEach((option) => {
-			option.setAttribute('aria-checked', String(option.dataset.themeValue === mode));
-		});
-	}
+  function setMode(mode: ColorMode) {
+    root.dataset.colorMode = mode;
+    const sharedDomain = location.hostname === 'myzjx.com' || location.hostname.endsWith('.myzjx.com')
+      ? ' Domain=myzjx.com;' : '';
+    document.cookie = cookieName + '=' + mode + '; Path=/;' + sharedDomain
+      + ' Max-Age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+    try { localStorage.setItem(cookieName, mode); } catch { /* Private mode. */ }
+    options.forEach(option =>
+      option.setAttribute('aria-checked', String(option.dataset.themeValue === mode)));
+  }
 
-	setMode(readCachedMode());
+  function panelFor(menu: HTMLDetailsElement): HTMLElement | null {
+    const number = menus.indexOf(menu);
+    return document.querySelector<HTMLElement>('[data-theme-floating-id="' + number + '"]');
+  }
 
-	options?.forEach((option) => {
-		option.addEventListener('click', () => {
-			const value = option.dataset.themeValue;
-			if (value === 'system' || value === 'light' || value === 'dark') {
-				setMode(value);
-				option.closest('details')?.removeAttribute('open');
-			}
-		});
-	});
+  function reposition(menu: HTMLDetailsElement) {
+    const trigger = menu.querySelector<HTMLElement>('summary');
+    const panel = panelFor(menu);
+    if (!trigger || !panel) return;
+    const anchor = trigger.getBoundingClientRect();
+    const margin = 10;
+    const width = Math.min(190, innerWidth - 2 * margin);
+    panel.style.width = width + 'px';
+    const height = panel.getBoundingClientRect().height;
+    const left = Math.max(margin, Math.min(anchor.left, innerWidth - width - margin));
+    const roomAbove = anchor.top - margin;
+    const roomBelow = innerHeight - anchor.bottom - margin;
+    const top = roomAbove >= height + margin || roomAbove > roomBelow
+      ? anchor.top - height - margin
+      : anchor.bottom + margin;
+    panel.style.left = left + 'px';
+    panel.style.top = Math.max(margin, Math.min(top, innerHeight - height - margin)) + 'px';
+    panel.style.visibility = 'visible';
+  }
 
-	document.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape') {
-			menus.forEach(menu => {
-				if (menu.open) { menu.open = false; menu.querySelector<HTMLElement>('summary')?.focus(); }
-			});
-		}
-	});
+  // The rail is a scrollable, frosted compositor. Any descendant popover is
+  // clipped by its overflow, regardless of z-index. Portal to <body> instead.
+  function removeFloating(menu: HTMLDetailsElement) {
+    const panel = panelFor(menu);
+    if (panel && panel.parentElement === document.body) {
+      panel.removeAttribute('data-theme-floating');
+      panel.removeAttribute('style');
+      panel.style.visibility = '';
+      menu.appendChild(panel);
+    }
+    if (floating === menu) floating = null;
+    menu.querySelector<HTMLElement>('summary')?.setAttribute('aria-expanded', 'false');
+  }
+
+  function openFloating(menu: HTMLDetailsElement) {
+    if (floating && floating !== menu) {
+      floating.open = false;
+      removeFloating(floating);
+    }
+    const panel = panelFor(menu);
+    if (!panel) return;
+    floating = menu;
+    panel.dataset.themeFloating = '';
+    panel.style.visibility = 'hidden';
+    document.body.appendChild(panel);
+    menu.querySelector<HTMLElement>('summary')?.setAttribute('aria-expanded', 'true');
+    reposition(menu);
+  }
+
+  menus.forEach((menu, i) => {
+    const panel = menu.querySelector<HTMLElement>('.theme-menu-popover');
+    if (!panel) return;
+    panel.dataset.themeFloatingId = String(i);
+    panel.id = 'theme-options-' + i;
+    menu.querySelector<HTMLElement>('summary')?.setAttribute('aria-controls', panel.id);
+    menu.addEventListener('toggle', () => {
+      if (menu.open) openFloating(menu);
+      else removeFloating(menu);
+    });
+  });
+
+  setMode(readCachedMode());
+
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      const value = option.dataset.themeValue;
+      if (value !== 'system' && value !== 'light' && value !== 'dark') return;
+      setMode(value);
+      if (floating) {
+        const menu = floating;
+        menu.open = false;
+        removeFloating(menu);
+        menu.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
+      }
+    });
+  });
+
+  document.addEventListener('pointerdown', event => {
+    if (!floating) return;
+    const node = event.target;
+    if (!(node instanceof Node)) return;
+    const panel = panelFor(floating);
+    if (floating.contains(node) || panel?.contains(node)) return;
+    const menu = floating;
+    menu.open = false;
+    removeFloating(menu);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    if (floating) {
+      const menu = floating;
+      menu.open = false;
+      removeFloating(menu);
+      menu.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
+    }
+    document.querySelectorAll<HTMLDetailsElement>('.studio-dock-menu').forEach(menu => menu.open = false);
+  });
+  window.addEventListener('resize', () => { if (floating) reposition(floating); }, { passive: true });
+  window.addEventListener('scroll', () => { if (floating) reposition(floating); }, { capture: true, passive: true });
+  document.querySelectorAll<HTMLDetailsElement>('.studio-dock-menu').forEach(dock => {
+    dock.addEventListener('toggle', () => {
+      if (!dock.open && floating && dock.contains(floating)) {
+        const menu = floating;
+        menu.open = false;
+        removeFloating(menu);
+      }
+    });
+  });
 </script>
