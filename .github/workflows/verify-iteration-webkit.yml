@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   webkit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright WebKit 1.57 supports Ubuntu 24.04; latest is 26.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
