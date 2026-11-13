@@ -93,3 +93,48 @@ test('hierarchical UI is read-only, has child controls and preserves visible anc
   assert.match(css, /\.iteration-tree-children\[hidden\]/);
   assert.match(css, /@media \(max-width: 760px\)/);
 });
+
+test('authoritative relationship table supports dotted child IDs and explicit focus', () => {
+  const md = [
+    '## 当前问题链（备用文本树）',
+    '```text',
+    '旧树示例',
+    '└─ P01 示例',
+    '   └─ P07 旧编号',
+    '```',
+    '## 当前各问题',
+    '| 编号 | 要解决什么 | 当前阶段 | 当前真实进度 | 下次关注 |',
+    '|---|---|---|---|---|',
+    '| P01 | 父问题 | 办法 | 已选办法 | 下一步 |',
+    '| P01.1 | 子问题 | 行动 | 正在执行 | 后续反馈 |',
+    '| P01.1.1 | 孙问题 | 问题 | 新发现 | 如何处理 |',
+    '## 问题关系（供画板读取）',
+    '| 编号 | 父问题 | 问题链 | 焦点 |',
+    '|---|---|---|---|',
+    '| P01 | — | 示例类别 | |',
+    '| P01.1 | P01 | 示例类别 | |',
+    '| P01.1.1 | P01.1 | 示例类别 | 当前 |'
+  ].join('\n');
+  const issues = parseIterationIssues(md);
+  assert.deepEqual(issues.map(issue => issue.id), ['P01','P01.1','P01.1.1']);
+  assert.deepEqual(issues.map(issue => issue.phase), ['办法','行动','问题']);
+  assert.deepEqual(parseIterationIssueTree(md), [
+    { id: 'P01', parentId: null, chain: '示例类别', depth: 0 },
+    { id: 'P01.1', parentId: 'P01', chain: '示例类别', depth: 1 },
+    { id: 'P01.1.1', parentId: 'P01.1', chain: '示例类别', depth: 2, focus: true }
+  ]);
+});
+
+test('relationship table rejects missing parent and cycles without inventing hierarchy', () => {
+  const md = [
+    '## 问题关系（测试）',
+    '| P01 | P01.1 | 测试 | |',
+    '| P01.1 | P01 | 测试 | |',
+    '| P02 | P99 | 测试 | |'
+  ].join('\n');
+  const relations = parseIterationIssueTree(md);
+  assert.equal(relations.length, 3);
+  assert.equal(relations[0].parentId, null);
+  assert.equal(relations[1].parentId, null);
+  assert.equal(relations[2].parentId, null);
+});
