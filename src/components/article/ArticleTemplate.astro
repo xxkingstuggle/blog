@@ -71,6 +71,14 @@ const linkedSoftware = getSoftwareByArticleSlug(post.id);
 			)}
 		</div>
 
+
+    <dl class="godly-detail-facts" aria-label="文章信息">
+      <div><dt>分类 / CATEGORY</dt><dd>{kindLabel}</dd></div>
+      <div><dt>发布时间 / PUBLISHED</dt><dd>{formatDate(post.data.pubDate)}</dd></div>
+      <div><dt>预计阅读 / READ TIME</dt><dd>{getReadingTime(post.body)}</dd></div>
+      <div><dt>标签 / TOPICS</dt><dd>{post.data.tags[0] || '手记'}</dd></div>
+    </dl>
+
 		{linkedSoftware && (
 			<aside class="related-article-banner" style="margin-top: 28px; padding: 20px 24px;" aria-label={`关联软件 ${linkedSoftware.name}`}>
 				<div>
