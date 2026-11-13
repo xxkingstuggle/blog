@@ -796,3 +796,38 @@ body.front-body {
   color: var(--text);
   border-color: var(--text);
 }
+
+
+/* The earlier generic dock link rule used flex-direction:column.
+   Reset it for the typographic brand so its period cannot drop below. */
+@media(max-width:720px) {
+  .front-body .studio-mobile-dock .studio-dock-brand {
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0;
+  }
+  .front-body .studio-mobile-dock .studio-dock-links a {
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: center;
+    white-space: nowrap;
+    color: var(--text-muted);
+    background: transparent;
+    border-radius: 0;
+  }
+  .front-body .studio-mobile-dock .studio-dock-links a[aria-current="page"] {
+    color: var(--text);
+    background: transparent;
+    font-weight: 720;
+  }
+  .front-body .studio-mobile-dock .studio-dock-menu summary {
+    color: var(--text);
+  }
+  .front-body .gallery-hero { padding-bottom: 15px; }
+  .front-body .gallery-section { padding-top: 4px; }
+  .front-body .gallery-index-count { margin-bottom: 13px; }
+}
