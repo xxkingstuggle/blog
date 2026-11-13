@@ -15,6 +15,9 @@ test('Claude-inspired iteration editorial theme is isolated to iteration page', 
   assert.match(page,/id="iteration-search"/);
   assert.match(page,/id="iteration-editor"/);
   assert.match(page,/id="iteration-save"/);
+  assert.match(page,/<details id="iteration-records"/);
+  assert.match(css,/\.iteration-body \.iteration-hero-action span \{ color: inherit; \}/);
+  assert.match(css,/\.iteration-body \.iteration-search-wrap \.sr-only/);
   assert.match(css,/body\.iteration-body\s*\{/);
   assert.match(css,/var\(--font-editorial\)/);
   assert.match(css,/:root\[data-color-mode="dark"\] body\.iteration-body/);
@@ -29,5 +32,6 @@ test('editorial theme preserves progress as read-only rendered data', () => {
   const wheel = readFileSync('src/scripts/iteration-wheel.ts','utf8');
   assert.match(page,/renderProgress\(payload\.files\['iteration-current\.md'\]\?\.content\|\|''\)/);
   assert.match(wheel,/parseIterationIssues\(markdown/);
+  assert.match(wheel,/archive\.open = true/);
   assert.match(wheel,/阅读|只(?:是|会)查看|不会改动 GitHub 记录/);
 });
