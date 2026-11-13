@@ -128,14 +128,26 @@ function createOrbit(issue: IterationIssue): HTMLElement {
   setInspection(null);
   return shell;
 }
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 function awakenOrbit(detail: HTMLElement) {
   const indicator = detail.querySelector<HTMLElement>('.iteration-orbit-pointer');
   if (!indicator) return;
   const turn = indicator.dataset.targetTurn || '0';
-  indicator.style.setProperty('--orbit-turn', '0deg');
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  if (prefersReducedMotion()) {
     indicator.style.setProperty('--orbit-turn', turn + 'deg');
-  }));
+    return;
+  }
+  // Safari/WebKit can batch the first two animation frames after an
+  // element is revealed. Force the initial transform to be committed.
+  indicator.style.setProperty('--orbit-turn', '0deg');
+  void indicator.offsetWidth;
+  requestAnimationFrame(() => {
+    if (!detail.hidden && detail.isConnected) {
+      indicator.style.setProperty('--orbit-turn', turn + 'deg');
+    }
+  });
 }
 function makeDetails(issue: IterationIssue): HTMLElement {
   const detail = el('section', 'iteration-issue-details');
@@ -164,7 +176,7 @@ function makeDetails(issue: IterationIssue): HTMLElement {
   editButton.addEventListener('click', () => {
     const tabs = [...document.querySelectorAll<HTMLButtonElement>('#iteration-doc-tabs button')];
     tabs.find(tab => tab.dataset.file === 'iteration-current.md')?.click();
-    document.querySelector('#iteration-editor-heading')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    document.querySelector('#iteration-editor-heading')?.scrollIntoView({behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start'});
   });
   column.append(progress, next, editButton, note);
   interior.append(column);
