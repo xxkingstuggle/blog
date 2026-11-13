@@ -555,7 +555,7 @@ body.iteration-body :where(a,button,input,textarea):focus-visible {
   margin-top: 28px;
 }
 .iteration-body .iteration-doc-tabs button {
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px 16px;
   border: 0;
   border-radius: 100px;
@@ -608,7 +608,8 @@ body.iteration-body :where(a,button,input,textarea):focus-visible {
     gap: 35px;
   }
   .iteration-body .iteration-goal h2 { font-size: clamp(34px, 6.3vw, 53px); }
-  .iteration-body .iteration-hero-art { width: 100%; max-width: 340px; }
+  /* Keep the work list within the first mobile viewport; art is desktop-only. */
+  .iteration-body .iteration-hero-art { display: none; }
   .iteration-body .iteration-hero-disc { width: min(100%, 255px); box-shadow: 10px 20px 55px rgb(98 57 40 / .08); }
   .iteration-body .iteration-hero-disc-center { font-size: 98px; }
   .iteration-body .iteration-hero-art-caption { margin-top: 12px; }
@@ -633,7 +634,7 @@ body.iteration-body :where(a,button,input,textarea):focus-visible {
   .iteration-body .iteration-panel-heading h2 { font-size: 31px; }
   .iteration-body .iteration-explorer-controls { gap: 12px; }
   .iteration-body .iteration-filters { gap: 3px; }
-  .iteration-body .iteration-filters button { font-size: 11px; min-height: 36px; padding: 7px 10px; }
+  .iteration-body .iteration-filters button { font-size: 11px; min-height: 44px; padding: 7px 10px; }
   .iteration-body .iteration-issue-trigger { grid-template-columns: 29px minmax(0,1fr) auto 16px; gap: 8px; }
   .iteration-body .iteration-issue-phase { min-width: auto; padding: 7px 9px; font-size: 10px; }
   .iteration-body .iteration-issue-name { font-size: 15px; }
