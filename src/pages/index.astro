@@ -113,27 +113,18 @@ const total = posts.length + 2 + workbench.length;
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[data-gallery-filter]')];
   const items = [...document.querySelectorAll<HTMLElement>('[data-gallery-kind]')];
   const liveCount = document.getElementById('gallery-live-count');
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   function setGalleryFilter(category: string) {
-    tabs.forEach((tab) => tab.setAttribute('aria-pressed', String(tab.dataset.galleryFilter === category)));
+    tabs.forEach(tab => tab.setAttribute('aria-pressed', String(tab.dataset.galleryFilter === category)));
     let visible = 0;
-    items.forEach((item, index) => {
+    items.forEach(item => {
       const show = category === 'all' || item.dataset.galleryKind === category;
-      const wasHidden = item.hidden;
       item.hidden = !show;
-      if (!show) return;
-      visible++;
-      if (wasHidden && !reduced.matches && typeof item.animate === 'function') {
-        item.animate([{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],
-          {duration:300,delay:Math.min(index * 25,120),easing:'cubic-bezier(.2,.7,.2,1)'});
-      }
+      if (show) visible++;
     });
     if (liveCount) liveCount.textContent = '正在展示 ' + visible + ' 项内容';
   }
-  tabs.forEach((tab) => tab.addEventListener('click', () => {
-    const category = tab.dataset.galleryFilter || 'all';
-    if ('startViewTransition' in document && !reduced.matches) {
-      document.startViewTransition(() => setGalleryFilter(category));
-    } else setGalleryFilter(category);
-  }));
+  tabs.forEach(tab => tab.addEventListener('click', () =>
+    setGalleryFilter(tab.dataset.galleryFilter || 'all')
+  ));
+
 </script>
