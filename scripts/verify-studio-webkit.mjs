@@ -95,6 +95,13 @@ async function run(){
   await mobile.locator('#note-history').click();
   await mobile.locator('#note-history-panel:not([hidden])').waitFor();
   assert.ok(await mobile.locator('#note-history-list li').count()>=1);
+  // Emulate a second device writing to D1 while the mobile editor is clean.
+  saved={title:'Another device',body:'Remote changes were saved'};
+  revision++;
+  await mobile.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await mobile.waitForFunction(()=>document.querySelector('#note-title')?.value==='Another device',
+    null,{timeout:6000});
+  assert.equal(await mobile.locator('#note-body').inputValue(),'Remote changes were saved');
   await ensureWithinViewport(mobile,'mobile notes');
   await mobile.screenshot({path:'artifacts/studio-notes-mobile.png',fullPage:true});
 
