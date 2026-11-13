@@ -1,0 +1,27 @@
+name: Probe iteration routing
+on:
+  push:
+    branches: [fix/iteration-404-routing]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe public unauthenticated routing
+        shell: bash
+        run: |
+          set -u
+          for origin in "https://myzjx.com" "https://blog-production.guozhongeba.workers.dev"; do
+            for path in "/admin/iteration/" "/admin/" "/login/" "/admin-shell/iteration/" "/api/admin/session" "/__build.json"; do
+              echo "=== $origin$path ==="
+              curl -m 12 --connect-timeout 6 -sSL --max-redirs 0 --output /tmp/probe-body --dump-header /tmp/probe-headers "$origin$path" || true
+              head -n 1 /tmp/probe-headers || true
+              grep -iE '^(server|location|content-type|x-vercel-id|cf-ray|cache-control):' /tmp/probe-headers || true
+              if grep -qi '这个地址暂时没有内容' /tmp/probe-body; then echo 'CONTENT: ASTRO CUSTOM 404'; fi
+              if grep -qi '登录内容工作台' /tmp/probe-body; then echo 'CONTENT: LOGIN PAGE'; fi
+              if grep -qi '个人迭代系统' /tmp/probe-body; then echo 'CONTENT: ITERATION PAGE'; fi
+              echo
+            done
+          done
