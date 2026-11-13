@@ -59,6 +59,7 @@ async function createTestEnv() {
 	db.exec(m1);
 	db.exec(m2);
 	db.exec(m3);
+	db.exec(fs.readFileSync(path.resolve('migrations/0004_private_app_documents.sql'), 'utf8'));
 
 	const d1Adapter = {
 		prepare(query: string) {
@@ -1209,3 +1210,69 @@ test('public catalog is blocked while an authenticated admin can list and edit r
 	assert.equal(((await dupRes.json()) as any).code, 'slug_exists');
 });
 
+
+
+test('private app documents require auth and CSRF, preserve revisions and history', async () => {
+  const { env, ctx, authedRequest, db } = await createTestEnv();
+  const url = 'https://test.local/api/admin/apps/studio-notes/documents/main';
+  const anonymous = await worker.fetch(new Request(url), env as any, ctx);
+  assert.equal(anonymous.status, 401);
+
+  const firstGet = await worker.fetch(authedRequest(url), env as any, ctx);
+  assert.equal(firstGet.status, 200);
+  assert.deepEqual(await firstGet.json(), {content:{},revision:0,updatedAt:null});
+
+  const withoutCsrf = await worker.fetch(authedRequest(url,{
+    method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':'incorrect'},
+    body:JSON.stringify({content:{title:'Safe'},expectedRevision:0})
+  }),env as any,ctx);
+  assert.equal(withoutCsrf.status,403);
+
+  const invalidKey = await worker.fetch(
+    authedRequest('https://test.local/api/admin/apps/studio-notes/documents/INVALID'),
+    env as any, ctx
+  );
+  assert.equal(invalidKey.status,404);
+
+  const first = await worker.fetch(authedRequest(url,{
+    method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({content:{title:'First',body:'Text 1'},expectedRevision:0})
+  }),env as any,ctx);
+  assert.equal(first.status,200);
+  assert.equal(((await first.json()) as any).revision,1);
+
+  const stale = await worker.fetch(authedRequest(url,{
+    method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({content:{title:'Stale'},expectedRevision:0})
+  }),env as any,ctx);
+  assert.equal(stale.status,409);
+  assert.equal(((await stale.json()) as any).code,'revision_conflict');
+
+  const second = await worker.fetch(authedRequest(url,{
+    method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({content:{title:'Second',body:'Text 2'},expectedRevision:1})
+  }),env as any,ctx);
+  assert.equal(second.status,200);
+  assert.equal(((await second.json()) as any).revision,2);
+
+  const historyResponse=await worker.fetch(authedRequest(url+'/history'),env as any,ctx);
+  assert.equal(historyResponse.status,200);
+  const history=((await historyResponse.json()) as any).history;
+  assert.deepEqual(history.map((v:any)=>v.revision),[2,1]);
+
+  const restore=await worker.fetch(authedRequest(url+'/restore',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({content:{targetRevision:1},expectedRevision:2})
+  }),env as any,ctx);
+  assert.equal(restore.status,200);
+  assert.equal(((await restore.json()) as any).revision,3);
+
+  const fresh = await worker.fetch(authedRequest(url),env as any,ctx);
+  assert.equal(((await fresh.json()) as any).content.title,'First');
+  const rows = db.prepare('SELECT revision FROM app_document_history ORDER BY revision').all() as any[];
+  assert.deepEqual(rows.map(row=>row.revision),[1,2,3]);
+
+  const backup=await worker.fetch(authedRequest(url+'/export'),env as any,ctx);
+  assert.equal(backup.status,200);
+  assert.equal(((await backup.json()) as any).format,'myzjx-private-app/v1');
+});

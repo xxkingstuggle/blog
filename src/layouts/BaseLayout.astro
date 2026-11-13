@@ -57,7 +57,7 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 		<meta name="twitter:description" content={description} />
 		{socialImage && <meta name="twitter:image" content={socialImage} />}
 	</head>
-	<body>
+	<body class="front-body">
 		<a class="skip-link" href="#main-content">跳到主要内容</a>
 		<SiteHeader />
 		<main id="main-content">
@@ -66,6 +66,9 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 		<SiteFooter />
 		<script>
 			import '../scripts/site-motion';
+			import '../scripts/mobile-dock';
+			import '../scripts/gallery-layout';
+			import '../scripts/glass-palette';
 		</script>
 	</body>
 </html>

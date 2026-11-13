@@ -4,9 +4,15 @@ Xin 的个人网站：作品、文章与技术实践。正式域名为 https://m
 
 ## 界面
 
-首页展示作者介绍、USBLinkMic 代表作、HabitBloom 与工作台项目、工程文章和联系入口；`/software/` 展示作品状态，`/software/<slug>/` 展示功能、素材来源、下载与限制。文章索引支持本地搜索与分类筛选，全站支持日间/夜间主题和响应式导航。
+首页采用作品网格，集中展示 USBLinkMic、HabitBloom、工程文章与工作台项目；`/software/` 展示作品状态，`/software/<slug>/` 展示功能、素材来源、下载与限制。文章索引支持本地搜索与分类筛选，全站支持日间/夜间主题、移动端 Dock 和兼容的浏览器上的页面转场。
 
 产品资料以 `src/lib/software.ts` 为准；公开下载版本、开发版截图和未完成设备验收分别说明。首页与作品索引目前按前两项产品组织，增加或调整产品顺序时须同时检查这两个页面，不能只追加数据。
+
+## 私人 Web 应用
+
+私人应用中心位于 `/admin/apps/`，包含原有内容工作台、个人迭代系统入口和可自动保存到 D1 的云端便笺。每份私人应用文档支持修订版本、冲突拦截、历史恢复和 JSON 备份。安全边界、应用接入 API、尚未完成的生产验收见 [个人数字空间架构](docs/digital-space.md)。
+
+该项目的前台与后台共享一个域名；Worker 校验 `/admin/*` 与 `/api/admin/*`，前端静态 shell 不包含私有数据。独立 app 可在 GitHub 仓库扩展，不允许在管理员同源环境里直接执行未经审查的上传脚本。
 
 ## 结构
 
@@ -15,7 +21,10 @@ Xin 的个人网站：作品、文章与技术实践。正式域名为 https://m
 - `src/pages/posts/`：文章索引与文章路由。
 - `src/content/blog/`：Markdown / MDX 原文。
 - `src/components/article/`：正文、目录、留言、媒体和下一篇。
-- `src/styles/global.css`：样式导入入口，含 `journal.css`、`brand.css` 和 `motion.css`。
+- `src/styles/global.css`：公共样式入口；`godly.css` 为网格及导航，`admin-studio.css` 为私人空间，`iteration-gallery.css` 为迭代应用统一风格。
+- `src/components/GalleryCard.astro` / `GalleryHero.astro`：首页卡片与详情封面的共享元素。
+- `src/pages/admin-shell/apps/`：受 Worker 认证保护的私人应用静态 shell。
+- `worker/app-state.ts` / `migrations/0004_private_app_documents.sql`：跨设备文档和版本历史。
 - `src/styles/tokens.css` / `components.css`：全站视觉与组件。
 - `worker/index.ts`：GitHub OAuth、草稿、发布、评论和友链 API。
 - `migrations/`：D1 数据库迁移。

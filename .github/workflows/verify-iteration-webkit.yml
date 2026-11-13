@@ -5,6 +5,27 @@ on:
     branches: [main]
     paths:
       - 'src/styles/iteration.css'
+      - 'src/styles/iteration-gallery.css'
+      - 'src/styles/godly.css'
+      - 'src/styles/godly-fidelity.css'
+      - 'src/styles/glass-media.css'
+      - 'src/styles/admin-glass.css'
+      - 'src/scripts/glass-palette.ts'
+      - 'src/components/SiteHeader.astro'
+      - 'src/components/GalleryCard.astro'
+      - 'src/components/GalleryHero.astro'
+      - 'src/components/admin/AppPreview.astro'
+      - 'src/components/NavIcon.astro'
+      - 'src/components/ThemeSwitcher.astro'
+      - 'src/components/article/**'
+      - 'src/scripts/mobile-dock.ts'
+      - 'src/styles/admin-studio.css'
+      - 'src/pages/index.astro'
+      - 'src/pages/posts/**'
+      - 'src/pages/software/**'
+      - 'src/pages/admin-shell/apps/**'
+      - 'scripts/verify-studio-webkit.mjs'
+      - 'scripts/capture-godly-reference.mjs'
       - 'src/styles/iteration-editorial.css'
       - 'src/layouts/AdminLayout.astro'
       - 'src/scripts/iteration-wheel.ts'
@@ -34,11 +55,16 @@ jobs:
           npx playwright install --with-deps webkit
       - name: Exercise iteration UI in WebKit
         run: node scripts/verify-iteration-webkit.mjs
+      - name: Exercise public gallery and private applications in WebKit
+        run: node scripts/verify-studio-webkit.mjs
+      - name: Capture Godly reference pages (best effort)
+        run: node scripts/capture-godly-reference.mjs
+        continue-on-error: true
       - name: Upload mocked desktop and mobile snapshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: iteration-editorial-webkit-snapshots
+          name: studio-and-iteration-webkit-snapshots
           path: artifacts/*.png
           if-no-files-found: ignore
           retention-days: 3

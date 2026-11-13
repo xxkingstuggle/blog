@@ -1,5 +1,6 @@
 ---
 import type { BlogPost } from '../../lib/posts';
+import GalleryHero from '../GalleryHero.astro';
 import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
 import ArticleRail from './ArticleRail.astro';
 import NextArticle from './NextArticle.astro';
@@ -42,26 +43,26 @@ const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
 		<h1 class="feature-page-title">{post.data.title}</h1>
 		<p class="feature-lead">{description}</p>
 
-		<div class="article-meta-bar">
-			<time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-			{post.data.updatedDate && (
-				<>
-					<span aria-hidden="true">·</span>
-					<time datetime={post.data.updatedDate.toISOString()}>更新于 {formatDate(post.data.updatedDate)}</time>
-				</>
-			)}
-			<span aria-hidden="true">·</span>
-			<span>{getReadingTime(post.body)}</span>
+		<dl class="godly-detail-facts" aria-label="文章信息">
+      <div><dt>内容类型</dt><dd>{kindLabel}</dd></div>
+      <div>
+        <dt>发布时间</dt>
+        <dd><time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time></dd>
+        {post.data.updatedDate && <dd class="godly-detail-update">更新于 {formatDate(post.data.updatedDate)}</dd>}
+      </div>
+      <div><dt>阅读时间</dt><dd>{getReadingTime(post.body)}</dd></div>
+      <div>
+        <dt>相关标签</dt>
+        <dd class="godly-detail-topics">
+          {post.data.tags.length > 0
+            ? post.data.tags.map((tag) => <a href={'/tags/' + encodeURIComponent(tag) + '/'}>{tag}</a>)
+            : <span>手记</span>}
+        </dd>
+      </div>
+    </dl>
 
-			{post.data.tags.length > 0 && (
-				<div class="tag-list" style="margin-left: auto;">
-					{post.data.tags.map((tag) => (
-						<a class="tag-item" href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a>
-					))}
-				</div>
-			)}
-		</div>
 	</div>
+	<GalleryHero post={post} />
 </header>
 
 <!-- Feature Body Layout with TOC Rail -->

@@ -1,0 +1,47 @@
+---
+interface Props {
+  kind: 'editor' | 'iteration' | 'notes';
+}
+const { kind } = Astro.props;
+---
+<div class:list={['studio-app-preview', 'studio-app-preview--' + kind]} aria-hidden="true">
+  {kind === 'editor' && (
+    <div class="studio-preview-window studio-preview-window--editor">
+      <div class="studio-preview-window-top"><span></span><span></span><span></span><i>内容工作台</i></div>
+      <div class="studio-preview-editor-layout">
+        <div class="studio-preview-editor-rail"><b>总览</b><span>文章</span><span>评论</span><span>友链</span></div>
+        <div class="studio-preview-editor-body">
+          <small>今日工作台</small>
+          <strong>创作，总有下一步。</strong>
+          <div class="studio-preview-stat-row"><span>—<small>已发布</small></span><span>—<small>草稿</small></span><span>—<small>待审核</small></span></div>
+          <i></i><i></i><i></i>
+        </div>
+      </div>
+    </div>
+  )}
+  {kind === 'iteration' && (
+    <div class="studio-preview-window studio-preview-window--iteration">
+      <div class="studio-preview-window-top"><span></span><span></span><span></span><i>个人迭代</i></div>
+      <div class="studio-preview-iteration-body">
+        <small>流程示意 · 不代表真实进度</small>
+        <strong>把问题变成进展</strong>
+        <div class="studio-preview-iteration-steps">
+          <span><i></i>问题</span><span><i></i>办法</span><span><i></i>行动</span><span><i></i>反馈</span>
+        </div>
+        <div class="studio-preview-iteration-note"><b></b><i></i><i></i></div>
+      </div>
+    </div>
+  )}
+  {kind === 'notes' && (
+    <div class="studio-preview-window studio-preview-window--notes">
+      <div class="studio-preview-window-top"><span></span><span></span><span></span><i>云端便笺</i></div>
+      <div class="studio-preview-notes-body">
+        <small>今天的记录 · 自动保存</small>
+        <strong>把值得留下的想法，<br/>记在这里。</strong>
+        <p>灵感不一定完整。可以先记下来，下次从这里接着写。</p>
+        <div class="studio-preview-note-lines"><span></span><span></span><span></span></div>
+        <span class="studio-preview-saved">● 所有修改已保存</span>
+      </div>
+    </div>
+  )}
+</div>

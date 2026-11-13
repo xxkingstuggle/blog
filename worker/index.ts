@@ -1,4 +1,5 @@
 import { REPO_CONTENT_CATALOG } from './.generated/repo-catalog';
+import { handleAppState } from './app-state';
 
 /**
  * Cloudflare Worker runtime for the static Astro release site.
@@ -1594,6 +1595,11 @@ async function api(request: Request, env: Env, ctx: ExecutionContextLike) {
 	if (url.pathname === '/api/links' && request.method === 'GET') return publicLinks(env);
 	if (url.pathname === '/api/admin/session' && request.method === 'GET') return adminSession(request, env);
 	if (url.pathname.startsWith('/api/admin/iteration/')) return iterationApi(request, env);
+	if (url.pathname.startsWith('/api/admin/apps/')) {
+		const auth = await requireAdmin(request, env);
+		if (auth.response) return auth.response;
+		return handleAppState(request, env, auth.subject ?? '');
+	}
 	if (url.pathname === '/api/admin/overview' && request.method === 'GET') {
 		const auth = await requireAdmin(request, env);
 		return auth.response ?? adminOverview(env);

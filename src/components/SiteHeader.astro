@@ -1,72 +1,66 @@
 ---
-import { SOFTWARE_PRODUCTS } from '../lib/software';
 import ThemeSwitcher from './ThemeSwitcher.astro';
-
-const currentPath = Astro.url.pathname;
-const isHome = currentPath === '/';
-const isSoftware = currentPath.startsWith('/software');
-const isPosts = currentPath.startsWith('/posts') || currentPath.startsWith('/archive') || currentPath.startsWith('/tags');
-const isAbout = currentPath.startsWith('/about') || currentPath.startsWith('/links');
+import NavIcon from './NavIcon.astro';
+const path = Astro.url.pathname;
+const isHome = path === '/';
+const isWork = path.startsWith('/software');
+const isPosts = path.startsWith('/posts') || path.startsWith('/tags') || path.startsWith('/archive');
+const isAbout = path.startsWith('/about') || path.startsWith('/links');
+const items = [
+  { href:'/', label:'精选', icon:'home', current:isHome },
+  { href:'/software/', label:'软件与作品', icon:'grid', current:isWork },
+  { href:'/posts/', label:'文章与手记', icon:'journal', current:isPosts },
+  { href:'/about/', label:'关于 Xin', icon:'person', current:isAbout },
+] as const;
+const collections = [
+  {href:'/archive/',label:'时间归档',icon:'archive'},
+  {href:'/tags/',label:'文章标签',icon:'tag'},
+  {href:'/links/',label:'友链收藏',icon:'links'},
+] as const;
 ---
-
-<header class="site-header" id="site-header">
-	<div class="shell header-inner">
-		<a class="brand" href="/" aria-label="Xin · myzjx.com 首页">
-			<span class="brand-monogram" aria-hidden="true">X</span>
-			<span class="brand-identity">
-				<span class="brand-name">MYZJX</span>
-				<span class="brand-domain">myzjx.com</span>
-			</span>
-		</a>
-
-		<nav class="site-nav" aria-label="主导航">
-			<a href="/" aria-current={isHome ? 'page' : undefined}>首页</a>
-			<a href="/software/" aria-current={isSoftware ? 'page' : undefined}>软件与工具</a>
-			<a href="/posts/" aria-current={isPosts ? 'page' : undefined}>文章与手记</a>
-			<a href="/about/" aria-current={isAbout ? 'page' : undefined}>关于</a>
-		</nav>
-
-		<div class="header-actions">
-			<a class="header-cta" href="/software/usblinkmic/">
-				<span>获取 USBLinkMic</span>
-				<span class="header-cta-badge">{SOFTWARE_PRODUCTS[0].latestVersion}</span>
-			</a>
-			<ThemeSwitcher />
-			<details class="mobile-nav" data-mobile-nav>
-				<summary class="mobile-nav-trigger" aria-label="站点导航菜单" aria-controls="mobile-nav-panel">
-					<span class="mobile-nav-bars" aria-hidden="true">
-						<span></span>
-						<span></span>
-					</span>
-					<span class="mobile-nav-label">菜单</span>
-				</summary>
-				<div class="mobile-nav-panel" id="mobile-nav-panel" role="dialog" aria-label="站点导航">
-					<nav class="mobile-nav-links" aria-label="移动端主导航">
-						<a href="/" aria-current={isHome ? 'page' : undefined}>
-							<strong>首页</strong>
-							<span>个人品牌、代表软件与近期手记</span>
-						</a>
-						<a href="/software/" aria-current={isSoftware ? 'page' : undefined}>
-							<strong>软件与工具</strong>
-							<span>公开作品、个人原型与工程实践</span>
-						</a>
-						<a href="/posts/" aria-current={isPosts ? 'page' : undefined}>
-							<strong>文章与手记</strong>
-							<span>工程复盘、技术实践与思考记录</span>
-						</a>
-						<a href="/about/" aria-current={isAbout ? 'page' : undefined}>
-							<strong>关于 Xin</strong>
-							<span>我在做什么、工作方法与联系方式</span>
-						</a>
-					</nav>
-					<div class="mobile-nav-sub">
-						<a href="/archive/">时间归档</a>
-						<a href="/tags/">标签索引</a>
-						<a href="/links/">友链推荐</a>
-						<a href="/rss.xml">RSS 订阅</a>
-					</div>
-				</div>
-			</details>
-		</div>
-	</div>
+<header class="site-header studio-side-rail" id="site-header">
+  <a class="studio-rail-brand" href="/" aria-label="MYZJX 首页">
+    <span class="studio-brand-wordmark">MYZJX<span>.</span></span>
+  </a>
+  <div class="studio-rail-content">
+    <nav class="studio-primary-nav" aria-label="主导航">
+      {items.map(item=>(
+        <a href={item.href} aria-current={item.current ? 'page' : undefined}>
+          <span class="studio-nav-icon"><NavIcon name={item.icon}/></span><span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
+    <div class="studio-rail-divider" aria-hidden="true"></div>
+    <nav class="studio-secondary-nav" aria-label="内容索引">
+      {collections.map(item=>(
+        <a href={item.href}><span class="studio-nav-icon"><NavIcon name={item.icon}/></span>{item.label}</a>
+      ))}
+    </nav>
+    <div class="studio-rail-spacer"></div>
+  </div>
+  <div class="studio-rail-bottom">
+    <div class="studio-rail-bottom-row"><ThemeSwitcher /><a href="/about/">关于本站</a></div>
+    <a href="/admin/apps/" class="studio-admin-access"><NavIcon name="lock" size={17}/> 私人应用中心 <span aria-hidden="true">↗</span></a>
+  </div>
 </header>
+<nav class="studio-mobile-dock" aria-label="手机端主导航">
+  <a class="studio-dock-brand" href="/" aria-label="MYZJX 首页">MYZJX<span>.</span></a>
+  <div class="studio-dock-links">
+    <a href="/" aria-current={isHome ? 'page' : undefined}>精选</a>
+    <a href="/software/" aria-current={isWork ? 'page' : undefined}>作品</a>
+    <a href="/posts/" aria-current={isPosts ? 'page' : undefined}>文章</a>
+  </div>
+  <details class="studio-dock-menu">
+    <summary>菜单 <span aria-hidden="true">⌄</span></summary>
+    <div class="studio-dock-panel">
+      <nav aria-label="手机端更多导航">
+        <a href="/about/"><NavIcon name="person"/> 关于 Xin</a>
+        <a href="/archive/"><NavIcon name="archive"/> 时间归档</a>
+        <a href="/tags/"><NavIcon name="tag"/> 文章标签</a>
+        <a href="/links/"><NavIcon name="links"/> 友链收藏</a>
+        <a href="/admin/apps/"><NavIcon name="lock"/> 私人应用中心</a>
+      </nav>
+      <div class="studio-dock-panel-appearance"><span>主题</span><ThemeSwitcher /></div>
+    </div>
+  </details>
+</nav>

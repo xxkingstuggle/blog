@@ -18,8 +18,8 @@
 </details>
 
 <script>
-	const menu = document.querySelector<HTMLElement>('[data-theme-menu]');
-	const options = menu?.querySelectorAll<HTMLButtonElement>('[data-theme-value]');
+	const menus = [...document.querySelectorAll<HTMLDetailsElement>('[data-theme-menu]')];
+	const options = [...document.querySelectorAll<HTMLButtonElement>('[data-theme-value]')];
 	const root = document.documentElement;
 	const cookieName = 'xingx-color-mode';
 	type ColorMode = 'system' | 'light' | 'dark';
@@ -46,7 +46,7 @@
 			: '';
 		document.cookie = `${cookieName}=${mode}; Path=/;${sharedDomain} Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
 		try { localStorage.setItem(cookieName, mode); } catch { /* storage can be disabled */ }
-		options?.forEach((option) => {
+		options.forEach((option) => {
 			option.setAttribute('aria-checked', String(option.dataset.themeValue === mode));
 		});
 	}
@@ -58,15 +58,16 @@
 			const value = option.dataset.themeValue;
 			if (value === 'system' || value === 'light' || value === 'dark') {
 				setMode(value);
-				if (menu instanceof HTMLDetailsElement) menu.open = false;
+				option.closest('details')?.removeAttribute('open');
 			}
 		});
 	});
 
 	document.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape' && menu instanceof HTMLDetailsElement && menu.open) {
-			menu.open = false;
-			menu.querySelector<HTMLElement>('summary')?.focus();
+		if (event.key === 'Escape') {
+			menus.forEach(menu => {
+				if (menu.open) { menu.open = false; menu.querySelector<HTMLElement>('summary')?.focus(); }
+			});
 		}
 	});
 </script>

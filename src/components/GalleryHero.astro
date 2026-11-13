@@ -1,0 +1,17 @@
+---
+import { Image } from 'astro:assets';
+import type { BlogPost } from '../lib/posts';
+
+interface Props { post: BlogPost; }
+const { post } = Astro.props;
+const image = post.data.cover;
+const transitionStyle = 'view-transition-name: article-' + post.id.replace(/[^a-zA-Z0-9_-]/g, '-');
+const ratio = image?.width && image?.height
+  ? Math.max(1.08, Math.min(2.05, image.width / image.height))
+  : 1.72;
+---
+{image && (
+  <div class="gallery-detail-cover gallery-detail-cover--image" data-glass-media style={transitionStyle + '; --detail-ratio: ' + ratio.toFixed(3)}>
+    <Image src={image} alt={post.data.title + ' 的文章封面'} widths={[760, 1200, 1800]} sizes="(max-width: 780px) 95vw, 1000px" format="webp" class="gallery-detail-image" />
+  </div>
+)}

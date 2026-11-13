@@ -1,19 +1,26 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ArticleRow from '../../components/ArticleRow.astro';
-import { getListedPosts, KIND_LABELS } from '../../lib/posts';
+import GalleryCard from '../../components/GalleryCard.astro';
+import { getListedPosts, KIND_LABELS, formatDate, getReadingTime } from '../../lib/posts';
 
 const posts = await getListedPosts();
+const usedCoverSources = new Set<string>();
+function previewForPost(post: (typeof posts)[number]) {
+  const cover = post.data.cover;
+  if (!cover || usedCoverSources.has(cover.src)) return undefined;
+  usedCoverSources.add(cover.src);
+  return cover;
+}
 const filters = ['all', 'project', 'thought', 'update'] as const;
 ---
 
 <BaseLayout title="文章与手记" description="Xin 的工程复盘、软件开发手记与日常思考，按时间排列。">
-	<header class="shell page-heading" data-reveal>
+	<header class="shell page-heading gallery-journal-heading" data-reveal>
 		<div class="section-kicker">
 			<span class="kicker-dot" aria-hidden="true"></span>
 			<span>JOURNAL & ENGINEERING NOTES / 文章与手记</span>
 		</div>
-		<h1>做过的事，想过的问题</h1>
+		<h1>文章与手记</h1>
 		<p>记录个人软件的架构取舍、真实开发里的踩坑排查，以及工作之外的自省与观察。</p>
 	</header>
 
@@ -49,14 +56,24 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 			共 {posts.length} 篇已发布文章
 		</p>
 
-		<div id="posts-list">
+		<div id="posts-list" class="gallery-grid">
 			{posts.map((post, index) => (
 				<div
-					class="post-index-item"
+					class="post-index-item gallery-item"
 					data-kind={post.data.kind}
 					data-search={[post.data.title, post.data.description, ...post.data.tags].join(' ').toLocaleLowerCase()}
 				>
-					<ArticleRow post={post} index={index} />
+					<GalleryCard
+						href={'/posts/' + post.id + '/'}
+						title={post.data.title}
+						description={post.data.description}
+						category={KIND_LABELS[post.data.kind]}
+						image={previewForPost(post)}
+						tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
+						meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
+						index={index}
+						transitionKey={'article-' + post.id}
+					/>
 				</div>
 			))}
 		</div>
