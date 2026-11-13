@@ -27,7 +27,7 @@ const isLong = title.length > 22;
 const isPoster = Boolean(image) && tone !== 'tool';
 const editorialLayout = index % 3;
 ---
-<a href={href} class:list={['gallery-card', image ? 'gallery-card--image' : 'gallery-card--editorial', isPoster && 'gallery-card--poster', image && tone === 'tool' && 'gallery-card--software']} data-gallery-card aria-label={title}>
+<a href={href} class:list={['gallery-card', image ? 'gallery-card--image' : 'gallery-card--editorial', isPoster && 'gallery-card--poster', image && tone === 'tool' && 'gallery-card--software', 'gallery-card--tone-' + tone]} data-gallery-card aria-label={title}>
   <div
     data-glass-media={image ? '' : undefined}
     class:list={['gallery-card-visual', 'gallery-card-visual--' + tone, image ? 'gallery-card-visual--has-image' : 'gallery-card-visual--text', isPoster && 'gallery-card-visual--poster']]}
