@@ -21,7 +21,7 @@ const files = Object.fromEntries(
 );
 
 const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4372'], {
-  stdio: ['ignore', 'pipe', 'pipe']
+  stdio: ['ignore', 'pipe', 'pipe'], detached: true
 });
 let output = '';
 server.stdout.on('data', data => { output += String(data).slice(0, 4000); });
@@ -106,5 +106,10 @@ try {
   await run();
 } finally {
   await browser?.close();
-  server.kill('SIGTERM');
+  // Terminate the whole npm -> astro subprocess group; otherwise GitHub CI
+  // can stay alive with preview's inherited stdout/stderr still open.
+  if (server.pid) {
+    try { process.kill(-server.pid, 'SIGTERM'); }
+    catch { server.kill('SIGTERM'); }
+  }
 }
