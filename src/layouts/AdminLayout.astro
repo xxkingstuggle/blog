@@ -3,6 +3,7 @@ import { siteConfig } from '../config';
 import ThemeSwitcher from '../components/ThemeSwitcher.astro';
 import '../styles/global.css';
 import '../styles/admin.css';
+import '../styles/admin-studio.css';
 
 interface Props {
 	title: string;
@@ -46,6 +47,7 @@ const canonical = new URL(canonicalPath, siteConfig.url).toString();
 			</a>
 			<div class="admin-topbar-center"><span class="admin-topbar-context">{context}</span></div>
 			<div class="admin-topbar-actions">
+				<a class="admin-front-link" href="/admin/apps/">应用中心</a>
 				<a class="admin-front-link" href="/software/">软件作品</a>
 				<a class="admin-front-link" href="/posts/">文章列表</a>
 				<a class="admin-front-link" href="/">返回官网 <span aria-hidden="true">↗</span></a>
