@@ -11,7 +11,7 @@
 ## 任务清单与不可妥协的验收条件
 
 - [x] 归纳真实页面的层级、视觉边界，确定**媒体实际像素边界**也必须圆角。
-- [x] **G1：圆角三层吻合。** 卡片壳、内层媒体背景、实际 \`img\` 均有可计算的正圆角；真实图片本身不允许显示直角边。内层不溢出父层圆角，阴影不会穿透裁切边界。
+- [x] **G1：圆角三层吻合。** 卡片壳、内层媒体背景、实际 `img` 均有可计算的正圆角；真实图片本身不允许显示直角边。内层不溢出父层圆角，阴影不会穿透裁切边界。
 - [x] **G2：真取色。** 从同源图片实际像素（缩小采样）提取主色和辅助色，不为所有卡片套相同蓝色；无彩色/读取失败时退回柔和中性色。
 - [x] **G3：可见但克制的玻璃。** 画面附近有低透明度的主辅色径向光晕、细微边缘高光、半透玻璃层；图片本身颜色和可读信息不被覆盖，不加夸张扫光、旋转、鼠标追踪。
 - [x] **G4：不同素材。** 横向、竖向、接近正方形媒体和无图长中文内容保持自然宽高比。仅有实际图片时才做像素取色。
@@ -19,30 +19,30 @@
 - [x] **G6：私人应用。** 三款应用预览用各自的调性色彩、柔光与边缘玻璃层，绝不伪造当前进度或统计数。
 - [x] **G7：系统深浅色。** 亮、暗模式不出现脏白雾、文本低对比、光晕变霓虹；CSS 变量同一套来源。
 - [ ] **G8：Safari & 性能。** 320/390/768/1440px 不横向溢出；无请求外部图片取色服务；每张图仅缩小取样一次，延迟加载可处理；动画低动态偏好回退。
-- [x] **G9：浏览器断言。** WebKit 自动检查实际 \`img\` 与媒体层圆角、颜色变量已从真实图像得到、前两张图片色彩有区别、相关产品及详情仍能点击、触摸与深色模式正常。
+- [x] **G9：浏览器断言。** WebKit 自动检查实际 `img` 与媒体层圆角、颜色变量已从真实图像得到、前两张图片色彩有区别、相关产品及详情仍能点击、触摸与深色模式正常。
 - [x] **G10：视觉复核。** 对比 WebKit 桌面与移动端截图，排除难看的矩形白块、异常遮罩、截断和图片超框。将截图作为 PR CI 构建产物。
 
 ## 具体实现路径
 
-- \`src/scripts/glass-palette.ts\`：不引入第三方依赖的浏览器本地像素采样，优先采有色区域；缓存本次页面相同图片的结果，\`load\` 时惰性执行，忽略第三方/跨域不可读图片，绝不上传像素。
-- \`src/styles/glass-media.css\`：图像/框体统一圆角、内容色渐变、内表面高光；放在现有样式最后，避免前面历史样式覆盖。设备不支持模糊属性时依然有纯 CSS 的清晰效果。
-- \`src/styles/admin-glass.css\`：私人应用的轻柔同类材质，来源是自身界面的主调色而非欺骗性取图。
-- \`scripts/verify-studio-webkit.mjs\`：WebKit 计算属性与页面流程验证，必要时追加截图。
-- \`.github/workflows/verify-iteration-webkit.yml\`：新文件变化触发回归测试。
+- `src/scripts/glass-palette.ts`：不引入第三方依赖的浏览器本地像素采样，优先采有色区域；缓存本次页面相同图片的结果，`load` 时惰性执行，忽略第三方/跨域不可读图片，绝不上传像素。
+- `src/styles/glass-media.css`：图像/框体统一圆角、内容色渐变、内表面高光；放在现有样式最后，避免前面历史样式覆盖。设备不支持模糊属性时依然有纯 CSS 的清晰效果。
+- `src/styles/admin-glass.css`：私人应用的轻柔同类材质，来源是自身界面的主调色而非欺骗性取图。
+- `scripts/verify-studio-webkit.mjs`：WebKit 计算属性与页面流程验证，必要时追加截图。
+- `.github/workflows/verify-iteration-webkit.yml`：新文件变化触发回归测试。
 
 ## 风险与边界
 
-CSS 的模糊、色彩融合是网页对玻璃视觉语言的近似，不等于苹果系统私有光学折射。透明度不应靠无限增大 \`backdrop-filter\` 获取。取色失败或用户禁用 JS 时，图片圆角、基础柔和背景和业务导航必须照常工作。自动浏览器验证不等于真实 iPhone 的主观视觉验收；在真实设备测试前不得合并发布。
+CSS 的模糊、色彩融合是网页对玻璃视觉语言的近似，不等于苹果系统私有光学折射。透明度不应靠无限增大 `backdrop-filter` 获取。取色失败或用户禁用 JS 时，图片圆角、基础柔和背景和业务导航必须照常工作。自动浏览器验证不等于真实 iPhone 的主观视觉验收；在真实设备测试前不得合并发布。
 
 **施工记录**：每通过一组自动检查，再把对应验收条目改成 [x] 并写清证据；不以“代码已提交”冒充视觉验收。
 
 ## 2026-11-13 WebKit 验收记录
 
-- **代码提交：** \`46e9c38b3abac058b65b07da7cc979e3a0c347fb\`，保持在 \`feat/godly-inspired-studio-20261113\` 草稿分支。
-- **静态检查及构建：** GitHub Actions「Verify pull request」运行 \`43457957296\` 成功（类型检查、单元测试、Astro 构建）。
+- **代码提交：** `46e9c38b3abac058b65b07da7cc979e3a0c347fb`，保持在 `feat/godly-inspired-studio-20261113` 草稿分支。
+- **静态检查及构建：** GitHub Actions「Verify pull request」运行 `43457957296` 成功（类型检查、单元测试、Astro 构建）。
 - **Safari WebKit 自动化：** [运行 43457957095](https://github.com/xxkingstuggle/blog/actions/runs/43457957095) 成功；验证了首页卡片源图像真取色、不同图像色调不同、实际图片非零圆角和无 padding 漏角、取色径向渐变、软件详情、条件文章封面、私人应用预览、手机暗色及响应式导航、便笺云端模拟交互。
-- **实际采样诊断：** \`usblinkmic-mac.webp\`、\`habitbloom-cover.webp\`、\`liquid-glass-cover.webp\` 均为 \`data-glass-state="sampled"\`；不是全站硬编码同一颜色。
-- **视觉截图：** 上述工作流产物 \`studio-and-iteration-webkit-snapshots\`，包含 \`studio-glass-card.png\`、\`studio-home-desktop.png\`、\`studio-home-mobile.png\`、\`studio-home-mobile-dark.png\`、\`studio-apps-desktop.png\`、\`studio-article-desktop.png\`。人工对照查看确认可见圆角、柔和染色和文字清晰。
+- **实际采样诊断：** `usblinkmic-mac.webp`、`habitbloom-cover.webp`、`liquid-glass-cover.webp` 均为 `data-glass-state="sampled"`；不是全站硬编码同一颜色。
+- **视觉截图：** 上述工作流产物 `studio-and-iteration-webkit-snapshots`，包含 `studio-glass-card.png`、`studio-home-desktop.png`、`studio-home-mobile.png`、`studio-home-mobile-dark.png`、`studio-apps-desktop.png`、`studio-article-desktop.png`。人工对照查看确认可见圆角、柔和染色和文字清晰。
 - **失败并修复记录：** 第一次浏览器测试的真实采样检测超时，排查并补充低彩度截图的像素均色回退，第二轮验证通过。不能删除这条记录来掩盖测试曾经失败的事实。
-- **部署门槛：** 该提交的 Vercel 状态因为预览构建频率限制而失败，GitHub 自身构建和 WebKit 成功。**新版本尚未通过 Vercel 在线预览验收，未合并到 \`main\`。**
+- **部署门槛：** 该提交的 Vercel 状态因为预览构建频率限制而失败，GitHub 自身构建和 WebKit 成功。**新版本尚未通过 Vercel 在线预览验收，未合并到 `main`。**
 - **G8 未勾选的原因：** WebKit 自动模拟通过 320/390/768/1440px 断言，且只单次取样、不上传图片；但真机 Safari/Android 上的 GPU 负载、低端机模糊性能仍需实际确认。后续如有卡顿，优先降低 blur 半径与玻璃层叠数量。
