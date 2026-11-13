@@ -25,61 +25,34 @@ import '../../../styles/iteration.css';
       <span>“我想成为什么样的人？”尚待探索，不替自己预先编造答案。</span>
     </section>
 
-    <section class="iteration-columns" aria-label="系统概念">
-      <div class="iteration-panel">
-        <p class="iteration-eyebrow">现实的输入</p>
-        <h3>经历 · 念头 · 感受</h3>
-        <p>它们帮助发现问题，但不是每个念头都要变成任务。</p>
-      </div>
-      <div class="iteration-panel">
-        <p class="iteration-eyebrow">人与 AI</p>
-        <h3>你负责生活，AI 协助迭代</h3>
-        <p>AI 整理问题、建议办法、记录结果，不替你决定人生方向。</p>
-      </div>
-    </section>
-
-    <section class="iteration-cycle" aria-labelledby="iteration-cycle-heading">
-      <header>
-        <p class="iteration-eyebrow">不变的核心</p>
-        <h2 id="iteration-cycle-heading">问题 → 办法 → 行动 → 反馈</h2>
-      </header>
-      <div class="iteration-step-grid">
-        <button class="iteration-step is-selected" type="button" data-index="0" aria-pressed="true">
-          <span>01</span><strong>问题</strong><small>现在怎样？希望怎样？真正的障碍在哪？</small>
-        </button>
-        <button class="iteration-step" type="button" data-index="1" aria-pressed="false">
-          <span>02</span><strong>办法</strong><small>先试哪一种办法？什么结果算有用？</small>
-        </button>
-        <button class="iteration-step" type="button" data-index="2" aria-pressed="false">
-          <span>03</span><strong>行动</strong><small>实际发生了什么？不能把计划算成行动。</small>
-        </button>
-        <button class="iteration-step" type="button" data-index="3" aria-pressed="false">
-          <span>04</span><strong>反馈</strong><small>保留、调整、停用；下一次处理得更好。</small>
-        </button>
-      </div>
-      <p id="iteration-step-detail" class="iteration-step-detail">AI 可以协助把模糊感受变成准确的问题；真正要不要解决，由你确认。</p>
-    </section>
-
-    <section class="iteration-board-grid">
-      <div class="iteration-panel">
-        <div class="iteration-panel-heading">
-          <div><p class="iteration-eyebrow">来自私有 Markdown</p><h2>当前问题</h2></div>
-          <span class="iteration-pill" id="iteration-progress-count">待载入</span>
+    <section class="iteration-explorer" aria-labelledby="iteration-explorer-title">
+      <div class="iteration-explorer-head">
+        <div>
+          <p class="iteration-eyebrow">LIVE ITERATION · GITHUB SOURCE</p>
+          <h2 id="iteration-explorer-title">正在迭代的问题</h2>
+          <p class="iteration-explorer-intro">点开任何问题，查看它在「问题 → 办法 → 行动 → 反馈」圆盘中的真实位置。</p>
         </div>
-        <div id="iteration-progress-list" class="iteration-progress-list">
-          <p class="iteration-muted">登录后将从 GitHub 私有仓库读取最新进度。</p>
+        <span class="iteration-pill" id="iteration-progress-count" aria-live="polite">等待同步</span>
+      </div>
+      <div class="iteration-explorer-controls">
+        <label for="iteration-search" class="iteration-search-wrap">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="11" cy="11" r="7.25"></circle><path d="m16.5 16.5 4.5 4.5"></path></svg>
+          <span class="sr-only">搜索问题</span>
+          <input id="iteration-search" type="search" placeholder="搜索编号、问题或进度…" autocomplete="off" />
+        </label>
+        <div class="iteration-filters" role="group" aria-label="按真实阶段筛选问题">
+          <button class="is-selected" data-iteration-filter="all" aria-pressed="true" type="button">全部 <span class="iteration-filter-count"></span></button>
+          <button data-iteration-filter="问题" aria-pressed="false" type="button">问题 <span class="iteration-filter-count"></span></button>
+          <button data-iteration-filter="办法" aria-pressed="false" type="button">办法 <span class="iteration-filter-count"></span></button>
+          <button data-iteration-filter="行动" aria-pressed="false" type="button">行动 <span class="iteration-filter-count"></span></button>
+          <button data-iteration-filter="反馈" aria-pressed="false" type="button">反馈 <span class="iteration-filter-count"></span></button>
+          <button data-iteration-filter="unknown" aria-pressed="false" type="button">待标注 <span class="iteration-filter-count"></span></button>
         </div>
       </div>
-      <div class="iteration-panel">
-        <p class="iteration-eyebrow">关于问题的问题</p>
-        <h2>系统自己也能迭代</h2>
-        <div class="iteration-question-tree">
-          <div><strong>原问题</strong><span>我对这套系统没有清晰概念。</span></div>
-          <div><strong>衍生问题</strong><span>怎么让系统更直观、可修改、能长期保存？</span></div>
-          <div><strong>已经试过</strong><span>画板和存储独立：展示用于理解，GitHub Markdown 用于保存。</span></div>
-          <div><strong>继续验证</strong><span>网页是否真的能读取、修改并保留历史？</span></div>
-        </div>
+      <div id="iteration-progress-list" class="iteration-progress-list" aria-live="off">
+        <p class="iteration-muted">正在从私有 GitHub 仓库读取问题和阶段…</p>
       </div>
+      <p class="iteration-explorer-footnote">圆盘突出的是 MD 中记录的真实阶段；点圆盘其他节点只是查看，不会伪造行动或修改进度。</p>
     </section>
 
     <section class="iteration-panel iteration-editor-panel" aria-labelledby="iteration-editor-heading">
@@ -112,19 +85,7 @@ import '../../../styles/iteration.css';
 </AdminLayout>
 
 <script>
-const detailTexts=[
-  'AI 可以协助把模糊经历变成准确的问题；是否值得解决，由你确认。',
-  '根据当前事实挑选办法；不必等想出最完美的办法才开始。',
-  '现实中发生的才算行动，计划和讨论不是已经完成。',
-  '保留有效方法、调整无效方法，再从新问题继续循环。'
-];
-document.querySelectorAll<HTMLButtonElement>('.iteration-step').forEach((button)=>{
-  button.addEventListener('click',()=>{
-    document.querySelectorAll('.iteration-step').forEach((el)=>{el.classList.remove('is-selected');el.setAttribute('aria-pressed','false');});
-    button.classList.add('is-selected');button.setAttribute('aria-pressed','true');
-    const text=document.querySelector('#iteration-step-detail');if(text)text.textContent=detailTexts[Number(button.dataset.index)||0];
-  });
-});
+import { mountIssueBoard } from '../../../scripts/iteration-wheel';
 interface IterationFile { content:string; sha:string }
 interface IterationFiles { [file:string]:IterationFile }
 interface IterationPayload { files:IterationFiles; repository:string; branch:string; directory:string }
@@ -154,21 +115,8 @@ function markDirty(){
   resetBtn.disabled=!file||!dirty||saving;
   editStatus.textContent=saving?'正在保存到 GitHub…':(!file?'尚未连接私有仓库':dirty?'有尚未保存的修改':'已与仓库同步（本页未修改）');
 }
-function renderProgress(markdown:string){
-  const node=document.querySelector<HTMLElement>('#iteration-progress-list')!;
-  const matches=[...markdown.matchAll(/^\|\s*(P\d{2})\s*\|\s*([^|\n]+)\|\s*([^|\n]+)/gm)];
-  node.replaceChildren();
-  if(!matches.length){const p=document.createElement('p');p.className='iteration-muted';p.textContent='当前进度文件中没有识别到 P01–P06 表格；请直接查看原文。';node.append(p);}
-  for(const match of matches){
-    const item=document.createElement('div');item.className='iteration-progress-item';
-    const code=document.createElement('code');code.textContent=match[1];
-    const body=document.createElement('div');
-    const h=document.createElement('strong');h.textContent=match[2].trim();
-    const p=document.createElement('p');p.textContent=match[3].trim();
-    body.append(h,p);item.append(code,body);node.append(item);
-  }
-  document.querySelector<HTMLElement>('#iteration-progress-count')!.textContent=matches.length?matches.length+' 个问题':'未识别';
-}
+const issueBoard = mountIssueBoard(document.querySelector<HTMLElement>('#iteration-progress-list')!);
+function renderProgress(markdown: string) { issueBoard.render(markdown); }
 async function refresh(){
   if(editor.value!==selectedDoc()?.content&&selectedDoc()&&!confirm('有未保存的修改。确认放弃并重新读取吗？'))return;
   setState('正在读取 GitHub 私有仓库…');
