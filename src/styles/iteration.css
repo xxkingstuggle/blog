@@ -498,7 +498,8 @@
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  overflow: clip;
+  /* WebKit: avoid clip + rounded corners + shadow compositing glitches. */
+  overflow: hidden;
   transition: border-color 260ms var(--ease-out), box-shadow 260ms var(--ease-out), background 260ms var(--ease-out);
 }
 .iteration-issue-card:hover { border-color: var(--line-strong); }
@@ -603,7 +604,6 @@
   width: 100%;
   height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 10px 25px color-mix(in srgb, var(--accent) 6%, transparent));
 }
 .iteration-orbit-base {
   fill: none;
@@ -622,7 +622,6 @@
   stroke: var(--accent);
   stroke-width: 18px;
   opacity: 1;
-  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--accent) 42%, transparent));
 }
 .iteration-orbit-ambient {
   position: absolute;
@@ -630,8 +629,11 @@
   z-index: -1;
   border-radius: 50%;
   background: conic-gradient(from 45deg, transparent 0%, var(--accent-soft) 18%, transparent 34%, var(--accent-soft) 57%, transparent 74%);
-  -webkit-mask: radial-gradient(transparent 64%, black 66%, black 68%, transparent 71%);
-  mask: radial-gradient(transparent 64%, black 66%, black 68%, transparent 71%);
+  /* Use the WebKit longhand and the standard mask image in parallel. */
+  -webkit-mask-image: radial-gradient(transparent 64%, black 66%, black 68%, transparent 71%);
+  mask-image: radial-gradient(transparent 64%, black 66%, black 68%, transparent 71%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
   opacity: .8;
   animation: iteration-orbit-spin 19s linear infinite;
 }
@@ -840,4 +842,39 @@
   .iteration-issue-details { animation: none !important; }
   .iteration-orbit-pointer,
   .iteration-issue-chevron { transition: none !important; }
+}
+
+
+/* Safari / iOS WebKit usability and rendering adjustments.
+   The native zoom gesture stays enabled; readable 16px fields avoid focus zoom. */
+.iteration-issue-trigger,
+.iteration-orbit-step,
+.iteration-filters button,
+.iteration-doc-tabs button,
+.iteration-inspection-reset,
+.iteration-detail-edit,
+.iteration-button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.iteration-search-wrap input {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+.iteration-orbit-pointer,
+.iteration-orbit-ambient {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+@media (hover: none) and (pointer: coarse) {
+  .iteration-orbit-step,
+  .iteration-filters button,
+  .iteration-doc-tabs button,
+  .iteration-inspection-reset,
+  .iteration-detail-edit { min-height: 44px; }
+}
+@media (max-width: 620px) {
+  .iteration-search-wrap input,
+  .iteration-textarea { font-size: 16px; }
 }
