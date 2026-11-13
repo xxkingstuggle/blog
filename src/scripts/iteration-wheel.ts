@@ -435,7 +435,9 @@ export function mountIssueBoard(root: HTMLElement) {
         childList.id = subtreeId;
         childList.hidden = closed;
         children.forEach(child => childList.append(buildNode(child)));
-        wrapper.append(fold, childList);
+        // When filtering, ancestors stay expanded to keep matching children visible.
+        if (filtering) wrapper.append(childList);
+        else wrapper.append(fold, childList);
       }
       return wrapper;
     }
