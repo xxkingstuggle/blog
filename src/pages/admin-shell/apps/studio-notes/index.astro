@@ -71,7 +71,7 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
   const updateButtons = () => {
     saveButton.disabled = !token || !dirty || sending;
     historyButton.disabled = !token;
-    exportButton.disabled = !token || !revision;
+    exportButton.disabled = !token;
   };
   function setDocument(data:CloudDocument) {
     revision = data.revision;
