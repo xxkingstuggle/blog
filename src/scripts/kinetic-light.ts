@@ -48,8 +48,8 @@ function mountKineticLight(): void {
   let wakeX = -500, wakeY = -500;
   let echoX = -500, echoY = -500;
   let lastPointerX = -500, lastPointerY = -500;
-  let lastFrameAt = 0;
-  let rotation = 0;
+  let lastFrameAt = 0, lastPointerAt = 0;
+  let rotation = 0, pointerImpulse = 0;
   let lastInputAt = 0;
   let velocity = 0, direction = 0;
   let targetOpacity = 0, opacity = 0;
@@ -145,8 +145,9 @@ function mountKineticLight(): void {
 
     const travelled = Math.hypot(headX - previousHeadX, headY - previousHeadY);
     // Current kinetic energy follows actual movement, then falls naturally.
-    const sensed = Math.min(2.8, travelled / dt);
-    velocity += (sensed - velocity) * smooth(dt, 78);
+    const sensed = Math.max(Math.min(2.8, travelled / dt), pointerImpulse);
+    velocity += (sensed - velocity) * smooth(dt, 66);
+    pointerImpulse *= Math.exp(-dt / 115);
     const displayedStretch = 1 + Math.min(.70, velocity * .52);
     const angularDifference = ((direction - rotation + 540) % 360) - 180;
     rotation += angularDifference * smooth(dt, 78);
@@ -217,6 +218,10 @@ function mountKineticLight(): void {
     const distance = Math.hypot(dx, dy);
     if (prepared && distance > 2) {
       direction = Math.atan2(dy, dx) * 180 / Math.PI;
+      // Pointer events can be coalesced: movement velocity must not be inferred
+      // only from how far the animated light travelled in the latest frame.
+      const elapsed = Math.max(8, Math.min(250, time - lastPointerAt));
+      pointerImpulse = Math.min(3.6, Math.max(pointerImpulse*.6, distance / elapsed));
     }
     // A discrete pointer jump is not painted instantly: springs and three
     // lagging positions keep the transition continuous across card gaps.
@@ -229,6 +234,7 @@ function mountKineticLight(): void {
     lastPointerX = pointerX = x;
     lastPointerY = pointerY = y;
     lastInputAt = time;
+    lastPointerAt = time;
     updateTarget();
     requestDraw();
   }

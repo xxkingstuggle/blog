@@ -211,6 +211,7 @@ async function run(){
     target:el.dataset.kineticTarget,
     lightCount:el.querySelectorAll('.studio-kinetic-core,.studio-kinetic-wake,.studio-kinetic-echo').length
   }));
+  console.log('Kinetic swipe diagnostics:',JSON.stringify({kineticMotion,beforeSwipe}));
   assert.ok(kineticMotion.lightCount===3 &&
     kineticMotion.target==='near' && kineticMotion.opacity>.05,
     'three-layer cursor light must remain visible while moving across a card');
