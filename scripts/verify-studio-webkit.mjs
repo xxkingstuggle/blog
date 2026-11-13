@@ -52,6 +52,7 @@ async function run(){
   assert.equal(await desktop.locator('.gallery-item:not([hidden])').count(),frameRatios.length);
   assert.equal(await desktop.locator('.studio-side-rail').evaluate(el=>getComputedStyle(el).position),'fixed');
   assert.equal(await desktop.locator('.gallery-grid').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
+  await desktop.waitForFunction(() => document.querySelector('.gallery-grid')?.dataset.masonry === 'true');
   await ensureWithinViewport(desktop,'desktop homepage');
   await desktop.screenshot({path:'artifacts/studio-home-desktop.png',fullPage:true});
   await desktop.locator('.gallery-card').first().click();
@@ -77,6 +78,8 @@ async function run(){
   await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.studio-dock-menu').evaluate(el=>el.open),true);
   await mobile.locator('.studio-dock-menu > summary').click();
+  assert.equal(await mobile.locator('.gallery-grid').first().getAttribute('data-masonry'), null,
+    'single-column mobile layout must retain natural document order');
   await ensureWithinViewport(mobile,'mobile homepage');
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
   const narrowPage = await browser.newPage({viewport:{width:320,height:730},isMobile:true,hasTouch:true});
