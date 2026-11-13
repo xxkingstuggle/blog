@@ -54,6 +54,7 @@ async function run(){
   assert.equal(await desktop.locator('.gallery-grid').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
   await desktop.waitForFunction(() => document.querySelector('.gallery-grid')?.dataset.masonry === 'true');
   await ensureWithinViewport(desktop,'desktop homepage');
+  await desktop.waitForTimeout(320);
   await desktop.screenshot({path:'artifacts/studio-home-desktop.png',fullPage:true});
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/software/usblinkmic/');
@@ -62,6 +63,7 @@ async function run(){
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/posts/*/');
   await desktop.locator('.gallery-detail-cover').waitFor();
+  await desktop.waitForTimeout(380);
   await desktop.screenshot({path:'artifacts/studio-article-desktop.png',fullPage:true});
 
   const mobile=await browser.newPage({
@@ -75,12 +77,21 @@ async function run(){
   assert.match(mobileLogo.text,/MYZJX/);
   assert.ok(mobileLogo.bg==='rgba(0, 0, 0, 0)' || mobileLogo.bg==='transparent',
     'mobile branding should be a restrained wordmark instead of an oversized filled icon');
+  const logoGeometry = await mobile.locator('.studio-dock-brand').evaluate(el => {
+    const period = el.querySelector('span');
+    return { container: el.getBoundingClientRect().top, period: period?.getBoundingClientRect().top,
+      direction: getComputedStyle(el).flexDirection };
+  });
+  assert.equal(logoGeometry.direction,'row','mobile wordmark must not stack its period vertically');
+  assert.ok(Math.abs((logoGeometry.period ?? 999) - logoGeometry.container) < 17,
+    'brand punctuation must stay on the same line');
   await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.studio-dock-menu').evaluate(el=>el.open),true);
   await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.gallery-grid').first().getAttribute('data-masonry'), null,
     'single-column mobile layout must retain natural document order');
   await ensureWithinViewport(mobile,'mobile homepage');
+  await mobile.waitForTimeout(320);
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
   const narrowPage = await browser.newPage({viewport:{width:320,height:730},isMobile:true,hasTouch:true});
   await narrowPage.goto(origin+'/',{waitUntil:'networkidle'});
