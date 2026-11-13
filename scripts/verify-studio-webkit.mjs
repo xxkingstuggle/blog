@@ -86,6 +86,9 @@ async function run(){
   assert.equal(logoGeometry.direction,'row','mobile wordmark must not stack its period vertically');
   assert.ok(Math.abs((logoGeometry.period ?? 999) - logoGeometry.container) < 17,
     'brand punctuation must stay on the same line');
+  const tapHeights = await mobile.locator('.studio-dock-links a, .studio-dock-menu > summary')
+    .evaluateAll(elements => elements.map(el=>el.getBoundingClientRect().height));
+  assert.ok(tapHeights.every(h=>h>=43.5),'touch navigation must have at least 44px hit targets');
   await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.studio-dock-menu').evaluate(el=>el.open),true);
   await mobile.locator('.studio-dock-menu > summary').click();
