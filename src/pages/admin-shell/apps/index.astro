@@ -19,7 +19,7 @@ const apps = [
     <div class="studio-app-grid">
       {apps.map((app,index)=>(
         <a href={app.href} class:list={['studio-app-card', 'studio-app-card-'+index]}>
-          <div class="studio-app-visual">
+          <div class="studio-app-visual studio-app-glass">
             <span class="studio-app-label">{app.label}</span>
             <AppPreview kind={app.kind as 'editor' | 'iteration' | 'notes'} />
             <span class="studio-app-visual-foot">应用界面示意 · {String(index+1).padStart(2,'0')}</span>
