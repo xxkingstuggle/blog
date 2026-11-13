@@ -770,3 +770,29 @@ body.front-body {
   .front-body .software-hero-copy h1 {font-size:clamp(29px,7vw,40px);}
   .front-body .studio-footer-wordmark {font-size:clamp(60px,16vw,110px);}
 }
+
+
+.godly-detail-facts .godly-detail-update {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 450;
+  margin-top: 4px;
+}
+.godly-detail-facts .godly-detail-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  align-items: center;
+  font-weight: 480;
+}
+.godly-detail-topics a {
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  padding-bottom: 2px;
+  text-decoration: none;
+}
+.godly-detail-topics a:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
