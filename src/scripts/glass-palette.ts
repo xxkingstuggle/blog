@@ -9,7 +9,7 @@ type Palette = readonly [string, string];
 type WeightedColor = { r: number; g: number; b: number; weight: number; hue: number };
 
 const SAMPLE_SIZE = 36;
-const paletteCache = new Map<string, Palette | null>();
+const paletteCache = new Map<string, Palette>();
 const processed = new WeakSet<HTMLElement>();
 
 function hueDegrees(r: number, g: number, b: number, maximum: number, chroma: number): number {
@@ -52,13 +52,13 @@ function extractPalette(image: HTMLImageElement): Palette | null {
       const min = Math.min(r, g, b);
       const chroma = max - min;
       const light = (max + min) / 2;
-      if (light > 25 && light < 245) {
-        const n = (alpha / 255) * (0.4 + Math.min(1, chroma / 80));
-        neutral.r += r * n;
-        neutral.g += g * n;
-        neutral.b += b * n;
-        neutral.weight += n;
-      }
+      // Include opaque light and dark pixels in the monochrome fallback.
+      // A valid near-white screenshot must not be mistaken for a failed decode.
+      const n = (alpha / 255) * (0.4 + Math.min(1, chroma / 80));
+      neutral.r += r * n;
+      neutral.g += g * n;
+      neutral.b += b * n;
+      neutral.weight += n;
       // Near-white UI screenshots and black backgrounds should not dominate
       // an accent palette; use their actual coloured pixels instead.
       if (chroma < 18 || light < 34 || light > 234) continue;
@@ -119,20 +119,43 @@ function attachSurface(surface: HTMLElement): void {
   const image = surface.querySelector<HTMLImageElement>('img');
   if (!image) return;
 
-  const sample = () => {
-    if (!image.naturalWidth || !image.naturalHeight) return;
-    const url = image.currentSrc || image.src;
-    if (!url) return;
-    let palette = paletteCache.get(url);
-    if (palette === undefined) {
-      palette = extractPalette(image);
-      paletteCache.set(url, palette);
+  let retries = 0;
+  let sampling = false;
+  const sample = async () => {
+    if (sampling || !image.naturalWidth || !image.naturalHeight) return;
+    sampling = true;
+    // In WebKit, img.complete can precede the pixels being available to
+    // drawImage. Wait for the actual decoded bitmap before sampling.
+    try {
+      if (typeof image.decode === 'function') await image.decode();
+      const url = image.currentSrc || image.src;
+      if (!url) return;
+      let palette = paletteCache.get(url);
+      if (palette === undefined) {
+        palette = extractPalette(image) ?? undefined;
+        if (palette) paletteCache.set(url, palette);
+      }
+      if (palette) {
+        applyPalette(surface, palette);
+      } else if (retries++ < 2) {
+        // Do not cache an empty canvas result: WebKit may finish decoding
+        // only after a paint, particularly for lazily loaded WebP images.
+        requestAnimationFrame(() => { void sample(); });
+      } else {
+        surface.dataset.glassState = 'fallback';
+      }
+    } catch {
+      if (retries++ < 2) {
+        requestAnimationFrame(() => { void sample(); });
+      } else {
+        surface.dataset.glassState = 'fallback';
+      }
+    } finally {
+      sampling = false;
     }
-    if (palette) applyPalette(surface, palette);
-    else surface.dataset.glassState = 'fallback';
   };
-  if (image.complete && image.naturalWidth > 0) sample();
-  else image.addEventListener('load', sample, { once: true });
+  if (image.complete && image.naturalWidth > 0) void sample();
+  else image.addEventListener('load', () => { void sample(); }, { once: true });
   image.addEventListener('error', () => { surface.dataset.glassState = 'fallback'; }, { once: true });
 }
 
