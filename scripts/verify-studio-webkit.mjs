@@ -36,6 +36,20 @@ async function run(){
   await desktop.goto(origin+'/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().waitFor();
   assert.ok(await desktop.locator('.gallery-card').count()>=5,'home has gallery cards');
+  const frameRatios = await desktop.locator('.gallery-card-visual').evaluateAll(elements =>
+    elements.map(element => Number.parseFloat(getComputedStyle(element).aspectRatio))
+  );
+  assert.ok(new Set(frameRatios.map(value => value.toFixed(2))).size >= 3,
+    'gallery frames should reflect source image and editorial contents rather than one fixed ratio');
+  assert.equal(await desktop.locator('.gallery-art-shape').count(),0,
+    'decorative rings must not mask content');
+  assert.equal(await desktop.locator('.gallery-card-visual--has-image').count()>=2,true,
+    'existing product media must remain in the gallery');
+  await desktop.locator('[data-gallery-filter="writing"]').click();
+  const visibleWrites = await desktop.locator('.gallery-item:not([hidden])').count();
+  assert.ok(visibleWrites > 0 && visibleWrites < frameRatios.length,'category filter narrows results');
+  await desktop.locator('[data-gallery-filter="all"]').click();
+  assert.equal(await desktop.locator('.gallery-item:not([hidden])').count(),frameRatios.length);
   assert.equal(await desktop.locator('.studio-side-rail').evaluate(el=>getComputedStyle(el).position),'fixed');
   assert.equal(await desktop.locator('.gallery-grid').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
   await ensureWithinViewport(desktop,'desktop homepage');
@@ -54,14 +68,29 @@ async function run(){
   });
   await mobile.goto(origin+'/',{waitUntil:'networkidle'});
   assert.equal(await mobile.locator('.studio-mobile-dock').evaluate(el=>getComputedStyle(el).display),'flex');
+  const mobileLogo = await mobile.locator('.studio-dock-brand').evaluate(el=>({
+    text: el.textContent, bg: getComputedStyle(el).backgroundColor
+  }));
+  assert.match(mobileLogo.text,/MYZJX/);
+  assert.ok(mobileLogo.bg==='rgba(0, 0, 0, 0)' || mobileLogo.bg==='transparent',
+    'mobile branding should be a restrained wordmark instead of an oversized filled icon');
   await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.studio-dock-menu').evaluate(el=>el.open),true);
   await mobile.locator('.studio-dock-menu > summary').click();
   await ensureWithinViewport(mobile,'mobile homepage');
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
+  const narrowPage = await browser.newPage({viewport:{width:320,height:730},isMobile:true,hasTouch:true});
+  await narrowPage.goto(origin+'/',{waitUntil:'networkidle'});
+  await ensureWithinViewport(narrowPage,'320px Safari homepage');
+  assert.equal(await narrowPage.locator('.studio-mobile-dock').evaluate(el=>getComputedStyle(el).display),'flex');
+  await narrowPage.close();
 
   await desktop.goto(origin+'/admin-shell/apps/',{waitUntil:'networkidle'});
   assert.equal(await desktop.locator('.studio-app-card').count(),3);
+  assert.equal(await desktop.locator('.studio-app-preview').count(),3,
+    'private apps should show previews of the actual workflows');
+  assert.equal(await desktop.locator('.studio-app-emblem').count(),0,
+    'oversized symbol artwork should not return');
   await desktop.screenshot({path:'artifacts/studio-apps-desktop.png',fullPage:true});
 
   let saved={title:'',body:''};
