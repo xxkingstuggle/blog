@@ -56,14 +56,67 @@ async function run(){
   await ensureWithinViewport(desktop,'desktop homepage');
   await desktop.waitForTimeout(320);
   await desktop.screenshot({path:'artifacts/studio-home-desktop.png',fullPage:true});
+  // Media quality: sample real local pixels, not one global background token.
+  const mediaCards = desktop.locator('.gallery-card--image');
+  assert.ok(await mediaCards.count() >= 2,'two original product images must remain present');
+  await mediaCards.last().scrollIntoViewIfNeeded();
+  await desktop.waitForFunction(() => {
+    const media = [...document.querySelectorAll('.gallery-card--image [data-glass-media]')];
+    return media.length >= 2 && media.every(el => el.dataset.glassState === 'sampled');
+  },null,{timeout:8000});
+  const glassMeasurements = await mediaCards.evaluateAll(cards => cards.map(card => {
+    const stage=card.querySelector('.gallery-card-visual');
+    const image=card.querySelector('img');
+    if(!stage || !image)return null;
+    const mediaBox=stage.getBoundingClientRect(), imageBox=image.getBoundingClientRect();
+    const imageStyle=getComputedStyle(image);
+    return {
+      palette:stage.style.getPropertyValue('--glass-primary-rgb').trim(),
+      stageRadius:parseFloat(getComputedStyle(stage).borderTopLeftRadius),
+      imageRadius:parseFloat(imageStyle.borderTopLeftRadius),
+      imagePadding:parseFloat(imageStyle.paddingTop),
+      imageInside:
+        imageBox.left >= mediaBox.left-1 && imageBox.top>=mediaBox.top-1 &&
+        imageBox.right <= mediaBox.right+1 && imageBox.bottom<=mediaBox.bottom+1,
+      mediaBG:getComputedStyle(stage).backgroundImage,
+    };
+  }));
+  assert.ok(glassMeasurements.every(x=>x && x.imageRadius>=9 && x.stageRadius>=x.imageRadius-2),
+    'actual picture pixels and inner stage need coherent rounded corners');
+  assert.ok(glassMeasurements.every(x=>x && x.imagePadding===0 && x.imageInside),
+    'painted image cannot be square inside a rounded padded image or overflow its stage');
+  assert.ok(new Set(glassMeasurements.map(x=>x.palette)).size >= 2,
+    'different local product images should produce different sampled glass colours');
+  assert.ok(glassMeasurements.every(x=>x?.mediaBG.includes('radial-gradient')),
+    'colour palette must diffuse through an ambient gradient');
+  await mediaCards.last().screenshot({path:'artifacts/studio-glass-card.png'});
+  await desktop.evaluate(()=>window.scrollTo(0,0));
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/software/usblinkmic/');
   assert.ok(await desktop.locator('h1').first().isVisible());
+  await desktop.waitForFunction(() =>
+    document.querySelector('.product-gallery[data-glass-media]')?.dataset.glassState === 'sampled',
+    null,{timeout:8000});
+  const productGlass=await desktop.locator('.product-gallery').evaluate(el=>{
+    const img=el.querySelector('img');
+    return { stageRadius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
+      imgRadius:img?parseFloat(getComputedStyle(img).borderTopLeftRadius):0,
+      palette:el.style.getPropertyValue('--glass-primary-rgb') };
+  });
+  assert.ok(productGlass.stageRadius>=12 && productGlass.imgRadius>=9 && productGlass.palette,
+    'product detail screenshot must keep rounded corners and its own image-colour palette');
   await desktop.goto(origin+'/posts/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/posts/*/');
   await desktop.locator('.article-prose').waitFor();
   assert.equal(await desktop.locator('h1').count()>=1,true);
+  const articleImage=desktop.locator('.gallery-detail-cover--image');
+  if(await articleImage.count()) {
+    await desktop.waitForFunction(() => document.querySelector('.gallery-detail-cover--image')?.dataset.glassState === 'sampled',
+      null,{timeout:8000});
+    const coverRadius=await articleImage.locator('img').evaluate(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius));
+    assert.ok(coverRadius>=9,'article cover image itself must have a rounded border');
+  }
   await desktop.waitForTimeout(380);
   await desktop.screenshot({path:'artifacts/studio-article-desktop.png',fullPage:true});
 
@@ -120,6 +173,15 @@ async function run(){
     'private apps should show previews of the actual workflows');
   assert.equal(await desktop.locator('.studio-app-emblem').count(),0,
     'oversized symbol artwork should not return');
+  const appGlass=await desktop.locator('.studio-app-glass').evaluateAll(elements => elements.map(el => ({
+    radius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    background:getComputedStyle(el).backgroundImage,
+    previewRadius:parseFloat(getComputedStyle(el.querySelector('.studio-preview-window')).borderTopLeftRadius)
+  })));
+  assert.equal(appGlass.length,3);
+  assert.ok(appGlass.every(x=>x.radius>=13 && x.previewRadius>=10 && x.background.includes('radial-gradient')),
+    'private app previews should have rounded, softly tinted windows');
+  assert.ok(new Set(appGlass.map(x=>x.background)).size>=3,'private app tint should match its own content');
   await desktop.screenshot({path:'artifacts/studio-apps-desktop.png',fullPage:true});
 
   let saved={title:'',body:''};
