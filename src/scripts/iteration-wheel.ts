@@ -76,6 +76,7 @@ function createOrbit(issue: IterationIssue): HTMLElement {
   indicator.setAttribute('aria-hidden', 'true');
   indicator.append(el('span', 'iteration-orbit-pointer-dot'));
   indicator.style.setProperty('--orbit-turn', '0deg');
+  indicator.dataset.targetTurn = String(issue.phase ? PHASES.indexOf(issue.phase) * 90 : 0);
   wheel.append(ambient, indicator);
   const center = el('div', 'iteration-orbit-center');
   center.append(
@@ -124,17 +125,17 @@ function createOrbit(issue: IterationIssue): HTMLElement {
   info.append(infoTitle, infoCopy, reset);
   shell.append(wheel, info);
 
-  // The pointer animates to the recorded phase when a problem expands.
-  // Decorative ambient motion is optional; the actual phase never changes.
-  const target = currentIndex >= 0 ? currentIndex * 90 : 0;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      indicator.style.setProperty('--orbit-turn', String(target) + 'deg');
-      indicator.classList.toggle('is-unknown', currentIndex < 0);
-    });
-  });
   setInspection(null);
   return shell;
+}
+function awakenOrbit(detail: HTMLElement) {
+  const indicator = detail.querySelector<HTMLElement>('.iteration-orbit-pointer');
+  if (!indicator) return;
+  const turn = indicator.dataset.targetTurn || '0';
+  indicator.style.setProperty('--orbit-turn', '0deg');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    indicator.style.setProperty('--orbit-turn', turn + 'deg');
+  }));
 }
 function makeDetails(issue: IterationIssue): HTMLElement {
   const detail = el('section', 'iteration-issue-details');
@@ -218,6 +219,7 @@ export function mountIssueBoard(root: HTMLElement) {
         if (button) button.setAttribute('aria-expanded', String(match));
         const panel = card.querySelector<HTMLElement>('.iteration-issue-details');
         if (panel) panel.hidden = !match;
+        if (panel && match) awakenOrbit(panel);
       });
     });
     article.append(trigger, details);
@@ -237,6 +239,7 @@ export function mountIssueBoard(root: HTMLElement) {
       const group = el('div', 'iteration-issue-stack');
       for (const issue of visible) group.append(buildCard(issue));
       root.append(group);
+      if (opened) { const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened); if (expanded) awakenOrbit(expanded); }
     }
     if (count) count.textContent = '显示 ' + visible.length + ' / ' + issues.length + ' 个';
     setButtons();
