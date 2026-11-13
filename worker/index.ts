@@ -789,7 +789,7 @@ async function iterationApi(request: Request, env: Env) {
       const entries = await Promise.all(ITERATION_DOCUMENTS.map(async (name) => {
         const entry = await githubFile(config, token, `${ITERATION_DIRECTORY}/${name}`);
         if (!entry?.sha || !entry.content) throw new Error('missing_iteration_file');
-        return [name, { sha: entry.sha, content: readIterationMarkdown(entry) }];
+        return [name, { sha: entry.sha, content: readIterationMarkdown(entry) }] as const;
       }));
       return json({
         repository: `${config.GITHUB_OWNER}/${config.GITHUB_REPO}`,
