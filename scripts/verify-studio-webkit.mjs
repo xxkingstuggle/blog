@@ -148,6 +148,43 @@ async function run(){
   const secondLight = await ambient.getAttribute('data-ambient-primary');
   const secondSource = await ambient.getAttribute('data-ambient-source');
   assert.ok(firstSource !== secondSource, 'hover should move the ambient field between works');
+  // Art-direction acceptance: the artwork must throw real coloured light
+  // beyond its own rectangle, not only a neutral drop shadow.
+  await productCards.first().hover({position:{x:44,y:42}});
+  await desktop.waitForTimeout(760);
+  const firstItem=productCards.first().locator('xpath=..');
+  const halo=await firstItem.evaluate(el=>{
+    const wide=getComputedStyle(el,'::before');
+    const refracted=getComputedStyle(el,'::after');
+    const card=el.querySelector('.gallery-card');
+    const a=el.getBoundingClientRect(),b=card.getBoundingClientRect();
+    return {
+      spreadOpacity:parseFloat(wide.opacity),
+      prismOpacity:parseFloat(refracted.opacity),
+      firstGlow:wide.backgroundImage,
+      secondGlow:refracted.backgroundImage,
+      offset:a.left-b.left,
+    };
+  });
+  assert.ok(halo.spreadOpacity>.78 &&
+    halo.prismOpacity>.40 &&
+    halo.firstGlow.includes('radial-gradient') &&
+    halo.secondGlow.includes('conic-gradient'),
+    'artwork light must diffuse into surrounding space with a second prismatic shape');
+  await productCards.first().hover({position:{x:65,y:65}});
+  await desktop.waitForTimeout(100);
+  const movingHighlightA=await productCards.first().evaluate(el=>el.style.getPropertyValue('--sheen-x'));
+  await productCards.first().hover({position:{x:170,y:125}});
+  await desktop.waitForTimeout(100);
+  const movingHighlightB=await productCards.first().evaluate(el=>el.style.getPropertyValue('--sheen-x'));
+  assert.ok(movingHighlightA && movingHighlightB && movingHighlightA!==movingHighlightB,
+    'specular highlight must move within the actual card under the cursor');
+  const fieldGlow=await ambient.locator('[data-ambient-layer]').first().evaluate(el=>getComputedStyle(el).backgroundImage);
+  assert.ok(fieldGlow.includes('radial-gradient') && fieldGlow.includes('linear-gradient'),
+    'chromatic atmosphere must use multiple lights rather than a single generic shadow');
+  await desktop.screenshot({path:'artifacts/studio-chromatic-hover-desktop.png',fullPage:false});
+  await productCards.first().screenshot({path:'artifacts/studio-chromatic-card.png'});
+
   // Source palettes are allowed to be similar, but the live field must track
   // each real card, never a frozen global CSS gradient.
   assert.ok(firstLight && secondLight,'global ambient field must have content-derived colour');
@@ -157,6 +194,7 @@ async function run(){
   await editorialCards.first().screenshot({path:'artifacts/studio-editorial-card.png'});
   await desktop.waitForTimeout(320);
   await desktop.screenshot({path:'artifacts/studio-home-desktop.png',fullPage:true});
+  await desktop.screenshot({path:'artifacts/studio-chromatic-overview.png',fullPage:false});
   // Media quality: sample real local pixels, not one global background token.
   const mediaCards = desktop.locator('.gallery-card--image');
   assert.ok(await mediaCards.count() >= 2,'two original product images must remain present');
@@ -304,6 +342,7 @@ async function run(){
     'mobile nested corners must follow the same concentric tokens');
   await mobile.waitForTimeout(320);
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
+  await mobile.screenshot({path:'artifacts/studio-chromatic-mobile.png',fullPage:false});
   await mobile.emulateMedia({colorScheme:'dark'});
   await mobile.waitForFunction(()=>getComputedStyle(document.body).backgroundColor!=='rgb(255, 255, 255)',
     null,{timeout:5000});

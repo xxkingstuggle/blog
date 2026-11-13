@@ -1,12 +1,12 @@
 /**
- * A single page-wide light field follows the actual gallery content.
- * It is separate from every rounded card, so the light can genuinely
- * illuminate surrounding page space instead of being clipped by media.
- * Hover/focus on desktop; viewport proximity on scroll/touch devices.
- * Two cross-fading layers prevent CSS RGB custom-property snap cuts.
+ * MYZJX / Chromatic Atmosphere v4
+ * Two painted viewport layers crossfade between local image/video palettes;
+ * the same light sits beneath the desktop glass rail and gallery.
+ * Pointer coordinates affect only the active small card, never an expensive
+ * full-viewport per-pointer shader.
  */
-type Scene = {
-  card: HTMLElement;
+type AmbientScene = {
+  element: HTMLElement;
   primary: string;
   secondary: string;
   x: number;
@@ -16,161 +16,247 @@ type Scene = {
 function bootAmbientStage(): void {
   const field = document.querySelector<HTMLElement>('[data-ambient-stage]');
   if (!field) return;
-  const layers = Array.from(field.querySelectorAll<HTMLElement>('[data-ambient-layer]'));
+  const layers = [...field.querySelectorAll<HTMLElement>('[data-ambient-layer]')];
   if (layers.length !== 2) return;
 
-  const cards = Array.from(document.querySelectorAll<HTMLElement>('.gallery-card'));
-  const covers = Array.from(document.querySelectorAll<HTMLElement>(
+  const cards = [...document.querySelectorAll<HTMLElement>('.gallery-card')];
+  const covers = [...document.querySelectorAll<HTMLElement>(
     '.gallery-detail-cover--image, .product-gallery[data-glass-media], .studio-motion-well[data-glass-media]'
-  ));
+  )];
   const sources = [...cards, ...covers];
-  if (sources.length === 0) {
-    field.hidden = true;
-    return;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const precisePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  let selected: HTMLElement | null = null;
+  let pinned: HTMLElement | null = null;
+  let selectedLayer = 0;
+  let hasRendered = false;
+  let pendingScroll = false;
+  let pointerScheduled = false;
+  let cursorX = 0;
+  let cursorY = 0;
+
+  function visible(element: HTMLElement): boolean {
+    if (element.closest('[hidden]')) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 &&
+      rect.bottom > 0 && rect.top < innerHeight &&
+      rect.right > 0 && rect.left < innerWidth;
   }
 
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  let active = 0;
-  let current: HTMLElement | null = null;
-  let pinned: HTMLElement | null = null;
-  let queued = false;
-  let didRender = false;
+  function enhance(rgb: string, fallback: [number,number,number]): string {
+    const values = rgb.split(',').map(n => Number(n.trim()));
+    if (values.length !== 3 || values.some(v => !Number.isFinite(v))) {
+      return fallback.join(', ');
+    }
+    const max = Math.max(...values), min = Math.min(...values);
+    const span = max - min;
+    if (span < 19) {
+      // Monochrome UI frames still emit a *coloured* light, rather than
+      // faint neutral grey. Their brightness informs the final tone.
+      const average = values.reduce((a,b)=>a+b,0)/3;
+      const shift = Math.max(-15,Math.min(15,(average-150)*.19));
+      return fallback.map(v => Math.round(v + shift)).join(', ');
+    }
+    const average = values.reduce((a,b)=>a+b,0)/3;
+    const boost = span < 80 ? 1.62 : 1.35;
+    const center = 154 + (average - 154) * .18;
+    return values.map(v => Math.max(42,Math.min(235,
+      Math.round(center + (v-average)*boost)))).join(', ');
+  }
 
-  const visible = (el: HTMLElement) => {
-    if (el.closest('[hidden]')) return false;
-    const rect = el.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0 && rect.bottom > 0 &&
-      rect.top < innerHeight && rect.right > 0 && rect.left < innerWidth;
-  };
-
-  function sceneFor(card: HTMLElement): Scene {
-    const surface = card.matches('.gallery-card') ?
-      card.querySelector<HTMLElement>('[data-glass-media]') ?? card : card;
-    const styles = getComputedStyle(surface);
-    const primary = styles.getPropertyValue('--glass-primary-rgb').trim() ||
-      '136, 148, 172';
-    const secondary = styles.getPropertyValue('--glass-secondary-rgb').trim() ||
-      '172, 187, 204';
-    const rect = card.getBoundingClientRect();
+  function sceneFor(element: HTMLElement): AmbientScene {
+    const surface = element.matches('.gallery-card')
+      ? element.querySelector<HTMLElement>('[data-glass-media]') ?? element
+      : element;
+    const css = getComputedStyle(surface);
+    const rawPrimary = css.getPropertyValue('--glass-primary-rgb').trim();
+    const rawSecondary = css.getPropertyValue('--glass-secondary-rgb').trim();
+    const rect = element.getBoundingClientRect();
     return {
-      card, primary, secondary,
-      x: Math.min(90, Math.max(10, (rect.left + rect.width / 2) / innerWidth * 100)),
-      y: Math.min(85, Math.max(15, (rect.top + rect.height / 2) / innerHeight * 100)),
+      element,
+      primary: enhance(rawPrimary, [112,125,214]),
+      secondary: enhance(rawSecondary, [193,129,193]),
+      x: Math.max(10,Math.min(88,
+        (rect.left + rect.width*.5)/Math.max(1,innerWidth)*100)),
+      y: Math.max(13,Math.min(84,
+        (rect.top + rect.height*.46)/Math.max(1,innerHeight)*100)),
     };
   }
 
-  function render(card: HTMLElement, force = false): void {
-    if (!force && current === card) return;
-    current = card;
-    field!.dataset.ambientScene = 'active';
-    const scene = sceneFor(card);
-    const next = didRender ? 1 - active : 0;
-    const target = layers[next];
-    target.style.setProperty('--ambient-primary-rgb', scene.primary);
-    target.style.setProperty('--ambient-secondary-rgb', scene.secondary);
-    target.style.setProperty('--ambient-x', scene.x + '%');
-    target.style.setProperty('--ambient-y', scene.y + '%');
+  function markActive(element: HTMLElement | null) {
+    for (const card of cards) {
+      const item = card.closest<HTMLElement>('.gallery-item');
+      if (item) {
+        if (card === element) item.dataset.ambientActive = 'true';
+        else delete item.dataset.ambientActive;
+      }
+    }
+  }
 
-    field!.dataset.ambientSource = card.getAttribute('href') ??
-      card.className.split(' ')[0] ?? 'media';
+  function render(element: HTMLElement, force = false, intent: 'hover'|'focus'|'scroll' = 'scroll') {
+    if (element === selected && !force) {
+      field!.dataset.ambientIntent = intent;
+      return;
+    }
+    selected = element;
+    field!.dataset.ambientScene = 'active';
+    field!.dataset.ambientIntent = intent;
+    const scene = sceneFor(element);
+    const next = hasRendered ? 1 - selectedLayer : 0;
+    const layer = layers[next];
+    layer.style.setProperty('--ambient-primary-rgb', scene.primary);
+    layer.style.setProperty('--ambient-secondary-rgb', scene.secondary);
+    layer.style.setProperty('--ambient-x', scene.x.toFixed(2)+'%');
+    layer.style.setProperty('--ambient-y', scene.y.toFixed(2)+'%');
+
+    field!.dataset.ambientSource = element.getAttribute('href') ??
+      (element.matches('.studio-motion-well') ? 'motion-scene' : element.classList[0] || 'artwork');
     field!.dataset.ambientPrimary = scene.primary;
-    if (didRender) layers[active].style.opacity = '0';
-    target.style.opacity = '1';
-    active = next;
-    didRender = true;
+    field!.dataset.ambientSecondary = scene.secondary;
+    if (hasRendered) layers[selectedLayer].style.opacity = '0';
+    layer.style.opacity = '1';
+    selectedLayer = next;
+    hasRendered = true;
+    markActive(element);
   }
 
   function closestVisible(): HTMLElement | null {
-    let winner: HTMLElement | null = null;
-    let shortest = Infinity;
-    for (const el of sources) {
-      if (!visible(el)) continue;
-      const rect = el.getBoundingClientRect();
-      const point = rect.top + Math.min(rect.height * .5, innerHeight * .35);
-      const distance = Math.abs(point - innerHeight * .48);
-      if (distance < shortest) {
-        shortest = distance;
-        winner = el;
-      }
+    let result: HTMLElement | null = null;
+    let minDistance = Infinity;
+    for (const element of sources) {
+      if (!visible(element)) continue;
+      const rect = element.getBoundingClientRect();
+      const midpoint = rect.top + Math.min(rect.height*.5,innerHeight*.37);
+      const distance = Math.abs(midpoint-innerHeight*.49);
+      if (distance < minDistance) {minDistance = distance;result = element;}
     }
-    return winner;
+    return result;
   }
 
-  function updateScroll(): void {
-    queued = false;
+  function refreshVisible(): void {
+    pendingScroll = false;
     if (pinned && visible(pinned)) return;
-    const closest = closestVisible();
-    if (closest) render(closest);
-    else field!.dataset.ambientScene = 'rest';
+    if (pinned && !visible(pinned)) pinned = null;
+    const nearest = closestVisible();
+    if (nearest) render(nearest,false,'scroll');
+    else {
+      field!.dataset.ambientScene = 'rest';
+      markActive(null);
+    }
+  }
+  function scheduleRefresh(): void {
+    if (pendingScroll) return;
+    pendingScroll = true;
+    requestAnimationFrame(refreshVisible);
   }
 
-  function requestUpdate(): void {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(updateScroll);
+  // Even content-light pages get the same subtle atmosphere, instead of a
+  // hard transition from a luminous gallery to an entirely blank route.
+  if (!sources.length) {
+    field.dataset.ambientScene = 'rest';
+    layers[0].style.opacity = '1';
+    layers[0].style.setProperty('--ambient-primary-rgb','116, 131, 208');
+    layers[0].style.setProperty('--ambient-secondary-rgb','185, 133, 194');
+    layers[0].style.setProperty('--ambient-x','58%');
+    layers[0].style.setProperty('--ambient-y','34%');
+    return;
   }
 
-  // Only precise pointers pin a hovered card; touch scroll remains viewport-driven.
-  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  if (precisePointer) {
     document.addEventListener('pointerover', event => {
       const node = event.target;
       if (!(node instanceof Element)) return;
-      const target = node.closest<HTMLElement>('.gallery-card');
-      if (!target) return;
-      pinned = target;
-      render(target);
-    }, { passive: true });
+      const card = node.closest<HTMLElement>('.gallery-card');
+      if (!card) return;
+      pinned = card;
+      render(card,false,'hover');
+    }, {passive:true});
 
     document.addEventListener('pointerout', event => {
       const node = event.target;
       if (!(node instanceof Element)) return;
       const card = node.closest<HTMLElement>('.gallery-card');
-      if (card && card === pinned) {
-        const destination = event.relatedTarget;
-        if (destination instanceof Node && card.contains(destination)) return;
-        pinned = null;
-        requestUpdate();
-      }
-    }, { passive: true });
+      if (!card || card!==pinned) return;
+      const next = event.relatedTarget;
+      if (next instanceof Node && card.contains(next)) return;
+      pinned = null;
+      card.style.removeProperty('--sheen-x');
+      card.style.removeProperty('--sheen-y');
+      const item = card.closest<HTMLElement>('.gallery-item');
+      item?.style.removeProperty('--local-glow-x');
+      item?.style.removeProperty('--local-glow-y');
+      scheduleRefresh();
+    }, {passive:true});
+
+    // A luminous glint moves over the card and the spill follows it, but
+    // only the active card's small paint surface receives pointer updates.
+    if (!reducedMotion.matches) {
+      document.addEventListener('pointermove', event => {
+        if (!pinned) return;
+        if (!(event.target instanceof Element) ||
+          event.target.closest('.gallery-card') !== pinned) return;
+        cursorX = event.clientX; cursorY = event.clientY;
+        if (pointerScheduled) return;
+        pointerScheduled = true;
+        requestAnimationFrame(() => {
+          pointerScheduled = false;
+          if (!pinned) return;
+          const rect = pinned.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          const x = Math.max(6,Math.min(94,(cursorX-rect.left)/rect.width*100));
+          const y = Math.max(6,Math.min(94,(cursorY-rect.top)/rect.height*100));
+          pinned.style.setProperty('--sheen-x',x.toFixed(1)+'%');
+          pinned.style.setProperty('--sheen-y',y.toFixed(1)+'%');
+          const item = pinned.closest<HTMLElement>('.gallery-item');
+          if (item) {
+            item.style.setProperty('--local-glow-x',x.toFixed(1)+'%');
+            item.style.setProperty('--local-glow-y',y.toFixed(1)+'%');
+          }
+        });
+      }, {passive:true});
+    }
   }
 
   document.addEventListener('focusin', event => {
-    const node = event.target;
-    if (!(node instanceof Element)) return;
-    const card = node.closest<HTMLElement>('.gallery-card');
-    if (card) {
-      pinned = card;
-      render(card);
-    }
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const card = target.closest<HTMLElement>('.gallery-card');
+    if (!card) return;
+    pinned = card;
+    render(card,false,'focus');
   });
   document.addEventListener('focusout', event => {
-    const node = event.target;
-    if (node === pinned) pinned = null;
-    requestUpdate();
+    if (!pinned) return;
+    const next = event.relatedTarget;
+    if (next instanceof Node && pinned.contains(next)) return;
+    pinned = null;
+    scheduleRefresh();
   });
+
+  // Video colour sampling is throttled separately (<=0.7 Hz). A new frame
+  // changes the two ambient layers, not a full-screen canvas read.
   document.addEventListener('glass-palette-ready', event => {
     const node = event.target;
     if (!(node instanceof HTMLElement)) return;
-    const affected = node.closest<HTMLElement>('.gallery-card') ??
-      (node.matches('.gallery-detail-cover--image, .product-gallery, .studio-motion-well') ? node : null);
-    if (affected && current === affected) render(affected, true);
+    const card = node.closest<HTMLElement>('.gallery-card') ??
+      (node.matches('.gallery-detail-cover--image,.product-gallery,.studio-motion-well') ? node : null);
+    if (card && selected === card) render(card,true,field!.dataset.ambientIntent==='hover'?'hover':'scroll');
   });
 
-  window.addEventListener('scroll', requestUpdate, { passive: true });
-  window.addEventListener('resize', requestUpdate, { passive: true });
-  document.addEventListener('click', event => {
+  window.addEventListener('scroll',scheduleRefresh,{passive:true});
+  window.addEventListener('resize',scheduleRefresh,{passive:true});
+  window.addEventListener('pageshow',scheduleRefresh);
+  document.addEventListener('click',event => {
     if (event.target instanceof Element &&
-      event.target.closest('[data-gallery-filter], [data-filter]')) {
-      requestUpdate();
-    }
+      event.target.closest('[data-gallery-filter],[data-filter]')) scheduleRefresh();
   });
-  window.addEventListener('pageshow', requestUpdate);
-  if (reduced.matches) field.dataset.ambientReduced = 'true';
-  requestUpdate();
+  if (reducedMotion.matches) field.dataset.ambientReduced = 'true';
+  scheduleRefresh();
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootAmbientStage, { once: true });
+  document.addEventListener('DOMContentLoaded',bootAmbientStage,{once:true});
 } else {
   bootAmbientStage();
 }
