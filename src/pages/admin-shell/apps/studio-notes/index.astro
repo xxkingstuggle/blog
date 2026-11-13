@@ -1,0 +1,195 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="云端便笺" description="支持自动保存、版本历史与跨设备同步的私人笔记工具。" context="云端便笺" canonicalPath="/admin/apps/studio-notes/" bodyClass="studio-private-body">
+  <main class="studio-private-shell" id="main-content">
+    <nav class="studio-private-breadcrumb" aria-label="面包屑"><a href="/admin/apps/">← 全部应用</a><span>/</span><span aria-current="page">云端便笺</span></nav>
+    <header class="studio-note-heading">
+      <div><span class="studio-private-label">STUDIO NOTES / PRIVATE</span><h1>把想法记下来<span>.</span></h1><p>所有修改保存在 Cloudflare D1，同一管理员账号在不同设备间同步。</p></div>
+      <span class="studio-sync-status" id="note-status" role="status" aria-live="polite" data-state="loading">正在连接云端…</span>
+    </header>
+
+    <div class="studio-note-layout" id="notes-app">
+      <section class="studio-note-editor" aria-label="笔记编辑器">
+        <div class="studio-note-editor-top">
+          <label for="note-title">当前便笺</label>
+          <span id="note-updated">尚未同步</span>
+        </div>
+        <input type="text" id="note-title" class="studio-note-title" maxlength="100" placeholder="给这个想法起个名字" autocomplete="off" disabled />
+        <label for="note-body" class="studio-note-body-label">正文</label>
+        <textarea id="note-body" class="studio-note-body" placeholder="从一个想法开始…&#10;&#10;每次停顿后会自动保存。" spellcheck="true" disabled></textarea>
+        <footer class="studio-note-toolbar">
+          <span id="note-counter">0 字</span>
+          <div class="studio-note-actions">
+            <button id="note-history" type="button" class="studio-note-button" disabled>历史版本</button>
+            <button id="note-export" type="button" class="studio-note-button" disabled>导出备份</button>
+            <button id="note-save" type="button" class="studio-note-button primary" disabled>立即保存 <span aria-hidden="true">↗</span></button>
+          </div>
+        </footer>
+      </section>
+
+      <aside class="studio-note-side">
+        <div class="studio-note-side-top"><span class="studio-private-label">SAVE STATE</span><span aria-hidden="true">◷</span></div>
+        <h2>每一次记录，<br/>都有迹可循。</h2>
+        <p>自动保存支持多设备访问。两台设备同时修改同一份笔记时，系统会阻止静默覆盖，保留当前编辑内容，并提示冲突。</p>
+        <dl><div><dt>数据位置</dt><dd>Cloudflare D1</dd></div><div><dt>同步方式</dt><dd>保存后拉取最新版本</dd></div><div><dt>版本编号</dt><dd id="note-revision">—</dd></div></dl>
+        <button class="studio-note-reload" type="button" id="note-refresh">↻ 从云端重新读取</button>
+      </aside>
+    </div>
+    <section class="studio-note-history" id="note-history-panel" hidden aria-labelledby="note-history-heading">
+      <div class="studio-note-history-head"><div><span class="studio-private-label">VERSION HISTORY</span><h2 id="note-history-heading">历史版本</h2></div><button id="note-close-history" type="button" class="studio-note-button">关闭</button></div>
+      <p>恢复历史记录会创建一个新版本，不会删除现有记录。最多显示最近 50 次保存。</p>
+      <ol id="note-history-list"></ol>
+    </section>
+  </main>
+</AdminLayout>
+<script>
+  type NoteContent = { title: string; body: string; [key:string]: unknown };
+  interface CloudDocument { content: NoteContent; revision: number; updatedAt: string | null; saved?: boolean; code?: string; error?: string; }
+  const BASE = '/api/admin/apps/studio-notes/documents/main';
+  const title = document.querySelector<HTMLInputElement>('#note-title')!;
+  const body = document.querySelector<HTMLTextAreaElement>('#note-body')!;
+  const status = document.querySelector<HTMLElement>('#note-status')!;
+  const updated = document.querySelector<HTMLElement>('#note-updated')!;
+  const revisionLabel = document.querySelector<HTMLElement>('#note-revision')!;
+  const counter = document.querySelector<HTMLElement>('#note-counter')!;
+  const saveButton = document.querySelector<HTMLButtonElement>('#note-save')!;
+  const exportButton = document.querySelector<HTMLButtonElement>('#note-export')!;
+  const historyButton = document.querySelector<HTMLButtonElement>('#note-history')!;
+  const historyPanel = document.querySelector<HTMLElement>('#note-history-panel')!;
+  const historyList = document.querySelector<HTMLOListElement>('#note-history-list')!;
+  let token = '';
+  let revision = 0;
+  let dirty = false;
+  let sending = false;
+  let timer = 0;
+  let savedSignature = '';
+  let pendingSignature = '';
+  const signature = () => JSON.stringify({title:title.value, body:body.value});
+  const setStatus = (message:string, state = 'ready') => { status.textContent=message; status.dataset.state=state; };
+  const updateCounter = () => { counter.textContent = [...body.value].length+' 字'; };
+  const updateButtons = () => {
+    saveButton.disabled = !token || !dirty || sending;
+    historyButton.disabled = !token;
+    exportButton.disabled = !token || !revision;
+  };
+  function setDocument(data:CloudDocument) {
+    revision = data.revision;
+    title.value = String(data.content?.title || '');
+    body.value = String(data.content?.body || '');
+    savedSignature = signature();
+    dirty = false;
+    title.disabled = false; body.disabled = false;
+    revisionLabel.textContent = String(revision);
+    updated.textContent = data.updatedAt ? '同步于 ' + new Date(data.updatedAt).toLocaleString('zh-CN') : '尚未保存';
+    updateCounter(); updateButtons();
+    setStatus(revision ? '已连接 · 云端同步' : '已连接 · 等待第一次保存');
+  }
+  async function request(path: string, init?:RequestInit):Promise<Response> {
+    const response = await fetch(path, {credentials:'same-origin',cache:'no-store',...init});
+    if (response.status === 401 || response.status === 403) {
+      if (!token || response.status === 401) location.href='/login/';
+    }
+    return response;
+  }
+  async function initialize() {
+    try {
+      const response = await request('/api/admin/session');
+      if(!response.ok) throw new Error('管理员身份验证失败');
+      const session = await response.json();
+      token = session.csrfToken;
+      const current = await request(BASE);
+      if(!current.ok) throw new Error('无法读取笔记：HTTP '+current.status);
+      setDocument(await current.json() as CloudDocument);
+    } catch(e) { setStatus(e instanceof Error ? e.message : '连接失败','error'); }
+  }
+  async function save() {
+    clearTimeout(timer);
+    if (!token || !dirty || sending) return;
+    sending = true;
+    pendingSignature = signature();
+    updateButtons(); setStatus('正在保存到 D1…','loading');
+    try {
+      const parsed = JSON.parse(pendingSignature) as NoteContent;
+      const response = await request(BASE, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-CSRF-Token':token},
+        body:JSON.stringify({content:parsed,expectedRevision:revision})
+      });
+      const result = await response.json() as CloudDocument;
+      if(response.status === 409) {
+        setStatus('版本冲突：云端有更新。你的输入尚未被覆盖。请先导出当前内容，再重新读取。','error');
+        return;
+      }
+      if(!response.ok) throw new Error(result.error || '云端保存失败');
+      revision = result.revision; savedSignature = pendingSignature;
+      dirty = signature() !== savedSignature;
+      revisionLabel.textContent = String(revision);
+      updated.textContent = '同步于 ' + new Date(result.updatedAt || Date.now()).toLocaleString('zh-CN');
+      setStatus(dirty ? '还有未保存的新修改' : '所有修改已保存','ready');
+    } catch(e) { setStatus(e instanceof Error ? e.message : '保存失败，请重试','error'); }
+    finally {
+      sending = false; updateButtons();
+      if (dirty && status.dataset.state !== 'error') timer=window.setTimeout(save,650);
+    }
+  }
+  function changed() {
+    dirty = signature() !== savedSignature;
+    updateCounter(); updateButtons();
+    clearTimeout(timer);
+    if (dirty) {setStatus('正在编辑 · 等待自动保存','pending');timer=window.setTimeout(save,650);}
+    else setStatus('所有修改已保存');
+  }
+  [title,body].forEach(input=>{input.addEventListener('input',changed);input.addEventListener('blur',()=>{if(dirty)void save();});});
+  saveButton.addEventListener('click',()=>void save());
+  document.querySelector('#note-refresh')?.addEventListener('click',async()=>{
+    if (dirty && !confirm('当前有尚未保存的内容。确认放弃本地修改并重新读取吗？')) return;
+    try {setStatus('正在重新同步…','loading');const res=await request(BASE);if(!res.ok)throw Error('读取失败');setDocument(await res.json());}
+    catch(e){setStatus('重新同步失败','error');}
+  });
+  exportButton.addEventListener('click',async()=>{
+    try {
+      // Local export includes currently typed text, so even a conflict can be backed up.
+      const backup = {format:'myzjx-private-app/v1',appId:'studio-notes',documentKey:'main',
+        exportedAt:new Date().toISOString(),revision,content:{title:title.value,body:body.value}};
+      const objectUrl = URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}));
+      const link = document.createElement('a');link.href=objectUrl;
+      link.download='myzjx-studio-notes-'+new Date().toISOString().slice(0,10)+'.json';
+      link.click();window.setTimeout(()=>URL.revokeObjectURL(objectUrl),1500);
+      setStatus('备份已导出到本地');
+    }catch{setStatus('导出失败','error');}
+  });
+  historyButton.addEventListener('click',async()=>{
+    historyPanel.hidden=false;
+    historyList.replaceChildren();
+    setStatus('正在读取历史记录…','loading');
+    try {
+      const response=await request(BASE+'/history');if(!response.ok)throw Error('历史记录读取失败');
+      const {history}=await response.json() as {history:{revision:number,savedAt:string,content:NoteContent}[]};
+      if(!history.length){const li=document.createElement('li');li.textContent='暂无历史版本';historyList.append(li);}
+      for(const record of history){
+        const li=document.createElement('li'),box=document.createElement('div'),btn=document.createElement('button');
+        const name=document.createElement('strong'),meta=document.createElement('small');
+        name.textContent=record.content.title || '未命名便笺';
+        meta.textContent='版本 '+record.revision+' · '+new Date(record.savedAt).toLocaleString('zh-CN');
+        box.append(name,meta);btn.type='button';btn.textContent='恢复这一版';btn.disabled=record.revision===revision;
+        btn.addEventListener('click',async()=>{
+          if(dirty){setStatus('请先保存或导出当前编辑内容，再恢复历史。','error');return;}
+          if(!confirm('确定恢复版本 '+record.revision+'？系统会保留现有记录并生成一个新版本。'))return;
+          try{
+            const res=await request(BASE+'/restore',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':token},
+              body:JSON.stringify({content:{targetRevision:record.revision},expectedRevision:revision})});
+            const doc=await res.json() as CloudDocument;
+            if(!res.ok)throw Error(doc.error||'恢复失败');
+            setDocument(doc);historyPanel.hidden=true;setStatus('已恢复历史版本，保存为新版本 '+doc.revision);
+          }catch(e){setStatus(e instanceof Error?e.message:'恢复失败','error');}
+        });li.append(box,btn);historyList.append(li);
+      }
+      setStatus('历史记录已载入');
+    }catch(e){setStatus(e instanceof Error?e.message:'读取失败','error');}
+  });
+  document.querySelector('#note-close-history')?.addEventListener('click',()=>historyPanel.hidden=true);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&dirty)void save();});
+  window.addEventListener('beforeunload',(event)=>{if(dirty){event.preventDefault();event.returnValue='';}});
+  void initialize();
+</script>
