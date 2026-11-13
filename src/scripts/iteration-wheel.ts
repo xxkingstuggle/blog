@@ -32,7 +32,7 @@ export function parseIterationIssues(markdown: string): IterationIssue[] {
   const issues: IterationIssue[] = [];
   const lines = markdown.split(/\r?\n/);
   for (const line of lines) {
-    if (!/^\|\s*P\d{2}\s*\|/.test(line)) continue;
+    if (!/^\|\s*P\d{2}(?:\.\d+)*\s*\|/.test(line)) continue;
     const cells = line.split('|').slice(1, -1).map(x => x.trim());
     if (cells.length !== 4 && cells.length !== 5) continue;
     const [id, title] = cells;
@@ -56,11 +56,55 @@ export interface IterationIssueRelation {
   parentId: string | null;
   chain: string;
   depth: number;
+  focus?: boolean;
 }
+const issueIdPattern = /^P\d{2}(?:\.\d+)*$/;
+
+/** The explicit private relationship table is authoritative. An older text tree is
+ * accepted only as a backwards-compatible fallback, never mixed with the table. */
 export function parseIterationIssueTree(markdown: string): IterationIssueRelation[] {
-  const header = /^## 当前问题链[^\r\n]*$/m.exec(markdown);
-  if (!header) return [];
-  const remaining = markdown.slice(header.index + header[0].length);
+  const header = /^## 问题关系[^\r\n]*$/m.exec(markdown);
+  if (header) {
+    const remaining = markdown.slice(header.index + header[0].length);
+    const boundary = remaining.search(/\r?\n## /);
+    const section = boundary < 0 ? remaining : remaining.slice(0, boundary);
+    const raw: Array<{ id: string; parentId: string | null; chain: string; focus: boolean }> = [];
+    const seen = new Set<string>();
+    for (const line of section.split(/\r?\n/)) {
+      if (!/^\|\s*P\d{2}(?:\.\d+)*\s*\|/.test(line)) continue;
+      const cells = line.split('|').slice(1, -1).map(x => x.trim());
+      if (cells.length !== 4 || !issueIdPattern.test(cells[0]) || seen.has(cells[0])) continue;
+      seen.add(cells[0]);
+      raw.push({
+        id: cells[0],
+        parentId: issueIdPattern.test(cells[1]) ? cells[1] : null,
+        chain: cells[2] || '未命名问题链',
+        focus: cells[3] === '当前'
+      });
+    }
+    if (raw.length) {
+      const byId = new Map(raw.map(row => [row.id, row]));
+      return raw.map(row => {
+        let ancestor = row.parentId;
+        const visited = new Set([row.id]);
+        let depth = 0;
+        let cyclic = false;
+        while (ancestor && byId.has(ancestor)) {
+          if (visited.has(ancestor)) { cyclic = true; break; }
+          visited.add(ancestor);
+          depth++;
+          ancestor = byId.get(ancestor)?.parentId ?? null;
+        }
+        const parentId = cyclic || (row.parentId && !byId.has(row.parentId)) ? null : row.parentId;
+        const result: IterationIssueRelation = { id: row.id, parentId, chain: row.chain, depth: parentId ? depth : 0 };
+        if (row.focus) result.focus = true;
+        return result;
+      });
+    }
+  }
+  const treeHeader = /^## 当前问题链[^\r\n]*$/m.exec(markdown);
+  if (!treeHeader) return [];
+  const remaining = markdown.slice(treeHeader.index + treeHeader[0].length);
   const boundary = remaining.search(/\r?\n## /);
   const section = boundary < 0 ? remaining : remaining.slice(0, boundary);
   const fenced = /```(?:text)?[ \t]*\r?\n([\s\S]*?)\r?\n```/.exec(section);
@@ -70,13 +114,10 @@ export function parseIterationIssueTree(markdown: string): IterationIssueRelatio
   let chain = '未命名问题链';
   const seen = new Set<string>();
   for (const line of fenced[1].split(/\r?\n/)) {
-    const match = /^([ \t│]*)(?:├|└)─\s*(P\d{2})\b/.exec(line);
+    const match = /^([ \t│]*)(?:├|└)─\s*(P\d{2}(?:\.\d+)*)\b/.exec(line);
     if (!match) {
       const name = line.trim();
-      if (name && !/[└├│]/.test(name)) {
-        chain = name;
-        ancestors.length = 0;
-      }
+      if (name && !/[└├│]/.test(name)) { chain = name; ancestors.length = 0; }
       continue;
     }
     const id = match[2];
@@ -346,7 +387,7 @@ export function mountIssueBoard(root: HTMLElement) {
         ancestor = nodes.get(ancestor)?.parentId ?? null;
       }
     }
-    const focus = [...nodes.values()].filter(n => n.inTree)
+    const focus = relations.find(r => r.focus && nodes.has(r.id))?.id ?? [...nodes.values()].filter(n => n.inTree)
       .sort((a, b) => b.depth - a.depth)[0]?.issue.id ?? null;
 
     function buildNode(node: IssueNode): HTMLElement {
@@ -429,7 +470,7 @@ export function mountIssueBoard(root: HTMLElement) {
       }
       root.append(forest);
       if (opened) {
-        const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened);
+        const expanded = document.getElementById('iteration-issue-details-' + opened);
         if (expanded && !expanded.hidden) awakenOrbit(expanded);
       }
     }
