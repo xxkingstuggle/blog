@@ -57,29 +57,30 @@ test('relationship table builds a nested issue chain without flattening the four
     '| 编号 | 父问题 | 问题链 | 焦点 |',
     '|---|---|---|---|',
     '| P01 | — | Alpha chain | |',
-    '| P07 | P01 | Alpha chain | |',
-    '| P08 | P07 | Alpha chain | 当前 |',
+    '| P01.1 | P01 | Alpha chain | |',
+    '| P01.1.1 | P01.1 | Alpha chain | 当前 |',
     '| P02 | — | Beta chain | |',
     '## 当前各问题',
     '| 编号 | 要解决什么 | 当前阶段 | 当前真实进度 | 下次关注 |',
     '|---|---|---|---|---|',
     '| P01 | Root task | 办法 | Proposal recorded | Try it |',
-    '| P07 | Execution obstacle | 行动 | Trial scheduled | Report result |',
-    '| P08 | Underlying obstacle | 问题 | Need to investigate | Pick an experiment |',
+    '| P01.1 | Execution obstacle | 行动 | Trial scheduled | Report result |',
+    '| P01.1.1 | Underlying obstacle | 问题 | Need to investigate | Pick an experiment |',
     '| P02 | Separate task | 反馈 | Feedback arrived | Review it |',
   ].join('\n');
   const links = parseIterationRelationships(markdown);
   assert.equal(links.length, 4);
-  assert.equal(links[2].parentId, 'P07');
+  assert.equal(parseIterationIssues(markdown).length, 4, 'metadata must not create phantom issues');
+  assert.equal(links[2].parentId, 'P01.1');
   assert.equal(links[2].isFocus, true);
   const groups = buildIterationTree(markdown);
   assert.deepEqual(groups.map(group => group.name), ['Alpha chain', 'Beta chain']);
   const root = groups[0].roots[0];
   assert.equal(root.id, 'P01');
   assert.equal(root.phase, '办法');
-  assert.equal(root.children[0].id, 'P07');
+  assert.equal(root.children[0].id, 'P01.1');
   assert.equal(root.children[0].phase, '行动');
-  assert.equal(root.children[0].children[0].id, 'P08');
+  assert.equal(root.children[0].children[0].id, 'P01.1.1');
   assert.equal(root.children[0].children[0].phase, '问题');
   assert.equal(root.children[0].children[0].depth, 2);
   assert.equal(root.children[0].children[0].isFocus, true);
