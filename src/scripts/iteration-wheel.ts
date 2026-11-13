@@ -174,6 +174,8 @@ function makeDetails(issue: IterationIssue): HTMLElement {
   const editButton = el('button', 'iteration-detail-edit', '查看 / 编辑原始记录');
   editButton.type = 'button';
   editButton.addEventListener('click', () => {
+    const archive = document.querySelector<HTMLDetailsElement>('#iteration-records');
+    if (archive) archive.open = true;
     const tabs = [...document.querySelectorAll<HTMLButtonElement>('#iteration-doc-tabs button')];
     tabs.find(tab => tab.dataset.file === 'iteration-current.md')?.click();
     document.querySelector('#iteration-editor-heading')?.scrollIntoView({behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start'});
