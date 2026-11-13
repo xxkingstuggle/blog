@@ -281,12 +281,24 @@ async function run(){
     null,{timeout:8000});
   const productGlass=await desktop.locator('.product-gallery').evaluate(el=>{
     const img=el.querySelector('img');
-    return { stageRadius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    const a=el.getBoundingClientRect(), b=img?.getBoundingClientRect();
+    return { single:el.classList.contains('single'),
+      stageRadius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
       imgRadius:img?parseFloat(getComputedStyle(img).borderTopLeftRadius):0,
-      palette:el.style.getPropertyValue('--glass-primary-rgb') };
+      palette:el.style.getPropertyValue('--glass-primary-rgb'),
+      ratio:parseFloat(getComputedStyle(el).aspectRatio),
+      actual:a.width/a.height,
+      widthDelta:b?Math.abs(a.width-b.width):999,
+      heightDelta:b?Math.abs(a.height-b.height):999 };
   });
-  assert.ok(productGlass.stageRadius>=12 && productGlass.imgRadius>=9 && productGlass.palette,
-    'product detail screenshot must keep rounded corners and its own image-colour palette');
+  assert.ok(productGlass.stageRadius>=12 && productGlass.palette,
+    'product image preview should preserve its outer round frame and sampled colour');
+  assert.ok(productGlass.single
+    ? productGlass.imgRadius<.2 &&
+      Math.abs(productGlass.ratio-productGlass.actual)<.03 &&
+      productGlass.widthDelta<1 && productGlass.heightDelta<1
+    : productGlass.imgRadius>=9,
+    'single screenshots must fill source-sized frames; multi-device comparisons retain separate previews');
 
   await desktop.goto(origin+'/lab/motion/',{waitUntil:'networkidle'});
   const labVideo=desktop.locator('.studio-motion-well video[data-video-light]');
