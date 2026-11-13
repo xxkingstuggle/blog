@@ -6,16 +6,20 @@ import { KIND_LABELS } from '../lib/posts';
 interface Props { post: BlogPost; }
 const { post } = Astro.props;
 const transitionStyle = 'view-transition-name: article-' + post.id.replace(/[^a-zA-Z0-9_-]/g, '-');
+const image = post.data.cover;
+const ratio = image?.width && image?.height
+  ? Math.max(1.08, Math.min(2.05, image.width / image.height))
+  : 1.72;
 ---
-<div class:list={['gallery-detail-cover', 'gallery-detail-cover--' + post.data.kind]} style={transitionStyle}>
-  {post.data.cover ? (
-    <Image src={post.data.cover} alt={post.data.title + ' 的封面'} widths={[760, 1200, 1800]} sizes="(max-width: 780px) 95vw, 1000px" format="webp" class="gallery-detail-image" />
+<div class:list={['gallery-detail-cover', 'gallery-detail-cover--' + post.data.kind, image ? 'gallery-detail-cover--image' : 'gallery-detail-cover--text']} style={transitionStyle + '; --detail-ratio: ' + ratio.toFixed(3)}>
+  {image ? (
+    <Image src={image} alt={post.data.title + ' 的文章封面'} widths={[760, 1200, 1800]} sizes="(max-width: 780px) 95vw, 1000px" format="webp" class="gallery-detail-image" />
   ) : (
-    <div class="gallery-detail-art" aria-hidden="true">
+    <div class="gallery-detail-art">
       <span class="gallery-detail-overline">MYZJX / {KIND_LABELS[post.data.kind]}</span>
-      <span class="gallery-detail-ornament"><span></span><span></span><span></span></span>
       <span class="gallery-detail-art-title">{post.data.title}</span>
-      <span class="gallery-detail-art-foot">STUDIO JOURNAL — XIN</span>
+      <span class="gallery-detail-summary">{post.data.description}</span>
+      <span class="gallery-detail-art-foot">XIN 的开发与思考记录</span>
     </div>
   )}
 </div>
