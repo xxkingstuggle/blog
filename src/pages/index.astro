@@ -9,6 +9,15 @@ const usb = SOFTWARE_PRODUCTS[0];
 const habit = SOFTWARE_PRODUCTS[1];
 const workbench = WORKBENCH_PROJECTS.slice(0, 3);
 const total = posts.length + 2 + workbench.length;
+// Keep a real product screenshot only once on the homepage. Articles that
+// reuse the same image receive a typographic cover instead of a duplicate.
+const usedImages = new Set<string>([usb.screenshot.src, habit.screenshot.src]);
+function previewForPost(post: (typeof posts)[number]) {
+  const cover = post.data.cover;
+  if (!cover || usedImages.has(cover.src)) return undefined;
+  usedImages.add(cover.src);
+  return cover;
+}
 ---
 <BaseLayout title="Xin 的作品与手记" description={siteConfig.description} image={usb.screenshot}>
   <header class="shell gallery-hero" data-reveal>
@@ -31,8 +40,7 @@ const total = posts.length + 2 + workbench.length;
   <section class="shell gallery-section" id="explore" aria-labelledby="explore-title">
     <div class="gallery-section-heading">
       <div>
-        <p class="eyebrow">THE COLLECTION / 作品集</p>
-        <h2 id="explore-title">值得留下的作品与记录</h2>
+        <h2 id="explore-title">作品与手记</h2>
       </div>
       <div class="gallery-view-tabs" role="group" aria-label="筛选公开内容">
         <button type="button" data-gallery-filter="all" aria-pressed="true">全部</button>
@@ -54,7 +62,7 @@ const total = posts.length + 2 + workbench.length;
             description={post.data.description} category={KIND_LABELS[post.data.kind]}
             meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
             tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
-            image={post.data.cover} index={index + 1} transitionKey={'article-' + post.id} />
+            image={previewForPost(post)} index={index + 1} transitionKey={'article-' + post.id} />
         </div>
       ))}
       <div class="gallery-item" data-gallery-kind="work" data-reveal>
@@ -68,7 +76,7 @@ const total = posts.length + 2 + workbench.length;
           <GalleryCard href={'/posts/' + post.id + '/'} title={post.data.title}
             description={post.data.description} category={KIND_LABELS[post.data.kind]}
             meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
-            image={post.data.cover} tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
+            image={previewForPost(post)} tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
             index={index + 4} transitionKey={'article-' + post.id} />
         </div>
       ))}
