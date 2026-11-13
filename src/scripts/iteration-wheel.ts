@@ -46,6 +46,90 @@ export function parseIterationIssues(markdown: string): IterationIssue[] {
   return issues;
 }
 
+
+export interface IterationRelationship {
+  id: string;
+  parentId: string | null;
+  chain: string;
+  isFocus: boolean;
+}
+export interface IterationTreeNode extends IterationIssue {
+  parentId: string | null;
+  chain: string;
+  isFocus: boolean;
+  depth: number;
+  children: IterationTreeNode[];
+}
+export interface IterationTreeGroup {
+  name: string;
+  roots: IterationTreeNode[];
+}
+
+/** The relationship table is kept in private Markdown, never in public source. */
+export function parseIterationRelationships(markdown: string): IterationRelationship[] {
+  const result: IterationRelationship[] = [];
+  let inSection = false;
+  for (const line of markdown.split(/\r?\n/)) {
+    if (/^##\s+问题关系（供画板读取）/.test(line)) { inSection = true; continue; }
+    if (inSection && /^##\s+/.test(line)) break;
+    if (!inSection || !/^\|\s*P\d{2}\s*\|/.test(line)) continue;
+    const cells = line.split('|').slice(1, -1).map(value => value.trim());
+    if (cells.length !== 4 || result.some(x => x.id === cells[0])) continue;
+    const [id, rawParent, rawChain, rawFocus] = cells;
+    const parentId = /^P\d{2}$/.test(rawParent) && rawParent !== id ? rawParent : null;
+    result.push({
+      id,
+      parentId,
+      chain: rawChain || '其他问题',
+      isFocus: rawFocus === '当前'
+    });
+  }
+  return result;
+}
+
+export function buildIterationTree(markdown: string): IterationTreeGroup[] {
+  const issues = parseIterationIssues(markdown);
+  const links = new Map(parseIterationRelationships(markdown).map(link => [link.id, link]));
+  const nodes = new Map<string, IterationTreeNode>();
+  for (const issue of issues) {
+    const link = links.get(issue.id);
+    nodes.set(issue.id, {
+      ...issue, parentId: link?.parentId || null, chain: link?.chain || '其他问题',
+      isFocus: link?.isFocus || false, depth: 0, children: []
+    });
+  }
+  // Never trust a Markdown parent link blindly: unknown parents, cross-chain
+  // references and cycles become independent roots instead of hiding nodes.
+  for (const node of nodes.values()) {
+    let parentId = node.parentId;
+    const seen = new Set([node.id]);
+    let valid = true;
+    while (parentId) {
+      const parent = nodes.get(parentId);
+      if (!parent || parent.chain !== node.chain || seen.has(parentId)) { valid = false; break; }
+      seen.add(parentId);
+      parentId = parent.parentId;
+    }
+    if (!valid) node.parentId = null;
+  }
+  for (const node of nodes.values()) {
+    const parent = node.parentId ? nodes.get(node.parentId) : null;
+    if (parent) parent.children.push(node);
+  }
+  const groups = new Map<string, IterationTreeGroup>();
+  for (const node of nodes.values()) {
+    if (node.parentId) continue;
+    if (!groups.has(node.chain)) groups.set(node.chain, { name: node.chain, roots: [] });
+    groups.get(node.chain)!.roots.push(node);
+  }
+  function assignDepth(node: IterationTreeNode, depth: number) {
+    node.depth = depth;
+    node.children.forEach(child => assignDepth(child, depth + 1));
+  }
+  for (const group of groups.values()) group.roots.forEach(node => assignDepth(node, 0));
+  return [...groups.values()];
+}
+
 function createOrbit(issue: IterationIssue): HTMLElement {
   const shell = el('div', 'iteration-orbit-shell');
   const wheel = el('div', 'iteration-orbit');
@@ -187,12 +271,22 @@ function makeDetails(issue: IterationIssue): HTMLElement {
 }
 export function mountIssueBoard(root: HTMLElement) {
   let issues: IterationIssue[] = [];
+  let groups: IterationTreeGroup[] = [];
   let opened: string | null = null;
   let query = '';
   let filter: Phase | 'all' | 'unknown' = 'all';
+  const collapsed = new Set<string>();
   const count = document.querySelector<HTMLElement>('#iteration-progress-count');
   const search = document.querySelector<HTMLInputElement>('#iteration-search');
   const filters = [...document.querySelectorAll<HTMLButtonElement>('[data-iteration-filter]')];
+
+  function allNodes(): IterationTreeNode[] {
+    const nodes: IterationTreeNode[] = [];
+    function walk(node: IterationTreeNode) { nodes.push(node); node.children.forEach(walk); }
+    groups.forEach(group => group.roots.forEach(walk));
+    return nodes;
+  }
+
   function setButtons() {
     for (const b of filters) {
       const key = b.dataset.iterationFilter as typeof filter;
@@ -200,27 +294,49 @@ export function mountIssueBoard(root: HTMLElement) {
       b.classList.toggle('is-selected', active);
       b.setAttribute('aria-pressed', String(active));
       const qty = key === 'all' ? issues.length
-        : issues.filter(i => key === 'unknown' ? i.phase === null : i.phase === key).length;
+        : issues.filter(issue => key === 'unknown' ? issue.phase === null : issue.phase === key).length;
       const qtyEl = b.querySelector<HTMLElement>('.iteration-filter-count');
       if (qtyEl) qtyEl.textContent = String(qty);
     }
   }
-  function buildCard(issue: IterationIssue) {
+
+  function openIssue(id: string) {
+    opened = id;
+    // The focused node and all its ancestors must be visible, even when
+    // the user had manually folded an earlier branch.
+    const lookup = new Map(allNodes().map(node => [node.id, node]));
+    let node = lookup.get(id);
+    while (node?.parentId) {
+      collapsed.delete(node.parentId);
+      node = lookup.get(node.parentId);
+    }
+    paint();
+    const target = root.querySelector<HTMLElement>('[data-issue-id="' + id + '"]');
+    target?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
+  }
+
+  function buildCard(issue: IterationTreeNode, isContext: boolean) {
     const article = el('article', 'iteration-issue-card');
     if (opened === issue.id) article.classList.add('is-open');
+    if (isContext) article.classList.add('is-context');
+    if (issue.isFocus) article.classList.add('is-focus');
     article.dataset.issueId = issue.id;
+
     const trigger = el('button', 'iteration-issue-trigger');
     trigger.type = 'button';
     trigger.setAttribute('aria-expanded', String(opened === issue.id));
     trigger.setAttribute('aria-controls', 'iteration-issue-details-' + issue.id);
     const index = el('span', 'iteration-issue-index', issue.id);
     const main = el('span', 'iteration-issue-main');
-    main.append(el('strong', 'iteration-issue-name', issue.title), el('small', 'iteration-issue-summary', issue.progress));
+    const label = el('span', 'iteration-tree-depth-label', issue.depth === 0 ? '主问题' : '第 ' + (issue.depth + 1) + ' 层 · 衍生问题');
+    if (issue.isFocus) label.append(el('span', 'iteration-tree-active-marker', '当前卡点'));
+    main.append(label, el('strong', 'iteration-issue-name', issue.title), el('small', 'iteration-issue-summary', issue.progress));
     const badge = el('span', 'iteration-issue-phase', issue.phase || '待确认');
     badge.dataset.phase = issue.phase || 'unknown';
     const chevron = el('span', 'iteration-issue-chevron', '⌄');
     chevron.setAttribute('aria-hidden', 'true');
     trigger.append(index, main, badge, chevron);
+
     const details = makeDetails(issue);
     details.hidden = opened !== issue.id;
     trigger.addEventListener('click', () => {
@@ -239,29 +355,116 @@ export function mountIssueBoard(root: HTMLElement) {
     article.append(trigger, details);
     return article;
   }
+
+  function matches(node: IterationTreeNode, normalized: string) {
+    const phaseMatch = filter === 'all' || (filter === 'unknown' ? node.phase === null : node.phase === filter);
+    const content = [node.id, node.title, node.progress, node.next, node.chain].join(' ').toLocaleLowerCase();
+    return phaseMatch && (!normalized || content.includes(normalized));
+  }
+
   function paint() {
     const normalized = query.trim().toLocaleLowerCase();
-    const visible = issues.filter(issue => {
-      const matchesPhase = filter === 'all' || (filter === 'unknown' ? issue.phase === null : issue.phase === filter);
-      const searchable = [issue.id, issue.title, issue.progress, issue.next].join(' ').toLocaleLowerCase();
-      return matchesPhase && (!normalized || searchable.includes(normalized));
-    });
+    const filtering = normalized.length > 0 || filter !== 'all';
+    const isMatch = (node: IterationTreeNode) => matches(node, normalized);
+    const branchMatches = (node: IterationTreeNode): boolean =>
+      isMatch(node) || node.children.some(branchMatches);
+    const visibleCount = issues.filter(issue => {
+      const node = allNodes().find(item => item.id === issue.id);
+      return node && isMatch(node);
+    }).length;
     root.replaceChildren();
-    if (!visible.length) {
-      root.append(el('p', 'iteration-issues-empty', issues.length ? '没有符合条件的问题，试试清除搜索或切换阶段。' : '暂无可读取的问题记录。'));
-    } else {
-      const group = el('div', 'iteration-issue-stack');
-      for (const issue of visible) group.append(buildCard(issue));
-      root.append(group);
-      if (opened) { const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened); if (expanded) awakenOrbit(expanded); }
+
+    const focus = allNodes().find(node => node.isFocus);
+    if (focus) {
+      const lookup = new Map(allNodes().map(node => [node.id, node]));
+      const path: IterationTreeNode[] = [];
+      let current: IterationTreeNode | undefined = focus;
+      const visited = new Set<string>();
+      while (current && !visited.has(current.id)) {
+        path.unshift(current);
+        visited.add(current.id);
+        current = current.parentId ? lookup.get(current.parentId) : undefined;
+      }
+      const trail = el('nav', 'iteration-tree-trail');
+      trail.setAttribute('aria-label', '当前正在深入的问题链');
+      const lead = el('span', 'iteration-tree-trail-lead', '当前深入');
+      trail.append(lead);
+      path.forEach((node, i) => {
+        if (i) {
+          const separator = el('span', 'iteration-tree-trail-separator', '›');
+          separator.setAttribute('aria-hidden', 'true');
+          trail.append(separator);
+        }
+        const button = el('button', 'iteration-tree-trail-link', node.id + ' ' + node.title);
+        button.type = 'button';
+        if (node.id === focus.id) button.classList.add('is-current');
+        button.addEventListener('click', () => {
+          query = ''; filter = 'all';
+          if (search) search.value = '';
+          openIssue(node.id);
+        });
+        trail.append(button);
+      });
+      root.append(trail);
     }
-    if (count) count.textContent = '显示 ' + visible.length + ' / ' + issues.length + ' 个';
+
+    function buildNode(node: IterationTreeNode): HTMLElement {
+      const wrapper = el('div', 'iteration-tree-node');
+      wrapper.dataset.depth = String(node.depth);
+      wrapper.append(buildCard(node, filtering && !isMatch(node)));
+      const children = node.children.filter(child => !filtering || branchMatches(child));
+      if (children.length) {
+        const subtreeId = 'iteration-tree-children-' + node.id;
+        const closed = !filtering && collapsed.has(node.id);
+        const fold = el('button', 'iteration-tree-fold');
+        fold.type = 'button';
+        fold.setAttribute('aria-expanded', String(!closed));
+        fold.setAttribute('aria-controls', subtreeId);
+        fold.append(
+          el('span', '', closed ? '展开下层问题' : '收起下层问题'),
+          el('span', 'iteration-tree-fold-count', String(children.length))
+        );
+        fold.addEventListener('click', () => {
+          if (collapsed.has(node.id)) collapsed.delete(node.id); else collapsed.add(node.id);
+          paint();
+        });
+        const childList = el('div', 'iteration-tree-children');
+        childList.id = subtreeId;
+        childList.hidden = closed;
+        children.forEach(child => childList.append(buildNode(child)));
+        wrapper.append(fold, childList);
+      }
+      return wrapper;
+    }
+
+    let groupCount = 0;
+    for (const group of groups) {
+      const visibleRoots = group.roots.filter(node => !filtering || branchMatches(node));
+      if (!visibleRoots.length) continue;
+      groupCount++;
+      const section = el('section', 'iteration-tree-group');
+      section.setAttribute('aria-label', group.name + '问题链');
+      const header = el('div', 'iteration-tree-group-head');
+      const left = el('div', 'iteration-tree-group-copy');
+      left.append(el('span', 'iteration-tree-group-kicker', 'PROBLEM CHAIN / ' + String(groupCount).padStart(2, '0')));
+      left.append(el('h3', 'iteration-tree-group-title', group.name));
+      header.append(left, el('span', 'iteration-tree-group-count', String(visibleRoots.length) + ' 个主问题'));
+      section.append(header);
+      const tree = el('div', 'iteration-tree-roots');
+      visibleRoots.forEach(node => tree.append(buildNode(node)));
+      section.append(tree);
+      root.append(section);
+    }
+    if (!groupCount) root.append(el('p', 'iteration-issues-empty', issues.length ? '没有符合条件的问题，试试清除搜索或切换阶段。' : '暂无可读取的问题记录。'));
+    if (opened) {
+      const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened);
+      if (expanded && !expanded.hidden) awakenOrbit(expanded);
+    }
+    if (count) count.textContent = '显示 ' + visibleCount + ' / ' + issues.length + ' 个 · ' + groupCount + ' 条问题链';
     setButtons();
   }
-  search?.addEventListener('input', () => {
-    query = search.value;
-    paint();
-  });
+
+  search?.addEventListener('input', () => { query = search.value; paint(); });
   filters.forEach(button => button.addEventListener('click', () => {
     const key = button.dataset.iterationFilter;
     if (key === 'all' || key === 'unknown' || PHASES.includes(key as Phase)) {
@@ -272,7 +475,8 @@ export function mountIssueBoard(root: HTMLElement) {
   return {
     render(markdown: string) {
       issues = parseIterationIssues(markdown);
-      if (!issues.some(x => x.id === opened)) opened = null;
+      groups = buildIterationTree(markdown);
+      if (!issues.some(issue => issue.id === opened)) opened = null;
       paint();
     }
   };
