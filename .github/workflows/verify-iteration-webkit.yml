@@ -9,6 +9,8 @@ on:
       - 'src/styles/godly.css'
       - 'src/styles/godly-fidelity.css'
       - 'src/styles/glass-media.css'
+      - 'src/styles/ambient-editorial.css'
+      - 'src/scripts/ambient-stage.ts'
       - 'src/styles/admin-glass.css'
       - 'src/scripts/glass-palette.ts'
       - 'src/components/SiteHeader.astro'
