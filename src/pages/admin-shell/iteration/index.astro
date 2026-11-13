@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
+import '../../../styles/iteration.css';
 ---
 
 <AdminLayout title="个人迭代系统" description="仅管理员可访问的个人迭代画板与 Markdown 资料工作台。" context="个人迭代系统" canonicalPath="/admin/iteration/">
@@ -110,61 +111,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
   </main>
 </AdminLayout>
 
-<style>
-.iteration-page {max-width:1160px;margin:0 auto;padding:35px 22px 80px;color:var(--text-primary,var(--text,#1e2c3f))}
-.iteration-top,.iteration-panel-heading,.iteration-editor-footer{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
-.iteration-kicker,.iteration-eyebrow{color:#7a91ad;font-size:11px;letter-spacing:.13em;font-weight:750;margin:0 0 8px}
-.iteration-top h1{font-size:clamp(27px,4vw,40px);line-height:1.15;margin:0 0 8px}
-.iteration-subtitle,.iteration-muted{color:var(--text-muted,#708095);font-size:13px;line-height:1.6}
-.iteration-subtitle{margin:0}
-.iteration-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.iteration-link{font-size:13px;color:#769bc6;text-decoration:none}
-.iteration-link:hover{text-decoration:underline}
-.iteration-button,.iteration-doc-tabs button{border:0;background:#456c9c;color:white;padding:10px 15px;border-radius:9px;cursor:pointer;font:inherit;font-size:13px;font-weight:650}
-.iteration-button.secondary{background:var(--surface-subtle,#eaf0f6);color:var(--text-primary,#37485c);border:1px solid var(--line,#d3dce5)}
-.iteration-button:disabled{opacity:.4;cursor:not-allowed}
-.iteration-state{border-radius:10px;margin:19px 0;padding:12px 15px;background:var(--surface-subtle,#eff3f8);font-size:13px;color:var(--text-muted,#607084)}
-.iteration-state[data-status="error"]{background:#fff1e9;color:#955b3b}
-.iteration-state[data-status="ready"]{background:#eaf3ec;color:#356347}
-.iteration-goal{text-align:center;border-radius:19px;background:#1b3553;color:white;padding:28px 18px;margin:12px 0}
-.iteration-goal p{color:#b7cce2;font-size:12px;margin:0}
-.iteration-goal h2{font-size:clamp(20px,3vw,28px);margin:9px 0;letter-spacing:-.025em}
-.iteration-goal span{font-size:13px;color:#c0d1e2}
-.iteration-columns,.iteration-board-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
-.iteration-panel{background:var(--surface,#fff);border:1px solid var(--line,#dce4ee);border-radius:15px;padding:20px;min-width:0}
-.iteration-panel h3,.iteration-panel h2{font-size:17px;margin:0 0 9px}
-.iteration-panel>p:not(.iteration-eyebrow),.iteration-panel-heading p{font-size:13px;color:var(--text-muted,#708095);line-height:1.6}
-.iteration-cycle{border:2px solid #7d9ec9;background:var(--surface-subtle,#f1f6fd);border-radius:19px;padding:20px;margin-top:14px}
-.iteration-cycle h2{font-size:18px;margin:0 0 14px}
-.iteration-step-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.iteration-step{background:var(--surface,#fff);color:var(--text-primary,#223043);text-align:left;border:1px solid var(--line,#dce5ef);padding:16px;border-radius:11px;cursor:pointer;min-height:142px}
-.iteration-step.is-selected{outline:2px solid #7eacde}
-.iteration-step span{font-size:11px;color:#85a2c4;font-weight:700}
-.iteration-step strong{display:block;font-size:17px;margin:7px 0}
-.iteration-step small{font-size:12px;color:var(--text-muted,#6d8196);line-height:1.65}
-.iteration-step-detail{font-size:13px;color:#53749a;margin:15px 0 0;line-height:1.7}
-.iteration-pill{display:inline-block;padding:6px 10px;border-radius:20px;background:var(--surface-subtle,#edf2f8);font-size:12px;color:#7292b3}
-.iteration-progress-list{display:grid;gap:9px}
-.iteration-progress-item{display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--line,#ebeff4);padding-top:10px}
-.iteration-progress-item code{padding:4px 6px;border-radius:6px;background:var(--surface-subtle,#eff4f8);color:#5d84b1}
-.iteration-progress-item strong{font-size:13px;font-weight:650;display:block}
-.iteration-progress-item p{margin:5px 0 0;font-size:12px;color:var(--text-muted,#728294);line-height:1.55}
-.iteration-question-tree{display:grid;gap:9px}
-.iteration-question-tree div{border-left:2px solid #a2bddb;padding:8px 12px;background:var(--surface-subtle,#f0f5fb);border-radius:0 8px 8px 0}
-.iteration-question-tree strong{font-size:11px;color:#6d8fb5;display:block;margin-bottom:5px}
-.iteration-question-tree span{font-size:13px;line-height:1.6}
-.iteration-editor-panel{margin-top:14px}
-.iteration-doc-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
-.iteration-doc-tabs button{color:var(--text-muted,#667c93);background:var(--surface-subtle,#eff3f8);border:1px solid var(--line,#dce5ed)}
-.iteration-doc-tabs button.is-selected{background:#2d507b;color:white;border-color:#2d507b}
-.iteration-editor-label{display:block;font-size:12px;color:var(--text-muted,#71829a);margin-bottom:8px}
-.iteration-textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:400px;padding:15px;background:var(--surface-subtle,#f8fafc);color:var(--text-primary,#25344b);border:1px solid var(--line,#d9e4ef);border-radius:9px;font:12px/1.75 ui-monospace,SFMono-Regular,Consolas,monospace}
-.iteration-textarea:focus{outline:2px solid #83a9d4}
-.iteration-editor-footer{margin-top:12px;align-items:center}
-.iteration-footer{color:var(--text-muted,#738498);font-size:12px;margin-top:22px;line-height:1.6}
-@media(max-width:760px){.iteration-columns,.iteration-board-grid{grid-template-columns:1fr}.iteration-step-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.iteration-top h1{font-size:26px}}
-@media(max-width:440px){.iteration-page{padding:23px 13px 50px}.iteration-step-grid{grid-template-columns:1fr}.iteration-step{min-height:auto}}
-</style>
 <script>
 const detailTexts=[
   'AI 可以协助把模糊经历变成准确的问题；是否值得解决，由你确认。',
