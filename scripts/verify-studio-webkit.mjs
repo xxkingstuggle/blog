@@ -54,6 +54,52 @@ async function run(){
   assert.equal(await desktop.locator('.gallery-grid').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
   await desktop.waitForFunction(() => document.querySelector('.gallery-grid')?.dataset.masonry === 'true');
   await ensureWithinViewport(desktop,'desktop homepage');
+
+  // Three radii must be mathematically related. Never hard-code unrelated values.
+  const nestedRadius = await desktop.locator('.gallery-card--image').first().evaluate(card => {
+    const stage = card.querySelector('.gallery-card-visual');
+    const image = card.querySelector('.gallery-card-image');
+    const c = getComputedStyle(card);
+    const s = getComputedStyle(stage);
+    const i = getComputedStyle(image);
+    return {
+      outer: parseFloat(c.borderTopLeftRadius),
+      inset: parseFloat(c.paddingLeft),
+      stage: parseFloat(s.borderTopLeftRadius),
+      gap: (stage.getBoundingClientRect().width - image.getBoundingClientRect().width) / 2,
+      image: parseFloat(i.borderTopLeftRadius),
+      stageBox: stage.getBoundingClientRect().width,
+      imageBox: image.getBoundingClientRect().width
+    };
+  });
+  assert.ok(Math.abs(nestedRadius.outer - nestedRadius.inset - nestedRadius.stage)<.6,
+    'middle radius must equal outer radius minus true shell inset');
+  const declaredMediaInset = await desktop.locator('.gallery-card--image').first()
+    .evaluate(card => parseFloat(getComputedStyle(card).getPropertyValue('--media-inset')));
+  assert.ok(Math.abs(nestedRadius.stage - declaredMediaInset - nestedRadius.image)<.6,
+    'image radius must be concentric with the stage radius and media inset');
+
+  const editorialCards = desktop.locator('.gallery-card--editorial');
+  assert.ok(await editorialCards.count()>=2,'text-only cards should have their own compositions');
+  assert.ok(await desktop.locator('.gallery-card-art--layout-0, .gallery-card-art--layout-1, .gallery-card-art--layout-2').count()>=2,
+    'text cards should use distinct editorial treatments');
+  const ambient = desktop.locator('[data-ambient-stage]');
+  await desktop.waitForFunction(() => Boolean(document.querySelector('[data-ambient-stage]')?.getAttribute('data-ambient-primary')));
+  const productCards=desktop.locator('.gallery-card--image');
+  await productCards.first().hover();
+  const firstLight = await ambient.getAttribute('data-ambient-primary');
+  const firstSource = await ambient.getAttribute('data-ambient-source');
+  await productCards.nth(1).hover();
+  const secondLight = await ambient.getAttribute('data-ambient-primary');
+  const secondSource = await ambient.getAttribute('data-ambient-source');
+  assert.ok(firstSource !== secondSource, 'hover should move the ambient field between works');
+  // Source palettes are allowed to be similar, but the live field must track
+  // each real card, never a frozen global CSS gradient.
+  assert.ok(firstLight && secondLight,'global ambient field must have content-derived colour');
+  const localGlow = await desktop.locator('.gallery-item').first().evaluate(el => getComputedStyle(el,'::before').backgroundImage);
+  assert.ok(localGlow.includes('radial-gradient'), 'nearby cards must illuminate their surrounding whitespace');
+  await desktop.screenshot({path:'artifacts/studio-ambient-hover-desktop.png',fullPage:false});
+  await editorialCards.first().screenshot({path:'artifacts/studio-editorial-card.png'});
   await desktop.waitForTimeout(320);
   await desktop.screenshot({path:'artifacts/studio-home-desktop.png',fullPage:true});
   // Media quality: sample real local pixels, not one global background token.
@@ -156,6 +202,22 @@ async function run(){
   assert.equal(await mobile.locator('.gallery-grid').first().getAttribute('data-masonry'), null,
     'single-column mobile layout must retain natural document order');
   await ensureWithinViewport(mobile,'mobile homepage');
+  assert.ok(await mobile.locator('[data-ambient-stage]').count() === 1,
+    'touch devices should keep a single lightweight page background field');
+  const mobileRad = await mobile.locator('.gallery-card--image').first().evaluate(el => {
+    const stage=el.querySelector('.gallery-card-visual');
+    const img=el.querySelector('.gallery-card-image');
+    return [
+      parseFloat(getComputedStyle(el).borderTopLeftRadius),
+      parseFloat(getComputedStyle(el).paddingLeft),
+      parseFloat(getComputedStyle(stage).borderTopLeftRadius),
+      parseFloat(getComputedStyle(img).borderTopLeftRadius),
+      parseFloat(getComputedStyle(el).getPropertyValue('--media-inset'))
+    ];
+  });
+  assert.ok(Math.abs(mobileRad[0]-mobileRad[1]-mobileRad[2])<.6 &&
+    Math.abs(mobileRad[2]-mobileRad[4]-mobileRad[3])<.6,
+    'mobile nested corners must follow the same concentric tokens');
   await mobile.waitForTimeout(320);
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
   await mobile.emulateMedia({colorScheme:'dark'});

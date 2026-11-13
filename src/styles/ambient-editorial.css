@@ -1,0 +1,385 @@
+/*
+ * The ambient scene is deliberately outside card clipping.
+ * Nested shapes use one concentric construction: outer 30px, 8px inset,
+ * media stage 22px, image margin 10px -> native media radius 12px.
+ * This layer is last in global.css and owns final geometry.
+ */
+
+/* Ambient lights occupy the actual surrounding page, not a clipped card. */
+.front-body .studio-ambient-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  contain: paint;
+  opacity: 1;
+}
+.front-body .studio-ambient-stage[hidden] { display: none; }
+.front-body .studio-ambient-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  --ambient-x: 50%;
+  --ambient-y: 40%;
+  --ambient-primary-rgb: 120, 142, 166;
+  --ambient-secondary-rgb: 170, 187, 206;
+  background:
+    radial-gradient(ellipse 63vmax 54vmax at var(--ambient-x) var(--ambient-y),
+      rgba(var(--ambient-primary-rgb), .23) 0%,
+      rgba(var(--ambient-primary-rgb), .12) 35%,
+      rgba(var(--ambient-primary-rgb), .035) 57%, transparent 76%),
+    radial-gradient(ellipse 54vmax 61vmax at
+      calc(var(--ambient-x) + 16%) calc(var(--ambient-y) + 11%),
+      rgba(var(--ambient-secondary-rgb), .145) 0%,
+      rgba(var(--ambient-secondary-rgb), .05) 45%, transparent 76%);
+  filter: blur(24px);
+  transition: opacity 850ms cubic-bezier(.22,1,.36,1);
+  will-change: opacity;
+}
+.front-body #main-content { position: relative; z-index: 1; }
+.front-body .site-header,
+.front-body .studio-mobile-dock { z-index: 30; }
+
+/* Every card also leaks a very soft, palette-bound halo into the gaps. */
+.front-body .gallery-item {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+.front-body .gallery-item::before {
+  content: '';
+  position: absolute;
+  inset: -23px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 24%, rgba(var(--glass-primary-rgb, 130, 149, 172), .22), transparent 64%),
+    radial-gradient(ellipse at 78% 76%, rgba(var(--glass-secondary-rgb, 180, 194, 204), .18), transparent 65%);
+  filter: blur(23px);
+  opacity: .64;
+  transition: opacity .3s ease;
+}
+@media(hover:hover) and (pointer:fine) {
+  .front-body .gallery-item:hover::before { opacity: 1; }
+}
+
+/* Geometry is derived, never three unrelated radius declarations. */
+.front-body .gallery-card {
+  --card-radius: 30px;
+  --card-inset: 8px;
+  --media-inset: 10px;
+  --stage-radius: calc(var(--card-radius) - var(--card-inset));
+  --image-radius: calc(var(--stage-radius) - var(--media-inset));
+  position: relative;
+  z-index: 1;
+  padding: var(--card-inset);
+  border-radius: var(--card-radius);
+  overflow: visible;
+  isolation: isolate;
+  border-color: rgba(var(--glass-primary-rgb, 125, 146, 163), .16);
+  box-shadow: 0 2px 14px rgba(24,38,55,.035), inset 0 1px 0 rgba(255,255,255,.34);
+}
+.front-body .gallery-card .gallery-card-visual,
+.front-body .gallery-card .gallery-card-visual--has-image,
+.front-body .gallery-card .gallery-card-visual--text {
+  border-radius: var(--stage-radius);
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: linear-gradient(white, black);
+}
+.front-body .gallery-card .gallery-card-visual--has-image .gallery-card-image {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--image-radius);
+  max-width: calc(100% - 2 * var(--media-inset));
+  max-height: calc(100% - 2 * var(--media-inset));
+  margin: auto;
+  object-fit: contain;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(10,25,46,.105), 0 0 0 1px rgba(255,255,255,.2);
+}
+.front-body .gallery-card--image .gallery-card-info {
+  border-radius: 0 0 calc(var(--card-radius) - var(--card-inset)) calc(var(--card-radius) - var(--card-inset));
+  padding: 13px 9px 12px;
+}
+
+/* Make the stage feel material, while keeping a clean image boundary. */
+.front-body .gallery-card .gallery-card-visual--has-image {
+  background:
+    radial-gradient(ellipse at 16% 23%,rgba(var(--glass-primary-rgb),.36), transparent 63%),
+    radial-gradient(ellipse at 87% 83%,rgba(var(--glass-secondary-rgb),.3), transparent 60%),
+    linear-gradient(145deg,rgba(255,255,255,.64),rgba(237,242,246,.77));
+}
+.front-body .gallery-card .gallery-card-visual--has-image::after {
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 0 0 1px rgba(255,255,255,.12);
+}
+
+/* Software shots are readable product photography, not a background texture. */
+.front-body .gallery-card--software .gallery-card-visual {
+  background:
+    radial-gradient(ellipse at 20% 20%,rgba(var(--glass-primary-rgb),.3),transparent 65%),
+    radial-gradient(ellipse at 80% 80%,rgba(var(--glass-secondary-rgb),.24),transparent 65%),
+    linear-gradient(145deg,#f6f8fa,#e7ebf1);
+}
+.front-body .gallery-product-flag {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 4;
+  color: #29364c;
+  font: 650 9px/1.1 var(--font-sans);
+  letter-spacing: .09em;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.62);
+  border: 1px solid rgba(255,255,255,.45);
+  -webkit-backdrop-filter: blur(9px) saturate(118%);
+  backdrop-filter: blur(9px) saturate(118%);
+  pointer-events: none;
+}
+
+/* Real editorial art can become a visual poster with a protected title. */
+.front-body .gallery-card--poster .gallery-card-visual--has-image {
+  position: relative;
+}
+.front-body .gallery-card--poster .gallery-card-visual--has-image .gallery-card-image {
+  width: calc(100% - 2 * var(--media-inset));
+  height: calc(100% - 2 * var(--media-inset));
+  max-width: calc(100% - 2 * var(--media-inset));
+  max-height: calc(100% - 2 * var(--media-inset));
+  object-fit: cover;
+  object-position: center;
+  filter: none;
+}
+.front-body .gallery-card--poster .gallery-poster-caption {
+  position: absolute;
+  z-index: 4;
+  inset: auto var(--media-inset) var(--media-inset);
+  display: grid;
+  align-content: end;
+  gap: 8px;
+  min-height: 38%;
+  padding: clamp(18px,2.25vw,32px);
+  border-radius: 0 0 var(--image-radius) var(--image-radius);
+  background: linear-gradient(to top,rgba(13,23,33,.76),rgba(13,23,33,.42) 48%,transparent);
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0,0,0,.12);
+  pointer-events:none;
+}
+.front-body .gallery-poster-caption > span {
+  font: 650 10px/1.5 var(--font-sans);
+  letter-spacing: .025em;
+  opacity: .84;
+}
+.front-body .gallery-poster-caption > strong {
+  font-weight: 670;
+  font-size: clamp(20px,2vw,31px);
+  line-height: 1.28;
+  letter-spacing: -.04em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.front-body .gallery-card--poster .gallery-card-caption h3 {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Typography-only entries become independent editorial covers.
+   These abstract forms are CSS, not fabricated project screenshots. */
+.front-body .gallery-card--editorial { --glass-primary-rgb: 109, 130, 151; --glass-secondary-rgb: 168, 181, 194; }
+.front-body .gallery-card--tone-thinking { --glass-primary-rgb: 173, 116, 91; --glass-secondary-rgb: 205, 172, 134; }
+.front-body .gallery-card--tone-update { --glass-primary-rgb: 98, 143, 129; --glass-secondary-rgb: 163, 198, 177; }
+.front-body .gallery-card--tone-project { --glass-primary-rgb: 107, 125, 176; --glass-secondary-rgb: 156, 181, 220; }
+
+.front-body .gallery-card--editorial .gallery-card-visual--text {
+  position: relative;
+  border-radius: var(--stage-radius);
+}
+.front-body .gallery-card--editorial .gallery-card-art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: clamp(21px,2vw,31px);
+  gap: 10px;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 82% 18%, rgba(167,191,226,.42),transparent 60%),
+    linear-gradient(135deg,#e8edf4 0%,#dbe6ef 63%,#edf0f3 100%);
+  color: #23334d;
+}
+.front-body .gallery-card--editorial .gallery-art-motif {
+  position: absolute;
+  right: -26%;
+  top: -24%;
+  width: 93%;
+  aspect-ratio: 1;
+  z-index: -1;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.48);
+  box-shadow: 0 0 0 14px rgba(255,255,255,.08),0 0 0 60px rgba(255,255,255,.035);
+  background:
+    radial-gradient(circle at 38% 33%,rgba(255,255,255,.83),transparent 28%),
+    radial-gradient(circle at 65% 70%,rgba(var(--glass-primary-rgb),.26),transparent 59%);
+  filter: none;
+  pointer-events:none;
+}
+.front-body .gallery-card--editorial .gallery-card-art::after {
+  content:'';
+  position:absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:repeating-linear-gradient(150deg,rgba(255,255,255,.14) 0 1px,transparent 1px 26px);
+  mask-image:linear-gradient(135deg,transparent 25%,#000);
+  pointer-events:none;
+}
+.front-body .gallery-card-art--layout-1.gallery-card-art {
+  background:
+    radial-gradient(ellipse at 83% 26%,rgba(245,214,176,.59),transparent 63%),
+    linear-gradient(134deg,#eae4da,#f0e6da 56%,#e5dcd2);
+  color: #3b302d;
+}
+.front-body .gallery-card-art--layout-1 .gallery-art-motif {
+  top: 18%;right: -34%;
+  transform: rotate(-12deg);
+  border-radius: 34% 66% 48% 52%;
+  background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(198,132,92,.18));
+}
+.front-body .gallery-card-art--layout-2.gallery-card-art {
+  background:
+    radial-gradient(ellipse at 70% 22%,rgba(192,223,200,.5),transparent 68%),
+    linear-gradient(136deg,#e1ece5,#d9e4e0 60%,#edf1ec);
+  color:#263d36;
+}
+.front-body .gallery-card-art--layout-2 .gallery-art-motif {
+  top:-30%;right:-8%; width:68%;
+  border-radius: 35% 63% 48% 51%;
+  transform: rotate(33deg);
+  background:linear-gradient(155deg,rgba(255,255,255,.81),rgba(92,148,122,.13));
+}
+.front-body .gallery-card--editorial .gallery-art-eyebrow {
+  position:relative;
+  z-index:1;
+  padding: 0;
+  font-size: 11px;
+  font-weight:670;
+  color: inherit;
+  opacity:.67;
+  letter-spacing:.015em;
+}
+.front-body .gallery-card--editorial .gallery-art-copy {
+  position:relative;
+  z-index:1;
+  display:grid;
+  gap:clamp(12px,2vw,19px);
+  margin: auto 0;
+  align-self:stretch;
+}
+.front-body .gallery-card--editorial .gallery-art-copy strong {
+  font-size:clamp(24px,2.4vw,38px);
+  line-height:1.23;
+  font-weight:680;
+  letter-spacing:-.052em;
+  max-width: 96%;
+  text-wrap:balance;
+  overflow-wrap:anywhere;
+}
+.front-body .gallery-card--editorial .gallery-card-art--long .gallery-art-copy strong {
+  font-size:clamp(21px,2.05vw,31px);
+  line-height:1.28;
+}
+.front-body .gallery-card--editorial .gallery-art-copy p {
+  max-width:33ch;
+  font-size:12px;
+  line-height:1.68;
+  -webkit-line-clamp:3;
+  opacity:.75;
+  margin:0;
+}
+.front-body .gallery-card--editorial .gallery-art-rail {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg) translateY(-50%);
+  transform-origin: center right;
+  font-size: 9px;
+  font-weight: 680;
+  letter-spacing: .13em;
+  color: inherit;
+  opacity: .3;
+  white-space: nowrap;
+  pointer-events:none;
+}
+.front-body .gallery-card--editorial .gallery-art-index {
+  position:relative;
+  z-index:1;
+  margin-top: auto;
+  font-size:10px;
+  opacity:.54;
+}
+
+/* On article covers the image keeps a real corner rather than rounded
+   background + square picture. Detail frames stay content-proportional. */
+.front-body .gallery-detail-cover--image {
+  --detail-frame-radius: 30px;
+  --detail-inset: clamp(14px, 2vw, 26px);
+  --detail-media-radius: calc(var(--detail-frame-radius) - var(--detail-inset));
+  border-radius: var(--detail-frame-radius);
+}
+.front-body .gallery-detail-cover--image .gallery-detail-image {
+  border-radius: max(7px,var(--detail-media-radius));
+}
+
+/* Match the light field to dark surfaces, never flood them with white. */
+:root[data-color-mode='dark'] .front-body .studio-ambient-layer {
+  opacity: inherit;
+  filter: blur(24px);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art,
+:root[data-color-mode='dark'] .front-body .gallery-card-art--layout-1.gallery-card-art,
+:root[data-color-mode='dark'] .front-body .gallery-card-art--layout-2.gallery-card-art {
+  filter: brightness(.88);
+}
+@media(prefers-color-scheme:dark) {
+  :root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art {
+    filter:brightness(.88);
+  }
+}
+@media(max-width:900px){
+  .front-body .studio-ambient-layer {
+    background:
+      radial-gradient(ellipse 70vmax 62vmax at var(--ambient-x) var(--ambient-y),rgba(var(--ambient-primary-rgb),.16),transparent 73%),
+      radial-gradient(ellipse 70vmax 64vmax at calc(var(--ambient-x) + 12%) calc(var(--ambient-y) + 7%),rgba(var(--ambient-secondary-rgb),.11),transparent 79%);
+    filter: blur(18px);
+  }
+}
+@media(max-width:720px){
+  .front-body .gallery-card {
+    --card-radius: 26px;
+    --card-inset: 7px;
+    --media-inset: 10px;
+  }
+  .front-body .gallery-card-art {
+    padding:24px;
+  }
+  .front-body .gallery-card--editorial .gallery-art-copy strong {
+    font-size:clamp(28px,6.4vw,42px);
+  }
+  .front-body .gallery-card--editorial .gallery-card-art--long .gallery-art-copy strong {
+    font-size:clamp(25px,5.6vw,35px);
+  }
+  .front-body .gallery-product-flag { top:15px;left:15px; }
+  .front-body .gallery-poster-caption > strong {font-size:clamp(22px,5.4vw,30px);}
+}
+@media(prefers-reduced-motion:reduce){
+  .front-body .studio-ambient-layer,
+  .front-body .gallery-item::before { transition:none!important; animation:none!important; }
+}
+@media(forced-colors:active){
+  .front-body .studio-ambient-stage,
+  .front-body .gallery-item::before,
+  .front-body .gallery-art-motif {display:none;}
+}
