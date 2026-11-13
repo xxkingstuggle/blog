@@ -60,7 +60,11 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 	<body class="front-body">
 		<a class="skip-link" href="#main-content">跳到主要内容</a>
 		<SiteHeader />
-		<main id="main-content">
+		<div class="studio-ambient-stage" data-ambient-stage aria-hidden="true">
+      <div class="studio-ambient-layer" data-ambient-layer></div>
+      <div class="studio-ambient-layer" data-ambient-layer></div>
+    </div>
+    <main id="main-content">
 			<slot />
 		</main>
 		<SiteFooter />
@@ -69,6 +73,7 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 			import '../scripts/mobile-dock';
 			import '../scripts/gallery-layout';
 			import '../scripts/glass-palette';
+			import '../scripts/ambient-stage';
 		</script>
 	</body>
 </html>
