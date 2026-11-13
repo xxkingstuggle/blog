@@ -1,5 +1,6 @@
 ---
 import type { BlogPost } from '../../lib/posts';
+import GalleryHero from '../GalleryHero.astro';
 import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
 import { getSoftwareByArticleSlug } from '../../lib/software';
 import ArticleRail from './ArticleRail.astro';
@@ -91,6 +92,7 @@ const linkedSoftware = getSoftwareByArticleSlug(post.id);
 			</aside>
 		)}
 	</div>
+	<GalleryHero post={post} />
 </header>
 
 <!-- Article Body & TOC Rail -->

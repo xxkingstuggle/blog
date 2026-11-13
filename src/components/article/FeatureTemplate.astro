@@ -1,5 +1,6 @@
 ---
 import type { BlogPost } from '../../lib/posts';
+import GalleryHero from '../GalleryHero.astro';
 import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
 import ArticleRail from './ArticleRail.astro';
 import NextArticle from './NextArticle.astro';
@@ -62,6 +63,7 @@ const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
 			)}
 		</div>
 	</div>
+	<GalleryHero post={post} />
 </header>
 
 <!-- Feature Body Layout with TOC Rail -->
