@@ -66,7 +66,8 @@ async function run(){
     parseFloat(navigationGlass.background.split(',').at(-1)) < .87,
     'side rail must be physically translucent rather than opaque');
   assert.match(navigationGlass.blur,/blur\(/,'side rail must use real backdrop filtering');
-  const opticalField=await ambient.evaluate(el=>el.getBoundingClientRect().toJSON());
+  const opticalField=await desktop.locator('[data-ambient-stage]').evaluate(el=>el.getBoundingClientRect().toJSON());
+  console.log('Optical rail:',JSON.stringify({navigationGlass,opticalField}));
   assert.ok(opticalField.x<=1 && opticalField.width>=1439,
     'ambient light must cover the rail as well as main content');
   const railTheme=desktop.locator('.studio-side-rail .theme-menu-trigger');
@@ -74,6 +75,7 @@ async function run(){
   const floatedMenu=desktop.locator('body > .theme-menu-popover[data-theme-floating]');
   await floatedMenu.waitFor({state:'visible'});
   const menuBounds=await floatedMenu.evaluate(el=>el.getBoundingClientRect().toJSON());
+  console.log('Desktop popup:',JSON.stringify(menuBounds));
   assert.ok(menuBounds.x>=5 && menuBounds.right<=1440-5 &&
     menuBounds.y>=5 && menuBounds.bottom<=900-5,
     'theme menu must stay wholly inside desktop viewport');
