@@ -94,7 +94,9 @@ async function run(){
   const motionCard=desktop.locator('.gallery-card--motion');
   assert.equal(await motionCard.count(),1,'one original motion demo belongs in homepage gallery');
   const motionEmbed=motionCard.locator('video[data-motion-video]');
-  assert.equal(await motionEmbed.getAttribute('preload'),'none');
+  const playPreload = await motionEmbed.getAttribute('preload');
+  assert.ok(playPreload==='none' || playPreload==='metadata',
+    'video starts unloaded; near-viewport playback may upgrade to metadata');
   assert.equal(await motionEmbed.getAttribute('data-src'),'/media/motion-study.mp4');
   const motionBudget=await Promise.all([
     desktop.request.get(origin+'/media/motion-study.mp4'),
