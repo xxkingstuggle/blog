@@ -1,0 +1,282 @@
+/*
+ * MYZJX / Chromatic Atmosphere v4
+ * A composition of three actual spaces: a luminous artwork, light that
+ * spills past its frame, and the full-page air seen through the side rail.
+ * All source colours come from locally sampled cards / videos.
+ *
+ * Deliberately avoids fullscreen blur filters, WebGL, scroll shaders,
+ * extra video downloads or infinite paint animations.
+ */
+
+/* One atmosphere shared by the entire page (including beneath the sidebar).
+   The soft gradient stops themselves do the scattering: no costly blur on
+   a full-viewport compositor. Cross-fade existing two layers on source change. */
+.front-body .studio-ambient-stage {
+  opacity: 1;
+  transition: opacity .65s ease;
+}
+.front-body .studio-ambient-stage[data-ambient-scene="rest"] { opacity: .72; }
+.front-body .studio-ambient-layer {
+  filter: none;
+  background:
+    /* A tight luminous nucleus close to the selected piece. */
+    radial-gradient(ellipse 31vmax 28vmax at var(--ambient-x) var(--ambient-y),
+      rgba(var(--ambient-primary-rgb), .55) 0%,
+      rgba(var(--ambient-primary-rgb), .42) 23%,
+      rgba(var(--ambient-primary-rgb), .19) 52%,
+      transparent 84%),
+    /* A displaced violet / complementary plume occupies the adjacent space. */
+    radial-gradient(ellipse 40vmax 38vmax at
+      calc(var(--ambient-x) - 23%) calc(var(--ambient-y) + 13%),
+      rgba(var(--ambient-secondary-rgb), .43) 0%,
+      rgba(var(--ambient-secondary-rgb), .19) 42%,
+      transparent 80%),
+    /* Carry source light under the fixed navigation glass at the left edge. */
+    radial-gradient(ellipse 29vmax 48vmax at 0% calc(var(--ambient-y) + 2%),
+      rgba(var(--ambient-primary-rgb), .29) 0%,
+      rgba(var(--ambient-secondary-rgb), .16) 44%,
+      transparent 85%),
+    /* Wide-angle bounce; removes the 'spotlight inside a box' appearance. */
+    linear-gradient(114deg,
+      rgba(var(--ambient-secondary-rgb), .13) 0%,
+      rgba(var(--ambient-primary-rgb), .07) 37%,
+      transparent 72%);
+  transition: opacity 1050ms cubic-bezier(.22,1,.3,1);
+}
+/* A translucent spectral arc is light reflected in air, not another card. */
+.front-body .studio-ambient-stage::after {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  opacity: .72;
+  background:
+    conic-gradient(from 204deg at 49% 49%,
+      transparent 0deg, rgba(255,255,255,.0) 37deg,
+      rgba(255,255,255,.16) 64deg,
+      transparent 91deg,
+      transparent 164deg,
+      rgba(255,255,255,.11) 196deg,
+      transparent 226deg, transparent 360deg);
+  -webkit-mask-image: radial-gradient(ellipse 66% 70% at 53% 48%,#000 19%,transparent 86%);
+  mask-image: radial-gradient(ellipse 66% 70% at 53% 48%,#000 19%,transparent 86%);
+}
+/* The same piece of light shows through a more strongly diffusing sidebar. */
+.front-body .studio-side-rail {
+  background: rgba(250,251,255,.43);
+  -webkit-backdrop-filter: blur(29px) saturate(152%);
+  backdrop-filter: blur(29px) saturate(152%);
+  border-right-color: rgba(255,255,255,.57);
+  box-shadow: inset -1px 0 rgba(255,255,255,.42),
+    12px 0 42px rgba(42,56,87,.055);
+}
+.front-body .studio-side-rail::before {
+  background: linear-gradient(180deg,rgba(255,255,255,.29),transparent 83%);
+}
+.front-body .studio-primary-nav a[aria-current='page'] {
+  background: rgba(255,255,255,.52);
+  border-color: rgba(255,255,255,.42);
+}
+/* The artwork is the light source. Extra gradients outside the rounded
+   geometry diffuse into neighbouring cards instead of stopping at its edge. */
+.front-body .gallery-item {
+  --local-glow-x: 48%;
+  --local-glow-y: 38%;
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+}
+.front-body .gallery-item::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -64px -64px -76px;
+  border-radius: 38%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 69% 58% at var(--local-glow-x) var(--local-glow-y),
+      rgba(var(--glass-primary-rgb, 123,135,209), .63) 0%,
+      rgba(var(--glass-primary-rgb, 123,135,209), .29) 34%,
+      transparent 76%),
+    radial-gradient(ellipse 65% 58% at 79% 79%,
+      rgba(var(--glass-secondary-rgb, 183,151,216), .54) 0%,
+      rgba(var(--glass-secondary-rgb, 183,151,216), .18) 41%,
+      transparent 76%);
+  filter: blur(22px);
+  opacity: .27;
+  transform: scale(.92);
+  transform-origin: 50% 44%;
+  transition: opacity .68s cubic-bezier(.16,1,.3,1),
+    transform 1.05s cubic-bezier(.16,1,.3,1);
+}
+/* The off-axis streak is a different shape and value: it gives the light
+   direction and a sense of refraction rather than generic neon outlines. */
+.front-body .gallery-item::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -70px -75px -80px;
+  pointer-events: none;
+  background:
+    conic-gradient(from 207deg at 51% 47%,
+      transparent 0 39deg,
+      rgba(var(--glass-primary-rgb, 123,135,209), .34) 66deg,
+      transparent 102deg 167deg,
+      rgba(var(--glass-secondary-rgb, 183,151,216), .38) 205deg,
+      transparent 240deg 360deg);
+  -webkit-mask-image: radial-gradient(ellipse 61% 62% at 50% 48%,#000 20%,transparent 89%);
+  mask-image: radial-gradient(ellipse 61% 62% at 50% 48%,#000 20%,transparent 89%);
+  opacity: 0;
+  transform: scale(.91) rotate(-5deg);
+  transition: opacity .8s ease, transform 1.25s cubic-bezier(.16,1,.3,1);
+}
+.front-body .gallery-item:hover::before,
+.front-body .gallery-item:focus-within::before,
+.front-body .gallery-item[data-ambient-active="true"]::before {
+  opacity: .93;
+  transform: scale(1.11);
+}
+.front-body .gallery-item:hover::after,
+.front-body .gallery-item:focus-within::after {
+  opacity: .83;
+  transform: scale(1.09) rotate(6deg);
+}
+.front-body .gallery-card {
+  --sheen-x: 50%;
+  --sheen-y: 40%;
+  background: color-mix(in srgb,var(--surface) 87%,transparent);
+  border: 1px solid rgba(var(--glass-primary-rgb, 123,135,209), .24);
+  box-shadow:
+    0 12px 34px rgba(36,45,70,.06),
+    inset 0 1px rgba(255,255,255,.66);
+  transition:
+    transform .55s cubic-bezier(.16,1,.3,1),
+    box-shadow .6s cubic-bezier(.16,1,.3,1),
+    border-color .55s ease,
+    background .55s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .front-body .gallery-card:hover,
+  .front-body .gallery-card:focus-visible {
+    transform: translateY(-4px);
+    border-color: rgba(var(--glass-primary-rgb, 123,135,209), .56);
+    box-shadow:
+      0 28px 70px rgba(var(--glass-primary-rgb, 123,135,209), .23),
+      0 10px 24px rgba(25,34,58,.11),
+      inset 0 1px rgba(255,255,255,.87);
+  }
+}
+/* A specular reflection follows the pointer but never obscures screenshots. */
+.front-body .gallery-card .gallery-card-visual--has-image::after {
+  background:
+    radial-gradient(ellipse 35% 29% at var(--sheen-x) var(--sheen-y),
+      rgba(255,255,255,.19),transparent 100%),
+    linear-gradient(155deg,rgba(255,255,255,.23),transparent 30% 75%,rgba(255,255,255,.08));
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.63),
+    inset 0 0 0 1px rgba(255,255,255,.16);
+}
+.front-body .gallery-card .gallery-card-visual--has-image::before {
+  background:
+    radial-gradient(ellipse at 29% 30%,rgba(var(--glass-primary-rgb),.43),transparent 61%),
+    radial-gradient(ellipse at 77% 70%,rgba(var(--glass-secondary-rgb),.41),transparent 62%);
+  filter: blur(16px);
+}
+/* Richer staging for product photography, without tinting the actual pixels. */
+.front-body .gallery-card--software .gallery-card-visual,
+.front-body .gallery-card--motion .gallery-card-visual {
+  background:
+    radial-gradient(ellipse 86% 78% at 17% 20%,rgba(var(--glass-primary-rgb),.49),transparent 75%),
+    radial-gradient(ellipse 91% 81% at 89% 82%,rgba(var(--glass-secondary-rgb),.37),transparent 76%),
+    linear-gradient(135deg,#f7f8fc,#e6eaf4);
+}
+.front-body .gallery-card--motion .gallery-card-visual {
+  background:
+    radial-gradient(ellipse 86% 78% at 17% 20%,rgba(var(--glass-primary-rgb),.38),transparent 75%),
+    radial-gradient(ellipse 91% 81% at 89% 82%,rgba(var(--glass-secondary-rgb),.34),transparent 76%),
+    #182036;
+}
+/* Dark mode: colorful light in the surrounding black air, NOT white fog. */
+:root[data-color-mode='dark'] .front-body .studio-ambient-layer {
+  background:
+    radial-gradient(ellipse 33vmax 31vmax at var(--ambient-x) var(--ambient-y),
+      rgba(var(--ambient-primary-rgb), .44) 0%,
+      rgba(var(--ambient-primary-rgb), .25) 38%,transparent 79%),
+    radial-gradient(ellipse 43vmax 38vmax at
+      calc(var(--ambient-x) - 23%) calc(var(--ambient-y) + 13%),
+      rgba(var(--ambient-secondary-rgb), .34) 0%,transparent 78%),
+    radial-gradient(ellipse 30vmax 48vmax at 0% calc(var(--ambient-y) + 2%),
+      rgba(var(--ambient-primary-rgb), .24),transparent 84%);
+}
+:root[data-color-mode='dark'] .front-body .studio-side-rail {
+  background: rgba(16,20,32,.47);
+  border-right-color: rgba(220,232,255,.14);
+}
+:root[data-color-mode='dark'] .front-body .studio-ambient-stage::after {opacity:.18;}
+:root[data-color-mode='dark'] .front-body .gallery-card {
+  background: color-mix(in srgb,var(--surface) 90%,transparent);
+  border-color: rgba(var(--glass-primary-rgb, 123,135,209), .31);
+  box-shadow: 0 15px 35px rgba(0,0,0,.23),inset 0 1px rgba(255,255,255,.10);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-visual--has-image::after {
+  background:
+    radial-gradient(ellipse 35% 29% at var(--sheen-x) var(--sheen-y),
+      rgba(255,255,255,.075),transparent 100%),
+    linear-gradient(155deg,rgba(255,255,255,.085),transparent 33% 74%,rgba(255,255,255,.025));
+}
+:root[data-color-mode='dark'] .front-body .gallery-item::before {opacity:.33;}
+:root[data-color-mode='dark'] .front-body .gallery-item:hover::before,
+:root[data-color-mode='dark'] .front-body .gallery-item:focus-within::before {opacity: .94;}
+@media (prefers-color-scheme: dark) {
+  :root[data-color-mode='system'] .front-body .studio-ambient-layer {
+    background:
+      radial-gradient(ellipse 33vmax 31vmax at var(--ambient-x) var(--ambient-y),
+        rgba(var(--ambient-primary-rgb), .44),transparent 79%),
+      radial-gradient(ellipse 43vmax 38vmax at calc(var(--ambient-x) - 23%) calc(var(--ambient-y) + 13%),
+        rgba(var(--ambient-secondary-rgb), .34),transparent 78%),
+      radial-gradient(ellipse 30vmax 48vmax at 0% var(--ambient-y),
+        rgba(var(--ambient-primary-rgb), .24),transparent 84%);
+  }
+  :root[data-color-mode='system'] .front-body .studio-side-rail {
+    background: rgba(16,20,32,.47);
+    border-right-color: rgba(220,232,255,.14);
+  }
+  :root[data-color-mode='system'] .front-body .studio-ambient-stage::after {opacity:.18;}
+  :root[data-color-mode='system'] .front-body .gallery-card {
+    background: color-mix(in srgb,var(--surface) 90%,transparent);
+  }
+}
+/* Coarse/touch devices get the atmosphere without multiple large animated
+   offscreen blurs or costly cursor listeners. */
+@media (max-width: 900px) {
+  .front-body .studio-ambient-layer {
+    background:
+      radial-gradient(ellipse 47vmax 43vmax at var(--ambient-x) var(--ambient-y),
+        rgba(var(--ambient-primary-rgb), .38),transparent 78%),
+      radial-gradient(ellipse 52vmax 44vmax at calc(var(--ambient-x) - 23%) calc(var(--ambient-y) + 13%),
+        rgba(var(--ambient-secondary-rgb), .31),transparent 79%),
+      radial-gradient(ellipse 38vmax 52vmax at 0% var(--ambient-y),
+        rgba(var(--ambient-primary-rgb), .2),transparent 86%);
+  }
+  .front-body .gallery-item::before {inset:-42px;filter:blur(15px);}
+  .front-body .gallery-item::after {display:none;}
+  .front-body .studio-ambient-stage::after {opacity:.35;}
+}
+@media (prefers-reduced-motion: reduce) {
+  .front-body .studio-ambient-layer,
+  .front-body .studio-ambient-stage,
+  .front-body .gallery-item::before,
+  .front-body .gallery-item::after,
+  .front-body .gallery-card { transition:none!important;animation:none!important;}
+  .front-body .gallery-item::after {display:none;}
+}
+@media (prefers-contrast: more) {
+  .front-body .gallery-card { background:var(--surface); }
+  .front-body .studio-side-rail {background:var(--surface-glass);}
+}
+@media (forced-colors: active) {
+  .front-body .studio-ambient-stage,
+  .front-body .gallery-item::before,
+  .front-body .gallery-item::after {display:none;}
+  .front-body .gallery-card {border:1px solid CanvasText;background:Canvas;}
+}

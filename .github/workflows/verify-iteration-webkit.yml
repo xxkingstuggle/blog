@@ -11,6 +11,7 @@ on:
       - 'src/styles/glass-media.css'
       - 'src/styles/ambient-editorial.css'
       - 'src/styles/optical-system.css'
+      - 'src/styles/chromatic-atmosphere.css'
       - 'src/scripts/gallery-video.ts'
       - 'src/pages/lab/**'
       - 'src/content.config.ts'
