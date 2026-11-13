@@ -31,8 +31,11 @@ function el<K extends keyof HTMLElementTagNameMap>(
 export function parseIterationIssues(markdown: string): IterationIssue[] {
   const issues: IterationIssue[] = [];
   const lines = markdown.split(/\r?\n/);
+  let inRelationships = false;
   for (const line of lines) {
-    if (!/^\|\s*P\d{2}\s*\|/.test(line)) continue;
+    if (/^##\s+问题关系（供画板读取）/.test(line)) { inRelationships = true; continue; }
+    if (inRelationships && /^##\s+/.test(line)) inRelationships = false;
+    if (inRelationships || !/^\|\s*P\d{2}\s*\|/.test(line)) continue;
     const cells = line.split('|').slice(1, -1).map(x => x.trim());
     if (cells.length !== 4 && cells.length !== 5) continue;
     const [id, title] = cells;
