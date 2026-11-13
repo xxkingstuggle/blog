@@ -1,0 +1,34 @@
+name: Safari WebKit smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/styles/iteration.css'
+      - 'src/scripts/iteration-wheel.ts'
+      - 'src/pages/admin-shell/iteration/index.astro'
+      - 'scripts/verify-iteration-webkit.mjs'
+      - '.github/workflows/verify-iteration-webkit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install WebKit browser test dependencies
+        run: |
+          npm install --no-save playwright@1.57.0
+          npx playwright install --with-deps webkit
+      - name: Exercise iteration UI in WebKit
+        run: node scripts/verify-iteration-webkit.mjs
