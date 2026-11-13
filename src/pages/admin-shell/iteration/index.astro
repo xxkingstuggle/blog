@@ -236,7 +236,7 @@ async function refresh(){
     if(!response.ok)throw new Error(result.message||result.error||'读取失败 ('+response.status+')');
     payload=result as IterationPayload;
     const link=document.querySelector<HTMLAnchorElement>('#iteration-github-link')!;
-    link.href='https://github.com/'+encodeURIComponent(payload.repository.split('/')[0])+'/'+encodeURIComponent(payload.repository.split('/')[1])+'/tree/'+encodeURIComponent(payload.branch)+'/'+payload.directory.split('/').map(encodeURIComponent).join('/');
+    link.href='https://github.com/'+encodeURIComponent(payload.repository.split('/')[0])+'/'+encodeURIComponent(payload.repository.split('/')[1])+'/tree/'+encodeURIComponent(payload.branch)+(payload.directory?'/'+payload.directory.split('/').map(encodeURIComponent).join('/'): '');
     link.hidden=false;
     renderProgress(payload.files['iteration-current.md']?.content||'');
     updateEditor();
