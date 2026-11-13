@@ -79,6 +79,10 @@ interface Env {
 	GITHUB_OWNER?: string;
 	GITHUB_REPO?: string;
 	GITHUB_BRANCH?: string;
+	ITERATION_GITHUB_OWNER?: string;
+	ITERATION_GITHUB_REPO?: string;
+	ITERATION_GITHUB_BRANCH?: string;
+	ITERATION_GITHUB_INSTALLATION_ID?: string;
 	CN_HEALTH_URL?: string;
 	CN_HEALTH_TOKEN?: string;
 	CF_RULE_API_URL?: string;
@@ -731,6 +735,100 @@ async function putGithubFile(env: Env, token: string, path: string, body: string
 	if (response.status === 409) throw new Error('source_changed');
 	if (!response.ok) throw new Error(`GitHub contents write failed (${response.status})`);
 	return (await response.json()) as { commit?: { sha?: string }; content?: { sha?: string } };
+}
+
+/** Dedicated private repository. Never read iteration documents from the public blog repo. */
+const ITERATION_DOCUMENTS = [
+  'iteration-current.md',
+  'personal-iteration-system.md',
+  'iteration-methods.md',
+  'START-HERE.md',
+] as const;
+const ITERATION_DIRECTORY = ''; // Dedicated repository: Markdown lives at the root.
+
+function iterationRepositoryEnv(env: Env): Env | null {
+  const owner = (env.ITERATION_GITHUB_OWNER ?? env.GITHUB_OWNER ?? '').trim();
+  const repo = (env.ITERATION_GITHUB_REPO ?? '').trim();
+  const branch = (env.ITERATION_GITHUB_BRANCH ?? 'main').trim();
+  if (!/^[a-zA-Z0-9_-]+$/.test(owner) || !/^[a-zA-Z0-9._-]+$/.test(repo) || !/^[a-zA-Z0-9._/-]+$/.test(branch) || branch.includes('..')) return null;
+  // Credentials stay server-side. The site GitHub App must be installed on this private repo.
+  return {
+    ...env,
+    GITHUB_OWNER: owner,
+    GITHUB_REPO: repo,
+    GITHUB_BRANCH: branch,
+    GITHUB_INSTALLATION_ID: env.ITERATION_GITHUB_INSTALLATION_ID ?? env.GITHUB_INSTALLATION_ID,
+  };
+}
+
+function iterationFilePath(filename: string) {
+  return ITERATION_DIRECTORY ? `${ITERATION_DIRECTORY}/${filename}` : filename;
+}
+
+function readIterationMarkdown(raw: { content?: string }) {
+  if (!raw.content) throw new Error('empty_content');
+  const bytes = Uint8Array.from(atob(raw.content.replace(/\s/g, '')), (char) => char.charCodeAt(0));
+  return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+}
+
+async function iterationApi(request: Request, env: Env) {
+  const auth = await requireAdmin(request, env);
+  if (auth.response) return auth.response;
+  const url = new URL(request.url);
+  const isList = url.pathname === '/api/admin/iteration/files' && request.method === 'GET';
+  const match = url.pathname.match(/^\/api\/admin\/iteration\/files\/([^/]+)$/);
+  const filename = match ? decodeURIComponent(match[1]) : null;
+  const isWrite = request.method === 'PUT' && filename !== null;
+  if (!isList && !isWrite) return error('不支持的迭代系统操作。', 405, 'method_not_allowed');
+  if (isWrite && !ITERATION_DOCUMENTS.includes(filename as typeof ITERATION_DOCUMENTS[number])) {
+    return error('只允许修改已批准的个人迭代 Markdown。', 404, 'file_not_allowed');
+  }
+
+  const config = iterationRepositoryEnv(env);
+  if (!config) return error('独立私有仓库尚未配置。需要 ITERATION_GITHUB_REPO。', 503, 'iteration_not_configured');
+
+  try {
+    const token = await githubAppToken(config);
+    if (isList) {
+      const entries = await Promise.all(ITERATION_DOCUMENTS.map(async (name) => {
+        const entry = await githubFile(config, token, iterationFilePath(name));
+        if (!entry?.sha || !entry.content) throw new Error('missing_iteration_file');
+        return [name, { sha: entry.sha, content: readIterationMarkdown(entry) }] as const;
+      }));
+      return json({
+        repository: `${config.GITHUB_OWNER}/${config.GITHUB_REPO}`,
+        branch: config.GITHUB_BRANCH,
+        directory: ITERATION_DIRECTORY,
+        files: Object.fromEntries(entries),
+      }, 200, { 'Cache-Control': 'no-store' });
+    }
+
+    if (filename === null) return error('需要合法文件名。', 400, 'invalid_filename');
+    if ((request.headers.get('Content-Type') ?? '').split(';')[0].trim() !== 'application/json') {
+      return error('只接受 JSON 修改请求。', 415, 'invalid_content_type');
+    }
+    if (Number(request.headers.get('Content-Length') ?? 0) > 120000) return error('文件过大。', 413, 'too_large');
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).length > 120000) return error('文件过大。', 413, 'too_large');
+    let input: { content?: unknown; sha?: unknown };
+    try { input = JSON.parse(rawBody); } catch { return error('JSON 格式不正确。', 400, 'invalid_json'); }
+    if (typeof input.content !== 'string' || typeof input.sha !== 'string' || !/^[a-f0-9]{40}$/i.test(input.sha)) {
+      return error('提交需要 Markdown 文本和原文件 SHA。', 400, 'invalid_input');
+    }
+    if (!input.content.trim() || new TextEncoder().encode(input.content).length > 100000) {
+      return error('Markdown 不能为空或超过 100 KB。', 400, 'invalid_content');
+    }
+    const filePath = iterationFilePath(filename);
+    const current = await githubFile(config, token, filePath);
+    if (!current?.sha) return error('文档不存在；不自动新建文件。', 404, 'file_missing');
+    if (current.sha !== input.sha) return error('其他位置已经更新此文档。请重新读取后再修改。', 409, 'source_changed');
+    const committed = await putGithubFile(config, token, filePath, input.content, current.sha);
+    return json({ sha: committed.content?.sha, commitSha: committed.commit?.sha });
+  } catch (reason) {
+    if (reason instanceof Error && reason.message === 'source_changed') return error('文件版本冲突，请重新读取。', 409, 'source_changed');
+    // Do not expose private GitHub API details, installation credentials or document content.
+    return error('无法访问或保存私有仓库。检查仓库是否存在、GitHub App 安装范围及 Worker 配置。', 503, 'iteration_unavailable');
+  }
 }
 
 async function adminSession(request: Request, env: Env) {
@@ -1495,6 +1593,7 @@ async function api(request: Request, env: Env, ctx: ExecutionContextLike) {
 	if (url.pathname === '/api/comments') return comments(request, env, ctx);
 	if (url.pathname === '/api/links' && request.method === 'GET') return publicLinks(env);
 	if (url.pathname === '/api/admin/session' && request.method === 'GET') return adminSession(request, env);
+	if (url.pathname.startsWith('/api/admin/iteration/')) return iterationApi(request, env);
 	if (url.pathname === '/api/admin/overview' && request.method === 'GET') {
 		const auth = await requireAdmin(request, env);
 		return auth.response ?? adminOverview(env);
@@ -1618,6 +1717,9 @@ export const testHelpers = {
 	markdownFileFromDraft,
 	checkLinks,
 	loadRepoCatalog,
+	iterationRepositoryEnv,
+	readIterationMarkdown,
+	iterationApi,
 };
 
 export default {

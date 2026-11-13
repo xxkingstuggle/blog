@@ -1,0 +1,275 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="个人迭代系统" description="仅管理员可访问的个人迭代画板与 Markdown 资料工作台。" context="个人迭代系统" canonicalPath="/admin/iteration/">
+  <main id="main-content" class="iteration-page">
+    <div class="iteration-top">
+      <div>
+        <p class="iteration-kicker">PRIVATE WORKSPACE / ITERATION</p>
+        <h1>个人迭代系统</h1>
+        <p class="iteration-subtitle">用真实问题推动改变，让有用的经验留下来。</p>
+      </div>
+      <div class="iteration-actions">
+        <a class="iteration-link" href="/admin/">返回管理后台</a>
+        <button id="iteration-reload" class="iteration-button secondary" type="button">重新读取</button>
+      </div>
+    </div>
+
+    <div class="iteration-state" id="iteration-state" role="status" aria-live="polite">正在验证身份并读取私有资料…</div>
+
+    <section class="iteration-goal">
+      <p>我们正在靠近的方向</p>
+      <h2>把日子过成自己想要的样子</h2>
+      <span>“我想成为什么样的人？”尚待探索，不替自己预先编造答案。</span>
+    </section>
+
+    <section class="iteration-columns" aria-label="系统概念">
+      <div class="iteration-panel">
+        <p class="iteration-eyebrow">现实的输入</p>
+        <h3>经历 · 念头 · 感受</h3>
+        <p>它们帮助发现问题，但不是每个念头都要变成任务。</p>
+      </div>
+      <div class="iteration-panel">
+        <p class="iteration-eyebrow">人与 AI</p>
+        <h3>你负责生活，AI 协助迭代</h3>
+        <p>AI 整理问题、建议办法、记录结果，不替你决定人生方向。</p>
+      </div>
+    </section>
+
+    <section class="iteration-cycle" aria-labelledby="iteration-cycle-heading">
+      <header>
+        <p class="iteration-eyebrow">不变的核心</p>
+        <h2 id="iteration-cycle-heading">问题 → 办法 → 行动 → 反馈</h2>
+      </header>
+      <div class="iteration-step-grid">
+        <button class="iteration-step is-selected" type="button" data-index="0" aria-pressed="true">
+          <span>01</span><strong>问题</strong><small>现在怎样？希望怎样？真正的障碍在哪？</small>
+        </button>
+        <button class="iteration-step" type="button" data-index="1" aria-pressed="false">
+          <span>02</span><strong>办法</strong><small>先试哪一种办法？什么结果算有用？</small>
+        </button>
+        <button class="iteration-step" type="button" data-index="2" aria-pressed="false">
+          <span>03</span><strong>行动</strong><small>实际发生了什么？不能把计划算成行动。</small>
+        </button>
+        <button class="iteration-step" type="button" data-index="3" aria-pressed="false">
+          <span>04</span><strong>反馈</strong><small>保留、调整、停用；下一次处理得更好。</small>
+        </button>
+      </div>
+      <p id="iteration-step-detail" class="iteration-step-detail">AI 可以协助把模糊感受变成准确的问题；真正要不要解决，由你确认。</p>
+    </section>
+
+    <section class="iteration-board-grid">
+      <div class="iteration-panel">
+        <div class="iteration-panel-heading">
+          <div><p class="iteration-eyebrow">来自私有 Markdown</p><h2>当前问题</h2></div>
+          <span class="iteration-pill" id="iteration-progress-count">待载入</span>
+        </div>
+        <div id="iteration-progress-list" class="iteration-progress-list">
+          <p class="iteration-muted">登录后将从 GitHub 私有仓库读取最新进度。</p>
+        </div>
+      </div>
+      <div class="iteration-panel">
+        <p class="iteration-eyebrow">关于问题的问题</p>
+        <h2>系统自己也能迭代</h2>
+        <div class="iteration-question-tree">
+          <div><strong>原问题</strong><span>我对这套系统没有清晰概念。</span></div>
+          <div><strong>衍生问题</strong><span>怎么让系统更直观、可修改、能长期保存？</span></div>
+          <div><strong>已经试过</strong><span>画板和存储独立：展示用于理解，GitHub Markdown 用于保存。</span></div>
+          <div><strong>继续验证</strong><span>网页是否真的能读取、修改并保留历史？</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="iteration-panel iteration-editor-panel" aria-labelledby="iteration-editor-heading">
+      <div class="iteration-panel-heading">
+        <div>
+          <p class="iteration-eyebrow">SOURCE OF TRUTH</p>
+          <h2 id="iteration-editor-heading">编辑长期记录</h2>
+          <p class="iteration-muted">直接修改私有仓库中的 MD；保存后会生成 Git 提交。编辑前先检查最新版本。</p>
+        </div>
+        <a class="iteration-link" id="iteration-github-link" href="https://github.com" target="_blank" rel="noopener noreferrer" hidden>在 GitHub 查看历史 ↗</a>
+      </div>
+      <div class="iteration-doc-tabs" id="iteration-doc-tabs" aria-label="选择文档">
+        <button type="button" data-file="iteration-current.md" class="is-selected">当前进度</button>
+        <button type="button" data-file="personal-iteration-system.md">系统规则</button>
+        <button type="button" data-file="iteration-methods.md">方法历史</button>
+        <button type="button" data-file="START-HERE.md">交接说明</button>
+      </div>
+      <label class="iteration-editor-label" for="iteration-editor">Markdown 原文</label>
+      <textarea id="iteration-editor" class="iteration-textarea" rows="18" spellcheck="false" disabled placeholder="私有资料尚未读取。"></textarea>
+      <div class="iteration-editor-footer">
+        <p id="iteration-edit-status" class="iteration-muted" role="status" aria-live="polite">尚未连接仓库</p>
+        <div class="iteration-actions">
+          <button id="iteration-reset" type="button" class="iteration-button secondary" disabled>放弃当前修改</button>
+          <button id="iteration-save" type="button" class="iteration-button" disabled>保存到 GitHub</button>
+        </div>
+      </div>
+    </section>
+    <footer class="iteration-footer">私有数据只通过管理员 API 获取；网页本身不包含个人记录。未经你反馈，不自动把计划写成完成。</footer>
+  </main>
+</AdminLayout>
+
+<style>
+.iteration-page {max-width:1160px;margin:0 auto;padding:35px 22px 80px;color:var(--text-primary,var(--text,#1e2c3f))}
+.iteration-top,.iteration-panel-heading,.iteration-editor-footer{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+.iteration-kicker,.iteration-eyebrow{color:#7a91ad;font-size:11px;letter-spacing:.13em;font-weight:750;margin:0 0 8px}
+.iteration-top h1{font-size:clamp(27px,4vw,40px);line-height:1.15;margin:0 0 8px}
+.iteration-subtitle,.iteration-muted{color:var(--text-muted,#708095);font-size:13px;line-height:1.6}
+.iteration-subtitle{margin:0}
+.iteration-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.iteration-link{font-size:13px;color:#769bc6;text-decoration:none}
+.iteration-link:hover{text-decoration:underline}
+.iteration-button,.iteration-doc-tabs button{border:0;background:#456c9c;color:white;padding:10px 15px;border-radius:9px;cursor:pointer;font:inherit;font-size:13px;font-weight:650}
+.iteration-button.secondary{background:var(--surface-subtle,#eaf0f6);color:var(--text-primary,#37485c);border:1px solid var(--line,#d3dce5)}
+.iteration-button:disabled{opacity:.4;cursor:not-allowed}
+.iteration-state{border-radius:10px;margin:19px 0;padding:12px 15px;background:var(--surface-subtle,#eff3f8);font-size:13px;color:var(--text-muted,#607084)}
+.iteration-state[data-status="error"]{background:#fff1e9;color:#955b3b}
+.iteration-state[data-status="ready"]{background:#eaf3ec;color:#356347}
+.iteration-goal{text-align:center;border-radius:19px;background:#1b3553;color:white;padding:28px 18px;margin:12px 0}
+.iteration-goal p{color:#b7cce2;font-size:12px;margin:0}
+.iteration-goal h2{font-size:clamp(20px,3vw,28px);margin:9px 0;letter-spacing:-.025em}
+.iteration-goal span{font-size:13px;color:#c0d1e2}
+.iteration-columns,.iteration-board-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.iteration-panel{background:var(--surface,#fff);border:1px solid var(--line,#dce4ee);border-radius:15px;padding:20px;min-width:0}
+.iteration-panel h3,.iteration-panel h2{font-size:17px;margin:0 0 9px}
+.iteration-panel>p:not(.iteration-eyebrow),.iteration-panel-heading p{font-size:13px;color:var(--text-muted,#708095);line-height:1.6}
+.iteration-cycle{border:2px solid #7d9ec9;background:var(--surface-subtle,#f1f6fd);border-radius:19px;padding:20px;margin-top:14px}
+.iteration-cycle h2{font-size:18px;margin:0 0 14px}
+.iteration-step-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.iteration-step{background:var(--surface,#fff);color:var(--text-primary,#223043);text-align:left;border:1px solid var(--line,#dce5ef);padding:16px;border-radius:11px;cursor:pointer;min-height:142px}
+.iteration-step.is-selected{outline:2px solid #7eacde}
+.iteration-step span{font-size:11px;color:#85a2c4;font-weight:700}
+.iteration-step strong{display:block;font-size:17px;margin:7px 0}
+.iteration-step small{font-size:12px;color:var(--text-muted,#6d8196);line-height:1.65}
+.iteration-step-detail{font-size:13px;color:#53749a;margin:15px 0 0;line-height:1.7}
+.iteration-pill{display:inline-block;padding:6px 10px;border-radius:20px;background:var(--surface-subtle,#edf2f8);font-size:12px;color:#7292b3}
+.iteration-progress-list{display:grid;gap:9px}
+.iteration-progress-item{display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--line,#ebeff4);padding-top:10px}
+.iteration-progress-item code{padding:4px 6px;border-radius:6px;background:var(--surface-subtle,#eff4f8);color:#5d84b1}
+.iteration-progress-item strong{font-size:13px;font-weight:650;display:block}
+.iteration-progress-item p{margin:5px 0 0;font-size:12px;color:var(--text-muted,#728294);line-height:1.55}
+.iteration-question-tree{display:grid;gap:9px}
+.iteration-question-tree div{border-left:2px solid #a2bddb;padding:8px 12px;background:var(--surface-subtle,#f0f5fb);border-radius:0 8px 8px 0}
+.iteration-question-tree strong{font-size:11px;color:#6d8fb5;display:block;margin-bottom:5px}
+.iteration-question-tree span{font-size:13px;line-height:1.6}
+.iteration-editor-panel{margin-top:14px}
+.iteration-doc-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.iteration-doc-tabs button{color:var(--text-muted,#667c93);background:var(--surface-subtle,#eff3f8);border:1px solid var(--line,#dce5ed)}
+.iteration-doc-tabs button.is-selected{background:#2d507b;color:white;border-color:#2d507b}
+.iteration-editor-label{display:block;font-size:12px;color:var(--text-muted,#71829a);margin-bottom:8px}
+.iteration-textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:400px;padding:15px;background:var(--surface-subtle,#f8fafc);color:var(--text-primary,#25344b);border:1px solid var(--line,#d9e4ef);border-radius:9px;font:12px/1.75 ui-monospace,SFMono-Regular,Consolas,monospace}
+.iteration-textarea:focus{outline:2px solid #83a9d4}
+.iteration-editor-footer{margin-top:12px;align-items:center}
+.iteration-footer{color:var(--text-muted,#738498);font-size:12px;margin-top:22px;line-height:1.6}
+@media(max-width:760px){.iteration-columns,.iteration-board-grid{grid-template-columns:1fr}.iteration-step-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.iteration-top h1{font-size:26px}}
+@media(max-width:440px){.iteration-page{padding:23px 13px 50px}.iteration-step-grid{grid-template-columns:1fr}.iteration-step{min-height:auto}}
+</style>
+<script>
+const detailTexts=[
+  'AI 可以协助把模糊经历变成准确的问题；是否值得解决，由你确认。',
+  '根据当前事实挑选办法；不必等想出最完美的办法才开始。',
+  '现实中发生的才算行动，计划和讨论不是已经完成。',
+  '保留有效方法、调整无效方法，再从新问题继续循环。'
+];
+document.querySelectorAll<HTMLButtonElement>('.iteration-step').forEach((button)=>{
+  button.addEventListener('click',()=>{
+    document.querySelectorAll('.iteration-step').forEach((el)=>{el.classList.remove('is-selected');el.setAttribute('aria-pressed','false');});
+    button.classList.add('is-selected');button.setAttribute('aria-pressed','true');
+    const text=document.querySelector('#iteration-step-detail');if(text)text.textContent=detailTexts[Number(button.dataset.index)||0];
+  });
+});
+interface IterationFile { content:string; sha:string }
+interface IterationFiles { [file:string]:IterationFile }
+interface IterationPayload { files:IterationFiles; repository:string; branch:string; directory:string }
+const editor=document.querySelector<HTMLTextAreaElement>('#iteration-editor')!;
+const state=document.querySelector<HTMLElement>('#iteration-state')!;
+const editStatus=document.querySelector<HTMLElement>('#iteration-edit-status')!;
+const saveBtn=document.querySelector<HTMLButtonElement>('#iteration-save')!;
+const resetBtn=document.querySelector<HTMLButtonElement>('#iteration-reset')!;
+const tabs=[...document.querySelectorAll<HTMLButtonElement>('#iteration-doc-tabs button')];
+let payload:IterationPayload|null=null;
+let csrfToken='';
+let chosen='iteration-current.md';
+let saving=false;
+function setState(message:string, kind:string='loading'){state.textContent=message;state.dataset.status=kind;}
+function selectedDoc(){return payload?.files[chosen];}
+function updateEditor(){
+  const file=selectedDoc();
+  editor.disabled=!file||saving;
+  editor.value=file?.content??'';
+  tabs.forEach((x)=>x.classList.toggle('is-selected',x.dataset.file===chosen));
+  markDirty();
+}
+function markDirty(){
+  const file=selectedDoc();
+  const dirty=!!file&&editor.value!==file.content;
+  saveBtn.disabled=!file||!dirty||saving;
+  resetBtn.disabled=!file||!dirty||saving;
+  editStatus.textContent=saving?'正在保存到 GitHub…':(!file?'尚未连接私有仓库':dirty?'有尚未保存的修改':'已与仓库同步（本页未修改）');
+}
+function renderProgress(markdown:string){
+  const node=document.querySelector<HTMLElement>('#iteration-progress-list')!;
+  const matches=[...markdown.matchAll(/^\|\s*(P\d{2})\s*\|\s*([^|\n]+)\|\s*([^|\n]+)/gm)];
+  node.replaceChildren();
+  if(!matches.length){const p=document.createElement('p');p.className='iteration-muted';p.textContent='当前进度文件中没有识别到 P01–P06 表格；请直接查看原文。';node.append(p);}
+  for(const match of matches){
+    const item=document.createElement('div');item.className='iteration-progress-item';
+    const code=document.createElement('code');code.textContent=match[1];
+    const body=document.createElement('div');
+    const h=document.createElement('strong');h.textContent=match[2].trim();
+    const p=document.createElement('p');p.textContent=match[3].trim();
+    body.append(h,p);item.append(code,body);node.append(item);
+  }
+  document.querySelector<HTMLElement>('#iteration-progress-count')!.textContent=matches.length?matches.length+' 个问题':'未识别';
+}
+async function refresh(){
+  if(editor.value!==selectedDoc()?.content&&selectedDoc()&&!confirm('有未保存的修改。确认放弃并重新读取吗？'))return;
+  setState('正在读取 GitHub 私有仓库…');
+  try{
+    const session=await fetch('/api/admin/session',{credentials:'same-origin',cache:'no-store'});
+    if(session.status===401||session.status===403){location.href='/login/';return;}
+    if(!session.ok)throw new Error('管理员会话获取失败 ('+session.status+')');
+    const auth=await session.json();csrfToken=auth.csrfToken;
+    const response=await fetch('/api/admin/iteration/files',{credentials:'same-origin',cache:'no-store'});
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.message||result.error||'读取失败 ('+response.status+')');
+    payload=result as IterationPayload;
+    const link=document.querySelector<HTMLAnchorElement>('#iteration-github-link')!;
+    link.href='https://github.com/'+encodeURIComponent(payload.repository.split('/')[0])+'/'+encodeURIComponent(payload.repository.split('/')[1])+'/tree/'+encodeURIComponent(payload.branch)+(payload.directory?'/'+payload.directory.split('/').map(encodeURIComponent).join('/'): '');
+    link.hidden=false;
+    renderProgress(payload.files['iteration-current.md']?.content||'');
+    updateEditor();
+    setState('已连接私有仓库 · '+payload.repository+' · '+payload.branch,'ready');
+  }catch(e){
+    payload=null;editor.value='';editor.disabled=true;
+    renderProgress('');markDirty();
+    setState('尚未连接：'+(e instanceof Error?e.message:String(e)),'error');
+  }
+}
+tabs.forEach((button)=>button.addEventListener('click',()=>{
+  if(chosen===button.dataset.file)return;
+  if(selectedDoc()&&editor.value!==selectedDoc()?.content&&!confirm('有未保存的修改。确认切换文档并放弃修改吗？'))return;
+  chosen=button.dataset.file||'iteration-current.md';updateEditor();
+}));
+editor.addEventListener('input',markDirty);
+resetBtn.addEventListener('click',updateEditor);
+document.querySelector('#iteration-reload')?.addEventListener('click',refresh);
+saveBtn.addEventListener('click',async()=>{
+  const file=selectedDoc();if(!file||saving||!csrfToken)return;
+  saving=true;markDirty();
+  try{
+    const response=await fetch('/api/admin/iteration/files/'+encodeURIComponent(chosen),{
+      method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrfToken},
+      body:JSON.stringify({content:editor.value,sha:file.sha})
+    });
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.message||result.error||'保存失败 ('+response.status+')');
+    file.sha=result.sha;file.content=editor.value;
+    if(chosen==='iteration-current.md')renderProgress(file.content);
+    setState('已保存到 GitHub · commit '+String(result.commitSha).slice(0,8),'ready');
+  }catch(e){setState('保存失败：'+(e instanceof Error?e.message:String(e)),'error');}
+  finally{saving=false;markDirty();}
+});
+refresh();
+</script>
