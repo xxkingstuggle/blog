@@ -69,7 +69,26 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
   let timer = 0;
   let savedSignature = '';
   let pendingSignature = '';
+  const RECOVERY_KEY = 'myzjx:studio-notes:unsynced:v1';
+  type RecoveryDraft = {title:string;body:string;baseRevision:number;timestamp:number};
   const signature = () => JSON.stringify({title:title.value, body:body.value});
+  function localRecovery():RecoveryDraft|null {
+    try {
+      const value=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'null') as RecoveryDraft|null;
+      if(!value || typeof value.title!=='string'||typeof value.body!=='string'||
+         !Number.isSafeInteger(value.baseRevision)||!Number.isFinite(value.timestamp)||
+         Date.now()-value.timestamp>7*24*60*60*1000) return null;
+      return value;
+    }catch{return null;}
+  }
+  function preserveUnsaved() {
+    try {
+      if(dirty) localStorage.setItem(RECOVERY_KEY,JSON.stringify({
+        title:title.value,body:body.value,baseRevision:revision,timestamp:Date.now()
+      } satisfies RecoveryDraft));
+      else localStorage.removeItem(RECOVERY_KEY);
+    }catch{/* Keep cloud editing available if storage quota/private mode blocks local backup. */}
+  }
   const setStatus = (message:string, state = 'ready') => { status.textContent=message; status.dataset.state=state; };
   const updateCounter = () => { counter.textContent = [...body.value].length+' 字'; };
   const updateButtons = () => {
@@ -105,7 +124,23 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
       token = session.csrfToken;
       const current = await request(BASE);
       if(!current.ok) throw new Error('无法读取笔记：HTTP '+current.status);
+      const emergency = localRecovery();
       setDocument(await current.json() as CloudDocument);
+      if (emergency && (emergency.title!==title.value || emergency.body!==body.value)) {
+        const restore = confirm('检测到这台设备上次尚未同步的笔记。要恢复本机编辑内容吗？');
+        if (restore) {
+          title.value=emergency.title;body.value=emergency.body;
+          dirty=signature()!==savedSignature;
+          updateCounter();updateButtons();
+          preserveUnsaved();
+          if (dirty && emergency.baseRevision===revision) {
+            setStatus('已恢复本机未同步草稿，正在继续保存…','pending');
+            timer=window.setTimeout(save,650);
+          } else if(dirty) {
+            setStatus('本机草稿与云端版本不一致。请先导出备份并比较，再决定是否覆盖。','error');
+          }
+        }
+      } else if (emergency) preserveUnsaved();
     } catch(e) { setStatus(e instanceof Error ? e.message : '连接失败','error'); }
   }
   async function save() {
@@ -129,6 +164,7 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
       if(!response.ok) throw new Error(result.error || '云端保存失败');
       revision = result.revision; savedSignature = pendingSignature;
       dirty = signature() !== savedSignature;
+      preserveUnsaved();
       revisionLabel.textContent = String(revision);
       updated.textContent = '同步于 ' + new Date(result.updatedAt || Date.now()).toLocaleString('zh-CN');
       setStatus(dirty ? '还有未保存的新修改' : '所有修改已保存','ready');
@@ -141,6 +177,7 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
   function changed() {
     dirty = signature() !== savedSignature;
     updateCounter(); updateButtons();
+    preserveUnsaved();
     clearTimeout(timer);
     if (dirty) {setStatus('正在编辑 · 等待自动保存','pending');timer=window.setTimeout(save,650);}
     else setStatus('所有修改已保存');
@@ -186,7 +223,7 @@ import AdminLayout from '../../../../layouts/AdminLayout.astro';
       title.value=data.title;
       body.value=data.body;
       dirty=signature()!==savedSignature;
-      updateCounter();updateButtons();
+      updateCounter();updateButtons();preserveUnsaved();
       if(dirty)await save();
       else setStatus('导入内容和当前版本相同，无需重复保存');
     }catch(e){setStatus(e instanceof Error?e.message:'导入失败','error');}
