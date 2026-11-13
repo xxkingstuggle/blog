@@ -54,9 +54,9 @@ async function run(){
   });
   await mobile.goto(origin+'/',{waitUntil:'networkidle'});
   assert.equal(await mobile.locator('.studio-mobile-dock').evaluate(el=>getComputedStyle(el).display),'flex');
-  await mobile.locator('.studio-dock-menu summary').click();
+  await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.studio-dock-menu').evaluate(el=>el.open),true);
-  await mobile.locator('.studio-dock-menu summary').click();
+  await mobile.locator('.studio-dock-menu > summary').click();
   await ensureWithinViewport(mobile,'mobile homepage');
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
 
