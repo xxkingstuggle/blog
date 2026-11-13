@@ -13,6 +13,7 @@ on:
       - 'src/pages/software/**'
       - 'src/pages/admin-shell/apps/**'
       - 'scripts/verify-studio-webkit.mjs'
+      - 'scripts/capture-godly-reference.mjs'
       - 'src/styles/iteration-editorial.css'
       - 'src/layouts/AdminLayout.astro'
       - 'src/scripts/iteration-wheel.ts'
@@ -44,6 +45,9 @@ jobs:
         run: node scripts/verify-iteration-webkit.mjs
       - name: Exercise public gallery and private applications in WebKit
         run: node scripts/verify-studio-webkit.mjs
+      - name: Capture Godly reference pages (best effort)
+        run: node scripts/capture-godly-reference.mjs
+        continue-on-error: true
       - name: Upload mocked desktop and mobile snapshots
         if: always()
         uses: actions/upload-artifact@v4
