@@ -803,6 +803,7 @@ async function iterationApi(request: Request, env: Env) {
       }, 200, { 'Cache-Control': 'no-store' });
     }
 
+    if (filename === null) return error('需要合法文件名。', 400, 'invalid_filename');
     if ((request.headers.get('Content-Type') ?? '').split(';')[0].trim() !== 'application/json') {
       return error('只接受 JSON 修改请求。', 415, 'invalid_content_type');
     }
