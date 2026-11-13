@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parseIterationIssues } from '../../src/scripts/iteration-wheel.ts';
+import { parseIterationIssues, parseIterationIssueTree } from '../../src/scripts/iteration-wheel.ts';
 
 test('five-column live Markdown drives the authoritative issue phase', () => {
   const md = [
@@ -48,4 +48,48 @@ test('interactive UI source includes disclosure, orbit inspect and reduced motio
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /iteration-orbit-spin/);
   assert.match(css, /iteration-issue-details\[hidden\]\s*\{\s*display:\s*none/);
+});
+
+test('private Markdown problem tree retains parent chain and independent phase cycles', () => {
+  const md = [
+    '## 当前问题链（树形结构）',
+    '```text',
+    '作息与行动切换',
+    '└─ P01 总问题',
+    '   ├─ P07 如何准时上床',
+    '   │  └─ P08 为什么总在等某种感觉',
+    '   └─ P09 其他实际卡点',
+    '```',
+    '## 当前各问题',
+    '| 编号 | 要解决什么 | 当前阶段 | 当前真实进度 | 下次关注 |',
+    '|---|---|---|---|---|',
+    '| P01 | 总问题 | 办法 | 已选办法待实测 | 有效果吗 |',
+    '| P07 | 子问题 | 行动 | 准备开始尝试 | 有没有真的行动 |',
+    '| P08 | 底层问题 | 问题 | 最近才发现 | 当前卡在哪里 |',
+    '| P09 | 并列子问题 | 反馈 | 有初步反馈 | 是否保留 |'
+  ].join('\n');
+  assert.deepEqual(parseIterationIssueTree(md), [
+    { id: 'P01', parentId: null, chain: '作息与行动切换', depth: 0 },
+    { id: 'P07', parentId: 'P01', chain: '作息与行动切换', depth: 1 },
+    { id: 'P08', parentId: 'P07', chain: '作息与行动切换', depth: 2 },
+    { id: 'P09', parentId: 'P01', chain: '作息与行动切换', depth: 1 }
+  ]);
+  assert.deepEqual(parseIterationIssues(md).map(x => x.phase), ['办法', '行动', '问题', '反馈']);
+});
+
+test('legacy Markdown without a tree remains valid and does not invent parent links', () => {
+  assert.deepEqual(parseIterationIssueTree('| P01 | 休息 | 行动 | 已开始 | 反馈 |'), []);
+});
+
+test('hierarchical UI is read-only, has child controls and preserves visible ancestors during filtering', () => {
+  const ts = readFileSync('src/scripts/iteration-wheel.ts', 'utf8');
+  const css = readFileSync('src/styles/iteration-editorial.css', 'utf8');
+  assert.match(ts, /parseIterationIssueTree\(markdown\)/);
+  assert.match(ts, /iteration-tree-children/);
+  assert.match(ts, /included\.add\(ancestor\)/);
+  assert.match(ts, /aria-controls/);
+  assert.match(ts, /aria-expanded/);
+  assert.match(ts, /inTree/);
+  assert.match(css, /\.iteration-tree-children\[hidden\]/);
+  assert.match(css, /@media \(max-width: 760px\)/);
 });

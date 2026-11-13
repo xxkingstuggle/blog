@@ -10,10 +10,20 @@ import { webkit } from 'playwright';
 
 const origin = 'http://127.0.0.1:4372';
 const md = [
+  '## 当前问题链（WebKit 测试）',
+  '```text',
+  '测试问题链',
+  '└─ P01 示例主问题',
+  '   └─ P07 示例执行障碍',
+  '      └─ P08 示例底层障碍',
+  '```',
+  '## 当前各问题',
   '| 编号 | 要解决什么 | 当前阶段 | 当前真实进度 | 下次关注 |',
   '|---|---|---|---|---|',
   '| P01 | 示例：休息 | 行动 | 已决定先按时放下电脑，未反馈实际结果 | 是否执行？ |',
   '| P02 | 示例：提醒 | 反馈 | 已设置提醒，效果尚未报告 | 提醒是否有帮助？ |',
+  '| P07 | 示例：上床动作 | 办法 | 新方法尚未验证 | 能不能准时上床 |',
+  '| P08 | 示例：等待感觉 | 问题 | 新发现的真实卡点 | 下一步怎么办 |',
 ].join('\n');
 const fakeSha = 'a'.repeat(40);
 const files = Object.fromEntries(
@@ -59,7 +69,10 @@ async function run() {
   await prepare(desktop);
   mkdirSync('artifacts', { recursive: true });
   await desktop.screenshot({ path: 'artifacts/iteration-editorial-desktop.png', fullPage: true });
-  assert.equal(await desktop.locator('.iteration-issue-card').count(), 2);
+  assert.equal(await desktop.locator('.iteration-issue-card').count(), 4);
+  assert.equal(await desktop.locator('.iteration-chain-group').count(), 2);
+  assert.equal(await desktop.locator('.iteration-tree-node[data-tree-parent="P07"]').count(), 1);
+  assert.equal(await desktop.locator('.iteration-tree-focus').count(), 1);
   const heroDesign = await desktop.locator('.iteration-hero-disc-center').evaluate(el => ({
     size: parseFloat(getComputedStyle(el).fontSize),
     caption: getComputedStyle(document.querySelector('.iteration-hero-art-caption')).display,
@@ -71,6 +84,16 @@ async function run() {
   assert.equal(heroDesign.caption, 'flex', 'hero caption must stay horizontal');
   assert.equal(heroDesign.linkColor, heroDesign.linkChildColor, 'CTA text must inherit readable contrast');
   assert.equal(heroDesign.searchLabelWidth, '1px', 'accessible search label must stay visually hidden');
+  // The child tree preserves its ancestry through collapse and filtering.
+  const branch = desktop.locator('.iteration-tree-node[data-tree-depth="0"]').filter({ has: desktop.locator('[data-issue-id="P01"]') }).first().locator(':scope > .iteration-tree-branch > .iteration-tree-toggle');
+  await branch.click();
+  assert.equal(await desktop.locator('[data-issue-id="P08"]').count(), 0);
+  await branch.click();
+  assert.equal(await desktop.locator('[data-issue-id="P08"]').count(), 1);
+  await desktop.locator('#iteration-search').fill('P08');
+  assert.equal(await desktop.locator('.iteration-issue-card').count(), 3);
+  assert.equal(await desktop.locator('[data-issue-id="P01"] .iteration-issue-phase').textContent(), '行动');
+  await desktop.locator('#iteration-search').fill('');
   assert.equal(await desktop.locator('#iteration-records').evaluate(el => el.open), false);
   const card = desktop.locator('[data-issue-id="P01"]');
   await card.locator('.iteration-issue-trigger').click();
@@ -109,6 +132,8 @@ async function run() {
   const editorSize = await mobile.locator('#iteration-editor').evaluate(element => getComputedStyle(element).fontSize);
   assert.ok(parseFloat(inputSize) >= 16, 'iPhone Safari focus would otherwise zoom search field');
   assert.ok(parseFloat(editorSize) >= 16, 'iPhone Safari focus would otherwise zoom editor');
+  const bottomCard = await mobile.locator('[data-issue-id="P08"]').boundingBox();
+  assert.ok(bottomCard && bottomCard.x >= 0 && bottomCard.x + bottomCard.width <= 390, 'nested tree must fit iPhone width');
   await mobile.locator('[data-issue-id="P01"] .iteration-issue-trigger').click();
   const orbit = mobile.locator('[data-issue-id="P01"]');
   await orbit.locator('.iteration-orbit-step').first().waitFor({ state: 'visible' });

@@ -46,6 +46,51 @@ export function parseIterationIssues(markdown: string): IterationIssue[] {
   return issues;
 }
 
+
+/** Parent/child links are read from the private Markdown problem-tree block.
+ * The public site never embeds a person's problem descriptions or relations.
+ * Missing/invalid relations leave issues as independent roots.
+ */
+export interface IterationIssueRelation {
+  id: string;
+  parentId: string | null;
+  chain: string;
+  depth: number;
+}
+export function parseIterationIssueTree(markdown: string): IterationIssueRelation[] {
+  const header = /^## 当前问题链[^\r\n]*$/m.exec(markdown);
+  if (!header) return [];
+  const remaining = markdown.slice(header.index + header[0].length);
+  const boundary = remaining.search(/\r?\n## /);
+  const section = boundary < 0 ? remaining : remaining.slice(0, boundary);
+  const fenced = /```(?:text)?[ \t]*\r?\n([\s\S]*?)\r?\n```/.exec(section);
+  if (!fenced) return [];
+  const relations: IterationIssueRelation[] = [];
+  const ancestors: Array<{ id: string; indent: number }> = [];
+  let chain = '未命名问题链';
+  const seen = new Set<string>();
+  for (const line of fenced[1].split(/\r?\n/)) {
+    const match = /^([ \t│]*)(?:├|└)─\s*(P\d{2})\b/.exec(line);
+    if (!match) {
+      const name = line.trim();
+      if (name && !/[└├│]/.test(name)) {
+        chain = name;
+        ancestors.length = 0;
+      }
+      continue;
+    }
+    const id = match[2];
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const indent = match[1].replace(/\t/g, '   ').length;
+    while (ancestors.length && ancestors[ancestors.length - 1].indent >= indent) ancestors.pop();
+    const parentId = ancestors.length ? ancestors[ancestors.length - 1].id : null;
+    relations.push({ id, parentId, chain, depth: ancestors.length });
+    ancestors.push({ id, indent });
+  }
+  return relations;
+}
+
 function createOrbit(issue: IterationIssue): HTMLElement {
   const shell = el('div', 'iteration-orbit-shell');
   const wheel = el('div', 'iteration-orbit');
@@ -185,14 +230,26 @@ function makeDetails(issue: IterationIssue): HTMLElement {
   detail.append(interior);
   return detail;
 }
+interface IssueNode {
+  issue: IterationIssue;
+  parentId: string | null;
+  chain: string;
+  depth: number;
+  children: IssueNode[];
+  inTree: boolean;
+}
+
 export function mountIssueBoard(root: HTMLElement) {
   let issues: IterationIssue[] = [];
+  let relations: IterationIssueRelation[] = [];
   let opened: string | null = null;
   let query = '';
   let filter: Phase | 'all' | 'unknown' = 'all';
+  const collapsed = new Set<string>();
   const count = document.querySelector<HTMLElement>('#iteration-progress-count');
   const search = document.querySelector<HTMLInputElement>('#iteration-search');
   const filters = [...document.querySelectorAll<HTMLButtonElement>('[data-iteration-filter]')];
+
   function setButtons() {
     for (const b of filters) {
       const key = b.dataset.iterationFilter as typeof filter;
@@ -205,7 +262,8 @@ export function mountIssueBoard(root: HTMLElement) {
       if (qtyEl) qtyEl.textContent = String(qty);
     }
   }
-  function buildCard(issue: IterationIssue) {
+
+  function buildCard(issue: IterationIssue, parentId: string | null, depth: number) {
     const article = el('article', 'iteration-issue-card');
     if (opened === issue.id) article.classList.add('is-open');
     article.dataset.issueId = issue.id;
@@ -215,6 +273,7 @@ export function mountIssueBoard(root: HTMLElement) {
     trigger.setAttribute('aria-controls', 'iteration-issue-details-' + issue.id);
     const index = el('span', 'iteration-issue-index', issue.id);
     const main = el('span', 'iteration-issue-main');
+    if (parentId) main.append(el('small', 'iteration-tree-lineage', '由 ' + parentId + ' 延伸 · 第 ' + (depth + 1) + ' 层'));
     main.append(el('strong', 'iteration-issue-name', issue.title), el('small', 'iteration-issue-summary', issue.progress));
     const badge = el('span', 'iteration-issue-phase', issue.phase || '待确认');
     badge.dataset.phase = issue.phase || 'unknown';
@@ -239,25 +298,145 @@ export function mountIssueBoard(root: HTMLElement) {
     article.append(trigger, details);
     return article;
   }
+
   function paint() {
     const normalized = query.trim().toLocaleLowerCase();
-    const visible = issues.filter(issue => {
+    const filtering = Boolean(normalized) || filter !== 'all';
+    const matched = new Set(issues.filter(issue => {
       const matchesPhase = filter === 'all' || (filter === 'unknown' ? issue.phase === null : issue.phase === filter);
       const searchable = [issue.id, issue.title, issue.progress, issue.next].join(' ').toLocaleLowerCase();
       return matchesPhase && (!normalized || searchable.includes(normalized));
-    });
+    }).map(issue => issue.id));
+
+    const nodes = new Map<string, IssueNode>(issues.map(issue => [
+      issue.id, { issue, parentId: null, chain: '其他独立问题', depth: 0, children: [], inTree: false }
+    ]));
+    const linked = new Set<string>();
+    for (const relation of relations) {
+      const node = nodes.get(relation.id);
+      if (!node || linked.has(relation.id)) continue;
+      const parent = relation.parentId ? nodes.get(relation.parentId) : null;
+      // A missing parent must not create an orphan or invent a new parent.
+      if (relation.parentId && !parent) continue;
+      node.parentId = relation.parentId;
+      node.chain = relation.chain;
+      node.depth = relation.depth;
+      node.inTree = true;
+      linked.add(node.issue.id);
+    }
+    for (const node of nodes.values()) {
+      if (!node.parentId) continue;
+      const parent = nodes.get(node.parentId);
+      if (parent && parent.inTree) parent.children.push(node);
+      else {
+        node.parentId = null;
+        node.depth = 0;
+      }
+    }
+
+    // Filtering keeps the ancestors of matching nodes visible as context.
+    // It never changes a parent node's real phase to match a child phase.
+    const included = new Set<string>(matched);
+    for (const id of matched) {
+      let ancestor = nodes.get(id)?.parentId;
+      const visited = new Set<string>([id]);
+      while (ancestor && !visited.has(ancestor)) {
+        visited.add(ancestor);
+        included.add(ancestor);
+        ancestor = nodes.get(ancestor)?.parentId ?? null;
+      }
+    }
+    const focus = [...nodes.values()].filter(n => n.inTree)
+      .sort((a, b) => b.depth - a.depth)[0]?.issue.id ?? null;
+
+    function buildNode(node: IssueNode): HTMLElement {
+      const outer = el('div', 'iteration-tree-node');
+      outer.dataset.treeDepth = String(node.depth);
+      outer.dataset.treeParent = node.parentId || '';
+      if (node.issue.id === focus) outer.classList.add('is-current-focus');
+      const card = buildCard(node.issue, node.parentId, node.depth);
+      if (node.issue.id === focus) {
+        const flag = el('span', 'iteration-tree-focus', '当前深入的问题');
+        card.querySelector('.iteration-issue-main')?.prepend(flag);
+      }
+      outer.append(card);
+      const children = node.children.filter(n => included.has(n.issue.id));
+      if (children.length) {
+        const branch = el('div', 'iteration-tree-branch');
+        const button = el('button', 'iteration-tree-toggle');
+        button.type = 'button';
+        const expanded = filtering || !collapsed.has(node.issue.id);
+        button.textContent = expanded ? '收起下层问题 · ' + children.length : '展开下层问题 · ' + children.length;
+        button.setAttribute('aria-expanded', String(expanded));
+        button.setAttribute('aria-controls', 'iteration-tree-children-' + node.issue.id);
+        if (filtering) {
+          button.disabled = true;
+          button.title = '筛选时自动展开匹配问题的上级关系';
+        } else {
+          button.addEventListener('click', () => {
+            if (collapsed.has(node.issue.id)) collapsed.delete(node.issue.id);
+            else collapsed.add(node.issue.id);
+            paint();
+          });
+        }
+        branch.append(button);
+        outer.append(branch);
+        const childBox = el('div', 'iteration-tree-children');
+        childBox.id = 'iteration-tree-children-' + node.issue.id;
+        childBox.hidden = !expanded;
+        if (expanded) for (const child of children) childBox.append(buildNode(child));
+        outer.append(childBox);
+      }
+      return outer;
+    }
+
     root.replaceChildren();
-    if (!visible.length) {
+    if (!matched.size) {
       root.append(el('p', 'iteration-issues-empty', issues.length ? '没有符合条件的问题，试试清除搜索或切换阶段。' : '暂无可读取的问题记录。'));
     } else {
-      const group = el('div', 'iteration-issue-stack');
-      for (const issue of visible) group.append(buildCard(issue));
-      root.append(group);
-      if (opened) { const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened); if (expanded) awakenOrbit(expanded); }
+      const groups = new Map<string, IssueNode[]>();
+      for (const issue of issues) {
+        const node = nodes.get(issue.id)!;
+        if (node.parentId || !included.has(issue.id)) continue;
+        if (!groups.has(node.chain)) groups.set(node.chain, []);
+        groups.get(node.chain)!.push(node);
+      }
+      const forest = el('div', 'iteration-issue-forest');
+      forest.setAttribute('aria-label', '按父子层级组织的问题树');
+      let n = 0;
+      for (const [label, roots] of groups) {
+        n++;
+        const section = el('section', 'iteration-chain-group');
+        section.setAttribute('aria-label', label);
+        if (label === '其他独立问题') section.classList.add('is-ungrouped');
+        const heading = el('div', 'iteration-chain-heading');
+        heading.append(el('span', 'iteration-chain-number', String(n).padStart(2, '0')));
+        const copy = el('div', 'iteration-chain-copy');
+        copy.append(el('h3', 'iteration-chain-name', label));
+        const total = roots.reduce((sum, node) => {
+          const countDescendants = (item: IssueNode): number => 1 + item.children.reduce((x, child) => x + countDescendants(child), 0);
+          return sum + countDescendants(node);
+        }, 0);
+        copy.append(el('p', 'iteration-chain-meta', label === '其他独立问题'
+          ? '尚未设定父子关系 · 按独立问题显示'
+          : total + ' 个相关问题 · 每一层独立迭代，解决底层后返回上一层'));
+        heading.append(copy);
+        section.append(heading);
+        const stack = el('div', 'iteration-issue-stack');
+        for (const node of roots) stack.append(buildNode(node));
+        section.append(stack);
+        forest.append(section);
+      }
+      root.append(forest);
+      if (opened) {
+        const expanded = root.querySelector<HTMLElement>('#iteration-issue-details-' + opened);
+        if (expanded && !expanded.hidden) awakenOrbit(expanded);
+      }
     }
-    if (count) count.textContent = '显示 ' + visible.length + ' / ' + issues.length + ' 个';
+    if (count) count.textContent = '匹配 ' + matched.size + ' / ' + issues.length + ' 个问题';
     setButtons();
   }
+
   search?.addEventListener('input', () => {
     query = search.value;
     paint();
@@ -272,6 +451,7 @@ export function mountIssueBoard(root: HTMLElement) {
   return {
     render(markdown: string) {
       issues = parseIterationIssues(markdown);
+      relations = parseIterationIssueTree(markdown);
       if (!issues.some(x => x.id === opened)) opened = null;
       paint();
     }
