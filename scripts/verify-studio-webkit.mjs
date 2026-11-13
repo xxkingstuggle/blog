@@ -116,6 +116,19 @@ async function run(){
   await mobile.waitForFunction(()=>document.querySelector('#note-status')?.textContent?.includes('所有修改已保存'),
     null,{timeout:8000});
   assert.equal(saved.title,'Restored backup');
+  // An unsynced local edit survives a browser restart and is reconciled by revision.
+  await mobile.evaluate((rev)=>{
+    localStorage.setItem('myzjx:studio-notes:unsynced:v1',JSON.stringify({
+      title:'Recovered locally',body:'Offline draft survives reload',
+      baseRevision:rev,timestamp:Date.now()
+    }));
+  }, revision);
+  await mobile.reload({waitUntil:'networkidle'});
+  await mobile.waitForFunction(()=>document.querySelector('#note-status')?.textContent?.includes('所有修改已保存'),
+    null,{timeout:8000});
+  assert.equal(saved.title,'Recovered locally');
+  assert.equal(saved.body,'Offline draft survives reload');
+  assert.equal(await mobile.evaluate(()=>localStorage.getItem('myzjx:studio-notes:unsynced:v1')),null);
   await ensureWithinViewport(mobile,'mobile notes');
   await mobile.screenshot({path:'artifacts/studio-notes-mobile.png',fullPage:true});
 
