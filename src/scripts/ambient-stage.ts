@@ -32,9 +32,6 @@ function bootAmbientStage(): void {
   let selectedLayer = 0;
   let hasRendered = false;
   let pendingScroll = false;
-  let pointerScheduled = false;
-  let cursorX = 0;
-  let cursorY = 0;
 
   function visible(element: HTMLElement): boolean {
     if (element.closest('[hidden]')) return false;
@@ -189,33 +186,7 @@ function bootAmbientStage(): void {
       scheduleRefresh();
     }, {passive:true});
 
-    // A luminous glint moves over the card and the spill follows it, but
-    // only the active card's small paint surface receives pointer updates.
-    if (!reducedMotion.matches) {
-      document.addEventListener('pointermove', event => {
-        if (!pinned) return;
-        if (!(event.target instanceof Element) ||
-          event.target.closest('.gallery-card') !== pinned) return;
-        cursorX = event.clientX; cursorY = event.clientY;
-        if (pointerScheduled) return;
-        pointerScheduled = true;
-        requestAnimationFrame(() => {
-          pointerScheduled = false;
-          if (!pinned) return;
-          const rect = pinned.getBoundingClientRect();
-          if (!rect.width || !rect.height) return;
-          const x = Math.max(6,Math.min(94,(cursorX-rect.left)/rect.width*100));
-          const y = Math.max(6,Math.min(94,(cursorY-rect.top)/rect.height*100));
-          pinned.style.setProperty('--sheen-x',x.toFixed(1)+'%');
-          pinned.style.setProperty('--sheen-y',y.toFixed(1)+'%');
-          const item = pinned.closest<HTMLElement>('.gallery-item');
-          if (item) {
-            item.style.setProperty('--local-glow-x',x.toFixed(1)+'%');
-            item.style.setProperty('--local-glow-y',y.toFixed(1)+'%');
-          }
-        });
-      }, {passive:true});
-    }
+
   }
 
   document.addEventListener('focusin', event => {
