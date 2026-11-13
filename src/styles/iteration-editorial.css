@@ -647,3 +647,146 @@ body.iteration-body :where(a,button,input,textarea):focus-visible {
   .iteration-hero-disc-ring { animation: none !important; }
   .iteration-hero-action { transition: none; }
 }
+
+
+/* Visual QA corrections: existing .iteration-goal span rules must not override
+   the CTA text, illustrated ring center, or the horizontal artwork caption. */
+.iteration-body .iteration-hero-action span { color: inherit; }
+.iteration-body .iteration-hero-disc-center {
+  display: block;
+  color: #fff6ec;
+  font-family: var(--font-editorial);
+  font-size: clamp(100px, 11vw, 152px);
+  line-height: 1;
+  font-weight: 400;
+}
+.iteration-body .iteration-hero-art-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font: 500 10px/1.5 var(--font-mono);
+  letter-spacing: .14em;
+}
+.iteration-body .iteration-hero-art-caption span {
+  display: inline;
+  color: var(--accent-contrast);
+  padding-inline: 8px;
+}
+
+/* The shared site does not define .sr-only; hide this search label visually,
+   but preserve it for VoiceOver and other screen readers. */
+.iteration-body .iteration-search-wrap .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A book-like archive disclosure instead of a permanent wall of Markdown. */
+.iteration-body .iteration-records {
+  margin-top: 105px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.iteration-body .iteration-records-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+  padding: clamp(24px, 3.8vw, 45px);
+  list-style: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 180ms ease;
+}
+.iteration-body .iteration-records-summary:hover { background: var(--surface-subtle); }
+.iteration-body .iteration-records-summary::-webkit-details-marker { display: none; }
+.iteration-body .iteration-records-summary::marker { content: ''; }
+.iteration-body .iteration-records-summary-copy {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  color: var(--text);
+}
+.iteration-body .iteration-records-summary-copy .iteration-eyebrow {
+  margin: 0 0 4px !important;
+  color: var(--accent-contrast);
+}
+.iteration-body .iteration-records-summary-copy strong {
+  font-family: var(--font-editorial);
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 540;
+  line-height: 1.35;
+  letter-spacing: -.045em;
+}
+.iteration-body .iteration-records-summary-copy small {
+  max-width: 60ch;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.8;
+}
+.iteration-body .iteration-records-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  color: var(--accent-contrast);
+  font-size: 13px;
+  font-weight: 600;
+}
+.iteration-body .iteration-records-toggle-arrow {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 240ms ease;
+}
+.iteration-body .iteration-records[open] .iteration-records-toggle-arrow {
+  transform: rotate(135deg);
+}
+.iteration-body .iteration-records[open] .iteration-records-summary {
+  border-bottom: 1px solid var(--line-subtle);
+}
+.iteration-body .iteration-records .iteration-editor-panel {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: clamp(22px, 3.8vw, 42px);
+  background: transparent;
+}
+.iteration-body .iteration-records .iteration-editor-panel .iteration-panel-heading h2 { font-size: clamp(22px, 2.5vw, 32px); }
+@media (max-width: 760px) {
+  .iteration-body .iteration-records { margin-top: 64px; }
+  .iteration-body .iteration-records-summary { padding: 23px 18px; }
+  .iteration-body .iteration-records-toggle { font-size: 0; gap: 0; }
+  .iteration-body .iteration-records-toggle-arrow { font-size: 17px; }
+  .iteration-body .iteration-records .iteration-editor-panel { padding: 22px 15px 26px; }
+  .iteration-body .iteration-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+  }
+  .iteration-body .iteration-filters::-webkit-scrollbar { display: none; }
+  .iteration-body .iteration-filters button { flex: 0 0 auto; min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iteration-body .iteration-records-toggle-arrow { transition: none; }
+}
