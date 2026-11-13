@@ -55,24 +55,24 @@ test('private Markdown problem tree retains parent chain and independent phase c
     '## 当前问题链（树形结构）',
     '```text',
     '作息与行动切换',
-    '└─ P01 总问题',
-    '   ├─ P07 如何准时上床',
-    '   │  └─ P08 为什么总在等某种感觉',
-    '   └─ P09 其他实际卡点',
+    '└─ P01 Example root',
+    '   ├─ P01.1 Example child',
+    '   │  └─ P01.1.1 Example leaf',
+    '   └─ P01.2 Other leaf',
     '```',
     '## 当前各问题',
     '| 编号 | 要解决什么 | 当前阶段 | 当前真实进度 | 下次关注 |',
     '|---|---|---|---|---|',
-    '| P01 | 总问题 | 办法 | 已选办法待实测 | 有效果吗 |',
-    '| P07 | 子问题 | 行动 | 准备开始尝试 | 有没有真的行动 |',
-    '| P08 | 底层问题 | 问题 | 最近才发现 | 当前卡在哪里 |',
-    '| P09 | 并列子问题 | 反馈 | 有初步反馈 | 是否保留 |'
+    '| P01 | Example root | 办法 | 已选办法待实测 | 有效果吗 |',
+    '| P01.1 | 子问题 | 行动 | 准备开始尝试 | 有没有真的行动 |',
+    '| P01.1.1 | 底层问题 | 问题 | 最近才发现 | 当前卡在哪里 |',
+    '| P01.2 | 并列子问题 | 反馈 | 有初步反馈 | 是否保留 |'
   ].join('\n');
   assert.deepEqual(parseIterationIssueTree(md), [
     { id: 'P01', parentId: null, chain: '作息与行动切换', depth: 0 },
-    { id: 'P07', parentId: 'P01', chain: '作息与行动切换', depth: 1 },
-    { id: 'P08', parentId: 'P07', chain: '作息与行动切换', depth: 2 },
-    { id: 'P09', parentId: 'P01', chain: '作息与行动切换', depth: 1 }
+    { id: 'P01.1', parentId: 'P01', chain: '作息与行动切换', depth: 1 },
+    { id: 'P01.1.1', parentId: 'P01.1', chain: '作息与行动切换', depth: 2 },
+    { id: 'P01.2', parentId: 'P01', chain: '作息与行动切换', depth: 1 }
   ]);
   assert.deepEqual(parseIterationIssues(md).map(x => x.phase), ['办法', '行动', '问题', '反馈']);
 });
@@ -92,4 +92,53 @@ test('hierarchical UI is read-only, has child controls and preserves visible anc
   assert.match(ts, /inTree/);
   assert.match(css, /\.iteration-tree-children\[hidden\]/);
   assert.match(css, /@media \(max-width: 760px\)/);
+});
+
+test('canonical relation table drives dotted levels, category grouping, and current focus', () => {
+  const md = [
+    '## 当前问题链（文本备份）',
+    '```text',
+    '旧版描述',
+    '└─ P01 Example root',
+    '```',
+    '## 当前各问题',
+    '| 编号 | 要解决什么 | 当前阶段 | 当前真实进度 | 下次关注 |',
+    '|---|---|---|---|---|',
+    '| P01 | Root | 办法 | Planned | Was it tried |',
+    '| P01.1 | Child | 行动 | Started | Next action |',
+    '| P01.1.1 | Leaf | 问题 | Observed | What happened |',
+    '| P02 | Independent | 反馈 | Result recorded | Next iteration |',
+    '## 问题关系（供画板读取）',
+    '| 编号 | 父问题 | 问题链 | 焦点 |',
+    '|---|---|---|---|',
+    '| P01 | — | Example chain | |',
+    '| P01.1 | P01 | Example chain | |',
+    '| P01.1.1 | P01.1 | Example chain | 当前 |',
+    '| P02 | — | Another chain | |',
+  ].join('\n');
+  assert.deepEqual(parseIterationIssues(md).map(x => x.id), ['P01','P01.1','P01.1.1','P02']);
+  assert.deepEqual(parseIterationIssueTree(md), [
+    { id:'P01', parentId:null, chain:'Example chain', depth:0 },
+    { id:'P01.1', parentId:'P01', chain:'Example chain', depth:1 },
+    { id:'P01.1.1', parentId:'P01.1', chain:'Example chain', depth:2, focus:true },
+    { id:'P02', parentId:null, chain:'Another chain', depth:0 }
+  ]);
+});
+
+test('unknown and cyclic parent metadata are treated as independent roots', () => {
+  const md = [
+    '## 问题关系（供画板读取）',
+    '| P01 | P01.1 | A | |',
+    '| P01.1 | P01 | A | |',
+    '| P03 | P99 | B | |',
+    '## 当前各问题',
+    '| P01 | One | 问题 | Some progress | Next |',
+    '| P01.1 | Two | 办法 | Some progress | Next |',
+    '| P03 | Three | 行动 | Some progress | Next |'
+  ].join('\n');
+  const rel = parseIterationIssueTree(md);
+  assert.equal(rel.length, 3);
+  assert.equal(rel.find(x => x.id === 'P01')?.parentId, null);
+  assert.equal(rel.find(x => x.id === 'P01.1')?.parentId, null);
+  assert.equal(rel.find(x => x.id === 'P03')?.parentId, null);
 });
