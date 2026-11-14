@@ -1,0 +1,271 @@
+/*
+ * Consistent public-site theme surfaces.
+ * Keep image/video pixels intact; adapt CSS-generated editorial artwork,
+ * text contrast and surrounding material to dark mode.
+ *
+ * Intentionally loaded after the gallery, optical and cloth styles so the
+ * final computed colors cannot be overwritten by older light-only rules.
+ */
+
+/* .article-prose a has higher specificity than .btn-primary and used to put
+   navy link text on a navy background. Buttons need real foreground contrast. */
+.front-body .article-prose a.btn-primary,
+.front-body .article-prose a.btn-primary:hover,
+.front-body .article-prose a.btn-primary:focus-visible {
+  color: var(--bg);
+  text-decoration: none;
+}
+.front-body .article-prose a.btn-secondary,
+.front-body .article-prose a.btn-secondary:hover,
+.front-body .article-prose a.btn-secondary:focus-visible {
+  color: var(--text);
+  text-decoration: none;
+}
+.front-body .article-prose a:is(.btn-primary, .btn-secondary):focus-visible {
+  outline: 2px solid var(--accent-contrast);
+  outline-offset: 4px;
+}
+
+/* Set dark-only custom properties on the body. Undefined properties cause
+   these overrides to be ignored in light mode, preserving its existing art. */
+:root[data-color-mode='dark'] body.front-body {
+  --editorial-dark-base:
+    radial-gradient(ellipse at 80% 13%, rgba(113,153,204,.24),transparent 65%),
+    linear-gradient(145deg,#253348 0%,#1c2636 59%,#19212e 100%);
+  --editorial-dark-warm:
+    radial-gradient(ellipse at 81% 21%, rgba(193,145,119,.18),transparent 62%),
+    linear-gradient(142deg,#362c37 0%,#292531 58%,#211f2a 100%);
+  --editorial-dark-green:
+    radial-gradient(ellipse at 76% 21%, rgba(101,165,144,.20),transparent 67%),
+    linear-gradient(137deg,#223a38 0%,#202f34 61%,#1b252d 100%);
+  --editorial-dark-ink: #edf1f8;
+  --editorial-dark-filter: none;
+  --editorial-dark-motif:
+    radial-gradient(circle at 38% 30%,rgba(186,210,244,.19),transparent 45%),
+    linear-gradient(145deg,rgba(159,178,210,.10),transparent 74%);
+  --editorial-dark-edge: rgba(225,236,255,.16);
+  --editorial-dark-device-panel: linear-gradient(145deg,#222b39,#171e29);
+  --editorial-dark-overlay-opacity: .22;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-color-mode='system'] body.front-body {
+    --editorial-dark-base:
+      radial-gradient(ellipse at 80% 13%, rgba(113,153,204,.24),transparent 65%),
+      linear-gradient(145deg,#253348 0%,#1c2636 59%,#19212e 100%);
+    --editorial-dark-warm:
+      radial-gradient(ellipse at 81% 21%, rgba(193,145,119,.18),transparent 62%),
+      linear-gradient(142deg,#362c37 0%,#292531 58%,#211f2a 100%);
+    --editorial-dark-green:
+      radial-gradient(ellipse at 76% 21%, rgba(101,165,144,.20),transparent 67%),
+      linear-gradient(137deg,#223a38 0%,#202f34 61%,#1b252d 100%);
+    --editorial-dark-ink: #edf1f8;
+    --editorial-dark-filter: none;
+    --editorial-dark-motif:
+      radial-gradient(circle at 38% 30%,rgba(186,210,244,.19),transparent 45%),
+      linear-gradient(145deg,rgba(159,178,210,.10),transparent 74%);
+    --editorial-dark-edge: rgba(225,236,255,.16);
+    --editorial-dark-device-panel: linear-gradient(145deg,#222b39,#171e29);
+  --editorial-dark-overlay-opacity: .22;
+  }
+}
+
+/* Only apply these overrides in actual dark mode. Unresolved CSS variables
+ * can reset a light theme property to its initial value, so never use
+ * a globally active background:var(--dark-token) on light-mode cards. */
+
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art {
+  background: var(--editorial-dark-base);
+  color: var(--editorial-dark-ink);
+  filter: none;
+}
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art--layout-1.gallery-card-art {
+  background: var(--editorial-dark-warm);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art--layout-2.gallery-card-art {
+  background: var(--editorial-dark-green);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-art-motif {
+  background: var(--editorial-dark-motif);
+  border-color: var(--editorial-dark-edge);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art::after {
+  opacity: var(--editorial-dark-overlay-opacity);
+}
+:root[data-color-mode='dark'] .front-body .gallery-detail-cover:not(.gallery-detail-cover--image) .gallery-detail-art {
+  background: var(--editorial-dark-base);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='dark'] .front-body .product-gallery:not(.single) {
+  background: var(--editorial-dark-device-panel);
+}
+@media (prefers-color-scheme: dark) {
+
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art {
+  background: var(--editorial-dark-base);
+  color: var(--editorial-dark-ink);
+  filter: none;
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art--layout-1.gallery-card-art {
+  background: var(--editorial-dark-warm);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art--layout-2.gallery-card-art {
+  background: var(--editorial-dark-green);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-art-motif {
+  background: var(--editorial-dark-motif);
+  border-color: var(--editorial-dark-edge);
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art::after {
+  opacity: var(--editorial-dark-overlay-opacity);
+}
+:root[data-color-mode='system'] .front-body .gallery-detail-cover:not(.gallery-detail-cover--image) .gallery-detail-art {
+  background: var(--editorial-dark-base);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='system'] .front-body .product-gallery:not(.single) {
+  background: var(--editorial-dark-device-panel);
+}
+
+}
+
+/* Final dark-mode contrast pass across the public navigation, about page and
+ * card chrome; images keep their actual photographic color. */
+
+/* Deliberately dark page furniture, not the inherited light 'card' fill. */
+:root[data-color-mode='dark'] .front-body .gallery-card {
+  background: #202631 !important;
+  background-image: linear-gradient(#202631,#202631) !important;
+  border-color: rgba(200,215,245,.17);
+  box-shadow: inset 0 1px 0 rgba(237,243,255,.055);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card:hover,
+:root[data-color-mode='dark'] .front-body .gallery-card:focus-visible {
+  background: #242b38 !important;
+  background-image: linear-gradient(#242b38,#242b38) !important;
+  border-color: rgba(200,215,245,.28);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-info,
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-caption {
+  background: transparent;
+  color: #eef2f9;
+}
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-info > p {
+  color: #b1bed1;
+}
+:root[data-color-mode='dark'] .front-body .studio-primary-nav a[aria-current='page'] {
+  --surface-subtle: #242c39;
+  background: #2a3445 !important;
+  background-image: linear-gradient(#2a3445,#2a3445) !important;
+  color: #f2f5ff !important;
+  -webkit-text-fill-color: #f2f5ff;
+  border-color: rgba(198,215,247,.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+:root[data-color-mode='dark'] .front-body .studio-primary-nav a[aria-current='page'] > span {
+  color: #f2f5ff !important;
+  -webkit-text-fill-color: #f2f5ff;
+}
+:root[data-color-mode='dark'] .front-body .about-sidebar .workbench-product-card,
+:root[data-color-mode='dark'] .front-body .about-sidebar .about-quick-links a {
+  /* Legacy rows still read var(--bg). Override the token on the actual
+     element as well as the painted background for WebKit. */
+  --bg: #242c39;
+  --surface: #242c39;
+  background: #242c39 !important;
+  /* WebKit still painted the legacy var(--bg) (white) despite the color
+     override; an explicit opaque image layer renders on top of that fill. */
+  background-image: linear-gradient(#242c39,#242c39) !important;
+  color: #dfe7f5;
+  border: 1px solid rgba(197,215,242,.12);
+}
+:root[data-color-mode='dark'] .front-body .about-sidebar .workbench-product-card:hover,
+:root[data-color-mode='dark'] .front-body .about-sidebar .about-quick-links a:hover {
+  background: #2c3544 !important;
+  background-image: linear-gradient(#2c3544,#2c3544) !important;
+  color: #fff;
+  border-color: rgba(197,215,242,.24);
+}
+:root[data-color-mode='dark'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary) {
+  --accent-contrast: #a6caff;
+  color: #a6caff !important;
+  -webkit-text-fill-color: #a6caff !important;
+  text-decoration-color: rgba(166,202,255,.52);
+}
+:root[data-color-mode='dark'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary):hover {
+  color: #d0e4ff !important;
+  -webkit-text-fill-color: #d0e4ff !important;
+  text-decoration-color: currentColor;
+}
+@media (prefers-color-scheme: dark) {
+
+/* Deliberately dark page furniture, not the inherited light 'card' fill. */
+:root[data-color-mode='system'] .front-body .gallery-card {
+  background: #202631 !important;
+  background-image: linear-gradient(#202631,#202631) !important;
+  border-color: rgba(200,215,245,.17);
+  box-shadow: inset 0 1px 0 rgba(237,243,255,.055);
+}
+:root[data-color-mode='system'] .front-body .gallery-card:hover,
+:root[data-color-mode='system'] .front-body .gallery-card:focus-visible {
+  background: #242b38 !important;
+  background-image: linear-gradient(#242b38,#242b38) !important;
+  border-color: rgba(200,215,245,.28);
+}
+:root[data-color-mode='system'] .front-body .gallery-card .gallery-card-info,
+:root[data-color-mode='system'] .front-body .gallery-card .gallery-card-caption {
+  background: transparent;
+  color: #eef2f9;
+}
+:root[data-color-mode='system'] .front-body .gallery-card .gallery-card-info > p {
+  color: #b1bed1;
+}
+:root[data-color-mode='system'] .front-body .studio-primary-nav a[aria-current='page'] {
+  --surface-subtle: #242c39;
+  background: #2a3445 !important;
+  background-image: linear-gradient(#2a3445,#2a3445) !important;
+  color: #f2f5ff !important;
+  -webkit-text-fill-color: #f2f5ff;
+  border-color: rgba(198,215,247,.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+:root[data-color-mode='system'] .front-body .studio-primary-nav a[aria-current='page'] > span {
+  color: #f2f5ff !important;
+  -webkit-text-fill-color: #f2f5ff;
+}
+:root[data-color-mode='system'] .front-body .about-sidebar .workbench-product-card,
+:root[data-color-mode='system'] .front-body .about-sidebar .about-quick-links a {
+  /* Legacy rows still read var(--bg). Override the token on the actual
+     element as well as the painted background for WebKit. */
+  --bg: #242c39;
+  --surface: #242c39;
+  background: #242c39 !important;
+  /* WebKit still painted the legacy var(--bg) (white) despite the color
+     override; an explicit opaque image layer renders on top of that fill. */
+  background-image: linear-gradient(#242c39,#242c39) !important;
+  color: #dfe7f5;
+  border: 1px solid rgba(197,215,242,.12);
+}
+:root[data-color-mode='system'] .front-body .about-sidebar .workbench-product-card:hover,
+:root[data-color-mode='system'] .front-body .about-sidebar .about-quick-links a:hover {
+  background: #2c3544 !important;
+  background-image: linear-gradient(#2c3544,#2c3544) !important;
+  color: #fff;
+  border-color: rgba(197,215,242,.24);
+}
+:root[data-color-mode='system'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary) {
+  --accent-contrast: #a6caff;
+  color: #a6caff !important;
+  -webkit-text-fill-color: #a6caff !important;
+  text-decoration-color: rgba(166,202,255,.52);
+}
+:root[data-color-mode='system'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary):hover {
+  color: #d0e4ff !important;
+  -webkit-text-fill-color: #d0e4ff !important;
+  text-decoration-color: currentColor;
+}
+
+}

@@ -62,7 +62,10 @@ body.front-body {
 }
 .front-body .studio-nav-icon {width:21px;min-width:21px;color:var(--text-secondary);}
 .front-body .studio-primary-nav a[aria-current='page'] .studio-nav-icon {color:var(--text);}
-.studio-rail-divider {height:1px;margin:15px 8px;border-top:1px solid var(--line-subtle);}
+/* In a 2x desktop capture the rail divider sat 5 physical pixels below
+   the footer's entry rule. Move only this rule up by 2.5 CSS pixels while
+   preserving the 30px total vertical gap and all secondary-nav positions. */
+.studio-rail-divider {height:1px;margin:12.5px 8px 17.5px;border-top:1px solid var(--line-subtle);}
 .front-body .studio-rail-bottom {
   border:0;border-top:1px solid var(--line-subtle);
   padding:14px 3px 0;display:block;margin-top:24px;
@@ -250,7 +253,12 @@ body.front-body {
   .front-body .studio-mobile-dock.is-hidden {
     opacity:0;pointer-events:none;transform:translate(-50%,calc(110% + env(safe-area-inset-bottom)));
   }
-  .front-body .site-footer {padding-bottom:115px;}
+  /* Reserve the fixed 64px mobile dock, its bottom offset and iOS home
+     indicator. The oversized closing wordmark remains fully visible at
+     scroll-bottom rather than sitting underneath the dock. */
+  .front-body .site-footer.studio-footer {
+    padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  }
 }
 @media(prefers-reduced-motion:reduce) {
   .studio-dock-panel {animation:none;}
