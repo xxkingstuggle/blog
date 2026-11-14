@@ -45,6 +45,7 @@
     linear-gradient(145deg,rgba(159,178,210,.10),transparent 74%);
   --editorial-dark-edge: rgba(225,236,255,.16);
   --editorial-dark-device-panel: linear-gradient(145deg,#222b39,#171e29);
+  --editorial-dark-overlay-opacity: .22;
 }
 @media (prefers-color-scheme: dark) {
   :root[data-color-mode='system'] body.front-body {
@@ -64,41 +65,69 @@
       linear-gradient(145deg,rgba(159,178,210,.10),transparent 74%);
     --editorial-dark-edge: rgba(225,236,255,.16);
     --editorial-dark-device-panel: linear-gradient(145deg,#222b39,#171e29);
+  --editorial-dark-overlay-opacity: .22;
   }
 }
 
-/* Retheme generated poster artwork, NOT photographs or video frames. */
-.front-body .gallery-card--editorial .gallery-card-art {
+/* Only apply these overrides in actual dark mode. Unresolved CSS variables
+ * can reset a light theme property to its initial value, so never use
+ * a globally active background:var(--dark-token) on light-mode cards. */
+
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art {
   background: var(--editorial-dark-base);
   color: var(--editorial-dark-ink);
-  filter: var(--editorial-dark-filter);
+  filter: none;
 }
-.front-body .gallery-card--editorial .gallery-card-art--layout-1.gallery-card-art {
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art--layout-1.gallery-card-art {
   background: var(--editorial-dark-warm);
   color: var(--editorial-dark-ink);
 }
-.front-body .gallery-card--editorial .gallery-card-art--layout-2.gallery-card-art {
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art--layout-2.gallery-card-art {
   background: var(--editorial-dark-green);
   color: var(--editorial-dark-ink);
 }
-.front-body .gallery-card--editorial .gallery-art-motif {
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-art-motif {
   background: var(--editorial-dark-motif);
   border-color: var(--editorial-dark-edge);
 }
-.front-body .gallery-card--editorial .gallery-card-art::after {
+:root[data-color-mode='dark'] .front-body .gallery-card--editorial .gallery-card-art::after {
   opacity: var(--editorial-dark-overlay-opacity);
 }
-:root[data-color-mode='dark'] body.front-body,
-:root[data-color-mode='dark'] .front-body {
-  --editorial-dark-overlay-opacity: .22;
-}
-@media (prefers-color-scheme: dark) {
-  :root[data-color-mode='system'] body.front-body { --editorial-dark-overlay-opacity: .22; }
-}
-.front-body .gallery-detail-cover:not(.gallery-detail-cover--image) .gallery-detail-art {
+:root[data-color-mode='dark'] .front-body .gallery-detail-cover:not(.gallery-detail-cover--image) .gallery-detail-art {
   background: var(--editorial-dark-base);
   color: var(--editorial-dark-ink);
 }
-.front-body .product-gallery:not(.single) {
+:root[data-color-mode='dark'] .front-body .product-gallery:not(.single) {
   background: var(--editorial-dark-device-panel);
+}
+@media (prefers-color-scheme: dark) {
+
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art {
+  background: var(--editorial-dark-base);
+  color: var(--editorial-dark-ink);
+  filter: none;
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art--layout-1.gallery-card-art {
+  background: var(--editorial-dark-warm);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art--layout-2.gallery-card-art {
+  background: var(--editorial-dark-green);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-art-motif {
+  background: var(--editorial-dark-motif);
+  border-color: var(--editorial-dark-edge);
+}
+:root[data-color-mode='system'] .front-body .gallery-card--editorial .gallery-card-art::after {
+  opacity: var(--editorial-dark-overlay-opacity);
+}
+:root[data-color-mode='system'] .front-body .gallery-detail-cover:not(.gallery-detail-cover--image) .gallery-detail-art {
+  background: var(--editorial-dark-base);
+  color: var(--editorial-dark-ink);
+}
+:root[data-color-mode='system'] .front-body .product-gallery:not(.single) {
+  background: var(--editorial-dark-device-panel);
+}
+
 }
