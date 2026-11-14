@@ -70,6 +70,14 @@ function initializeClothPressure(): void {
       release(); // Allow the surface to rebound; do not abruptly clear it.
       return;
     }
+    // Browsers may retarget a pointermove while a transformed card is
+    // settling. Never react unless the pointer is really inside its shell.
+    const shell = card.getBoundingClientRect();
+    if (event.clientX < shell.left || event.clientX > shell.right ||
+        event.clientY < shell.top || event.clientY > shell.bottom) {
+      release();
+      return;
+    }
     if (card !== active) {
       if (active) clear(active);
       active = card;
@@ -96,6 +104,19 @@ function initializeClothPressure(): void {
     if (!raf) raf = requestAnimationFrame(tick);
   }
   document.addEventListener('pointermove', update, { passive: true });
+  // WebKit can skip a document-level pointermove on exit following a
+  // screenshot or a composited transform. Card-level exit and mouseout
+  // give the rebound an independent, reliable trigger.
+  for (const card of cards) {
+    card.addEventListener('pointerleave', () => {
+      if (active === card) release();
+    }, { passive: true });
+    card.addEventListener('mouseleave', () => {
+      if (active === card) release();
+    }, { passive: true });
+  }
+  document.addEventListener('pointercancel', release, { passive: true });
+  window.addEventListener('scroll', release, { passive: true });
   document.addEventListener('pointerout', event => {
     if (active && !(event.relatedTarget instanceof Node &&
       active.contains(event.relatedTarget))) release();
