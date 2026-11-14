@@ -210,8 +210,15 @@ async function run(){
   await desktop.screenshot({path:'artifacts/studio-cloth-hover-desktop.png',fullPage:false});
   await desktop.mouse.move(12,12);
   await desktop.waitForTimeout(1100);
-  const released=await touchCard.evaluate(el=>Number(el.style.getPropertyValue('--pressure-opacity')));
-  assert.ok(released<.04,'cloth rebounds and leaves no floating cursor shadow');
+  const released=await touchCard.evaluate(el=>({
+    opacity:Number(el.style.getPropertyValue('--pressure-opacity')),
+    active:el.dataset.clothActive || 'none',
+    hovered:el.matches(':hover'),
+    focused:el.contains(document.activeElement),
+    transform:getComputedStyle(el.querySelector('.gallery-card-visual')).transform
+  }));
+  assert.ok(released.opacity<.04,
+    'cloth rebounds and leaves no floating cursor shadow: '+JSON.stringify(released));
   await desktop.screenshot({path:'artifacts/studio-cloth-released.png',fullPage:false});
 
   const fieldGlow=await ambient.locator('[data-ambient-layer]').first().evaluate(el=>getComputedStyle(el).backgroundImage);
