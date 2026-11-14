@@ -250,7 +250,12 @@ body.front-body {
   .front-body .studio-mobile-dock.is-hidden {
     opacity:0;pointer-events:none;transform:translate(-50%,calc(110% + env(safe-area-inset-bottom)));
   }
-  .front-body .site-footer {padding-bottom:115px;}
+  /* Reserve the fixed 64px mobile dock, its bottom offset and iOS home
+     indicator. The oversized closing wordmark remains fully visible at
+     scroll-bottom rather than sitting underneath the dock. */
+  .front-body .site-footer.studio-footer {
+    padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  }
 }
 @media(prefers-reduced-motion:reduce) {
   .studio-dock-panel {animation:none;}
