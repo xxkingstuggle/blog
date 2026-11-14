@@ -154,6 +154,37 @@ async function run(){
       navigation:get('.studio-primary-nav a[aria-current="page"]')
     };
   });
+  const themeDiag = await colorAudit.locator('.about-sidebar .workbench-product-card').first().evaluate(el=>{
+    const st=getComputedStyle(el);
+    const rules=[];
+    const walk=(ruleList)=>{
+      for(const rule of Array.from(ruleList)){
+        if(rule.cssRules){try{walk(rule.cssRules);}catch{}}
+        const selectors=rule.selectorText;
+        if(!selectors || !selectors.includes('workbench-product-card')) continue;
+        try {
+          if(el.matches(selectors))rules.push({
+            selector:selectors.slice(0,200),
+            background:rule.style?.getPropertyValue('background'),
+            priority:rule.style?.getPropertyPriority('background'),
+            bgColor:rule.style?.getPropertyValue('background-color'),
+            color:rule.style?.getPropertyValue('color')
+          });
+        }catch{}
+      }
+    };
+    for(const sheet of Array.from(document.styleSheets)){
+      try{walk(sheet.cssRules);}catch{}
+    }
+    return {
+      rootMode:document.documentElement.dataset.colorMode,
+      bodyBg:getComputedStyle(document.body).getPropertyValue('--bg'),
+      elementStyle:el.getAttribute('style'),
+      bg:st.background,fg:st.color,backgroundColor:st.backgroundColor,
+      rules:rules.slice(-25)
+    };
+  });
+  console.log('THEME DIAGNOSTIC',JSON.stringify(themeDiag));
   for(const item of [aboutDarkPanels.productPanel,aboutDarkPanels.quick,aboutDarkPanels.navigation]) {
     assert.ok(item && /^(?:rgb|rgba)[(]/.test(item.bg) && !item.bg.includes('255, 255, 255'),
       'dark-mode navigation and cards must not become white blocks: '+JSON.stringify(item));
