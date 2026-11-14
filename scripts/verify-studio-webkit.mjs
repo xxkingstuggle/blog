@@ -144,7 +144,7 @@ async function run(){
       const el=document.querySelector(selector);
       if(!el)return null;
       const s=getComputedStyle(el);
-      return {fg:s.color,bg:s.backgroundColor,bgImage:s.backgroundImage,label:el.textContent?.trim()};
+      return {fg:s.color,fill:s.webkitTextFillColor,bg:s.backgroundColor,bgImage:s.backgroundImage,label:el.textContent?.trim()};
     };
     return {
       product:get('.about-sidebar .workbench-product-card strong'),
@@ -191,8 +191,9 @@ async function run(){
       item.bgImage?.includes('linear-gradient')
     ), 'dark-mode navigation and cards must not become white blocks: '+JSON.stringify(item));
   }
-  assert.ok(aboutDarkPanels.articleLink && !aboutDarkPanels.articleLink.fg.includes('23, 32, 57'),
-    'dark article links must not inherit navy-on-black typography');
+  assert.ok(aboutDarkPanels.articleLink &&
+    !(aboutDarkPanels.articleLink.fill || aboutDarkPanels.articleLink.fg).includes('23, 32, 57'),
+    'dark article links must not inherit navy-on-black typography: '+JSON.stringify(aboutDarkPanels.articleLink));
   await auditButton.scrollIntoViewIfNeeded();
   await colorAudit.screenshot({path:'artifacts/studio-about-button-dark.png'});
   await colorAudit.close();
