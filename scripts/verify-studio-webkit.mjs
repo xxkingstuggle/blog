@@ -155,7 +155,7 @@ async function run(){
     };
   });
   for(const item of [aboutDarkPanels.productPanel,aboutDarkPanels.quick,aboutDarkPanels.navigation]) {
-    assert.ok(item && /^rgb\\(/.test(item.bg) && !item.bg.includes('255, 255, 255'),
+    assert.ok(item && /^(?:rgb|rgba)[(]/.test(item.bg) && !item.bg.includes('255, 255, 255'),
       'dark-mode navigation and cards must not become white blocks: '+JSON.stringify(item));
   }
   assert.ok(aboutDarkPanels.articleLink && !aboutDarkPanels.articleLink.fg.includes('23, 32, 57'),
