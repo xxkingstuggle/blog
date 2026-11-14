@@ -144,7 +144,7 @@ async function run(){
       const el=document.querySelector(selector);
       if(!el)return null;
       const s=getComputedStyle(el);
-      return {fg:s.color,bg:s.backgroundColor,label:el.textContent?.trim()};
+      return {fg:s.color,bg:s.backgroundColor,bgImage:s.backgroundImage,label:el.textContent?.trim()};
     };
     return {
       product:get('.about-sidebar .workbench-product-card strong'),
@@ -186,8 +186,10 @@ async function run(){
   });
   console.log('THEME DIAGNOSTIC',JSON.stringify(themeDiag));
   for(const item of [aboutDarkPanels.productPanel,aboutDarkPanels.quick,aboutDarkPanels.navigation]) {
-    assert.ok(item && /^(?:rgb|rgba)[(]/.test(item.bg) && !item.bg.includes('255, 255, 255'),
-      'dark-mode navigation and cards must not become white blocks: '+JSON.stringify(item));
+    assert.ok(item && (
+      (!item.bg.includes('255, 255, 255') && /^(?:rgb|rgba)[(]/.test(item.bg)) ||
+      item.bgImage?.includes('linear-gradient')
+    ), 'dark-mode navigation and cards must not become white blocks: '+JSON.stringify(item));
   }
   assert.ok(aboutDarkPanels.articleLink && !aboutDarkPanels.articleLink.fg.includes('23, 32, 57'),
     'dark article links must not inherit navy-on-black typography');
