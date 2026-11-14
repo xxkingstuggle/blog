@@ -50,6 +50,19 @@ async function run(){
   assert.ok(visibleWrites > 0 && visibleWrites < frameRatios.length,'category filter narrows results');
   await desktop.locator('[data-gallery-filter="all"]').click();
   assert.equal(await desktop.locator('.gallery-item:not([hidden])').count(),frameRatios.length);
+  // The left separator receives a 2.5 CSS px optical correction (5 px at
+  // 2x Retina), without moving any of the secondary navigation links.
+  const dividerMargins=await desktop.locator('.studio-rail-divider').evaluate(el=>({
+    top:parseFloat(getComputedStyle(el).marginTop),
+    bottom:parseFloat(getComputedStyle(el).marginBottom),
+    line:parseFloat(getComputedStyle(el).borderTopWidth),
+    rect:el.getBoundingClientRect().toJSON()
+  }));
+  assert.ok(Math.abs(dividerMargins.top-12.5)<.02 &&
+    Math.abs(dividerMargins.bottom-17.5)<.02 &&
+    dividerMargins.line>=1 &&
+    Math.abs(dividerMargins.top+dividerMargins.bottom-30)<.02,
+    'rail separator must align 5 Retina px higher without displacing lower navigation');
   assert.equal(await desktop.locator('.studio-side-rail').evaluate(el=>getComputedStyle(el).position),'fixed');
   assert.equal(await desktop.locator('.gallery-grid').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
   await desktop.waitForFunction(() => document.querySelector('.gallery-grid')?.dataset.masonry === 'true');
@@ -90,6 +103,32 @@ async function run(){
   await railTheme.click();
   await desktop.locator('body > .theme-menu-popover[data-theme-floating] [data-theme-value="system"]').click();
   assert.equal(await desktop.evaluate(()=>document.documentElement.dataset.colorMode),'system');
+  // Real WebKit capture of the specific seam the user pointed to.
+  // Scroll the article footer to the fixed rail separator for a direct
+  // two-line visual comparison; no mockups or image compositing involved.
+  await desktop.goto(origin+'/posts/lightweight-multi-agent-coding-loop/',{waitUntil:'networkidle'});
+  await desktop.evaluate(()=>{
+    const footer=document.querySelector('.studio-footer');
+    const divider=document.querySelector('.studio-rail-divider');
+    if(!footer || !divider) return;
+    const documentFooterTop=footer.getBoundingClientRect().top+scrollY;
+    const desiredTop=divider.getBoundingClientRect().top;
+    window.scrollTo(0, documentFooterTop-desiredTop);
+  });
+  await desktop.waitForTimeout(200);
+  const footerSeam=await desktop.evaluate(()=>{
+    const divider=document.querySelector('.studio-rail-divider');
+    const footer=document.querySelector('.studio-footer');
+    return {
+      dividerY:divider?.getBoundingClientRect().top,
+      footerY:footer?.getBoundingClientRect().top,
+      scrollY,innerHeight
+    };
+  });
+  console.log('Editorial rail/footer seam',JSON.stringify(footerSeam));
+  await desktop.screenshot({path:'artifacts/studio-divider-alignment-desktop.png',fullPage:false});
+  await desktop.goto(origin+'/',{waitUntil:'networkidle'});
+
 
 
   // Public theme regression: genuine button contrast in article prose and
