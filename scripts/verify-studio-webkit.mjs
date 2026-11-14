@@ -113,20 +113,29 @@ async function run(){
     if(!footer || !divider) return;
     const documentFooterTop=footer.getBoundingClientRect().top+scrollY;
     const desiredTop=divider.getBoundingClientRect().top;
-    window.scrollTo(0, documentFooterTop-desiredTop);
+    // The site normally uses html{scroll-behavior:smooth}; forcing an
+    // immediate jump is necessary for a deterministic Safari snapshot.
+    document.documentElement.style.scrollBehavior='auto';
+    window.scrollTo({top:documentFooterTop-desiredTop,behavior:'instant'});
   });
-  await desktop.waitForTimeout(200);
+  await desktop.waitForTimeout(150);
   const footerSeam=await desktop.evaluate(()=>{
     const divider=document.querySelector('.studio-rail-divider');
     const footer=document.querySelector('.studio-footer');
+    const rail=divider?.getBoundingClientRect();
     return {
-      dividerY:divider?.getBoundingClientRect().top,
+      dividerY:rail?.top,
       footerY:footer?.getBoundingClientRect().top,
       scrollY,innerHeight
     };
   });
   console.log('Editorial rail/footer seam',JSON.stringify(footerSeam));
+  assert.ok(Math.abs(footerSeam.dividerY-footerSeam.footerY)<1.5,
+    'Safari footer/rail comparison screenshot requires exact settled scroll position');
   await desktop.screenshot({path:'artifacts/studio-divider-alignment-desktop.png',fullPage:false});
+  const clipTop=Math.max(0,Math.floor(footerSeam.dividerY-115));
+  await desktop.screenshot({path:'artifacts/studio-divider-alignment-detail.png',
+    clip:{x:0,y:clipTop,width:1440,height:Math.min(370,900-clipTop)}});
   await desktop.goto(origin+'/',{waitUntil:'networkidle'});
 
 
