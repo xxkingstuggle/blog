@@ -131,3 +131,107 @@
 }
 
 }
+
+/* Final dark-mode contrast pass across the public navigation, about page and
+ * card chrome; images keep their actual photographic color. */
+
+/* Deliberately dark page furniture, not the inherited light 'card' fill. */
+:root[data-color-mode='dark'] .front-body .gallery-card {
+  background: #202631;
+  border-color: rgba(200,215,245,.17);
+  box-shadow: inset 0 1px 0 rgba(237,243,255,.055);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card:hover,
+:root[data-color-mode='dark'] .front-body .gallery-card:focus-visible {
+  background: #242b38;
+  border-color: rgba(200,215,245,.28);
+}
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-info,
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-caption {
+  background: transparent;
+  color: #eef2f9;
+}
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-info > p {
+  color: #b1bed1;
+}
+:root[data-color-mode='dark'] .front-body .studio-primary-nav a[aria-current='page'] {
+  background: rgba(198,215,247,.12);
+  color: #f2f5ff;
+  border-color: rgba(198,215,247,.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+:root[data-color-mode='dark'] .front-body .studio-primary-nav a[aria-current='page'] .studio-nav-icon {
+  color: #e8eefb;
+}
+:root[data-color-mode='dark'] .front-body .about-sidebar .workbench-product-card,
+:root[data-color-mode='dark'] .front-body .about-sidebar .about-quick-links a {
+  background: #242c39;
+  color: #dfe7f5;
+  border: 1px solid rgba(197,215,242,.12);
+}
+:root[data-color-mode='dark'] .front-body .about-sidebar .workbench-product-card:hover,
+:root[data-color-mode='dark'] .front-body .about-sidebar .about-quick-links a:hover {
+  background: #2c3544;
+  color: #fff;
+  border-color: rgba(197,215,242,.24);
+}
+:root[data-color-mode='dark'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary) {
+  color: #a6caff;
+  text-decoration-color: rgba(166,202,255,.52);
+}
+:root[data-color-mode='dark'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary):hover {
+  color: #d0e4ff;
+  text-decoration-color: currentColor;
+}
+@media (prefers-color-scheme: dark) {
+
+/* Deliberately dark page furniture, not the inherited light 'card' fill. */
+:root[data-color-mode='system'] .front-body .gallery-card {
+  background: #202631;
+  border-color: rgba(200,215,245,.17);
+  box-shadow: inset 0 1px 0 rgba(237,243,255,.055);
+}
+:root[data-color-mode='system'] .front-body .gallery-card:hover,
+:root[data-color-mode='system'] .front-body .gallery-card:focus-visible {
+  background: #242b38;
+  border-color: rgba(200,215,245,.28);
+}
+:root[data-color-mode='system'] .front-body .gallery-card .gallery-card-info,
+:root[data-color-mode='system'] .front-body .gallery-card .gallery-card-caption {
+  background: transparent;
+  color: #eef2f9;
+}
+:root[data-color-mode='system'] .front-body .gallery-card .gallery-card-info > p {
+  color: #b1bed1;
+}
+:root[data-color-mode='system'] .front-body .studio-primary-nav a[aria-current='page'] {
+  background: rgba(198,215,247,.12);
+  color: #f2f5ff;
+  border-color: rgba(198,215,247,.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+:root[data-color-mode='system'] .front-body .studio-primary-nav a[aria-current='page'] .studio-nav-icon {
+  color: #e8eefb;
+}
+:root[data-color-mode='system'] .front-body .about-sidebar .workbench-product-card,
+:root[data-color-mode='system'] .front-body .about-sidebar .about-quick-links a {
+  background: #242c39;
+  color: #dfe7f5;
+  border: 1px solid rgba(197,215,242,.12);
+}
+:root[data-color-mode='system'] .front-body .about-sidebar .workbench-product-card:hover,
+:root[data-color-mode='system'] .front-body .about-sidebar .about-quick-links a:hover {
+  background: #2c3544;
+  color: #fff;
+  border-color: rgba(197,215,242,.24);
+}
+:root[data-color-mode='system'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary) {
+  color: #a6caff;
+  text-decoration-color: rgba(166,202,255,.52);
+}
+:root[data-color-mode='system'] .front-body .about-prose a:not(.btn-primary):not(.btn-secondary):hover {
+  color: #d0e4ff;
+  text-decoration-color: currentColor;
+}
+
+}

@@ -138,6 +138,29 @@ async function run(){
   const aboutDark=await readButton();
   assert.ok(contrastRatio(aboutDark)>=4.5,
     'GitHub link label must be visible on its button in dark mode: '+JSON.stringify(aboutDark));
+  // All sidebar rows and editorial links must remain visible when dark.
+  const aboutDarkPanels=await colorAudit.evaluate(()=>{
+    const get=selector=>{
+      const el=document.querySelector(selector);
+      if(!el)return null;
+      const s=getComputedStyle(el);
+      return {fg:s.color,bg:s.backgroundColor,label:el.textContent?.trim()};
+    };
+    return {
+      product:get('.about-sidebar .workbench-product-card strong'),
+      productPanel:get('.about-sidebar .workbench-product-card'),
+      quick:get('.about-sidebar .about-quick-links a'),
+      articleLink:get('.about-prose p a'),
+      navigation:get('.studio-primary-nav a[aria-current="page"]')
+    };
+  });
+  for(const item of [aboutDarkPanels.productPanel,aboutDarkPanels.quick,aboutDarkPanels.navigation]) {
+    assert.ok(item && /^rgb\\(/.test(item.bg) && !item.bg.includes('255, 255, 255'),
+      'dark-mode navigation and cards must not become white blocks: '+JSON.stringify(item));
+  }
+  assert.ok(aboutDarkPanels.articleLink && !aboutDarkPanels.articleLink.fg.includes('23, 32, 57'),
+    'dark article links must not inherit navy-on-black typography');
+  await auditButton.scrollIntoViewIfNeeded();
   await colorAudit.screenshot({path:'artifacts/studio-about-button-dark.png'});
   await colorAudit.close();
 
