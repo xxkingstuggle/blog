@@ -118,7 +118,7 @@ async function run(){
     return {text:el.textContent?.trim(),fg:style.color,bg:style.backgroundColor};
   });
   const contrastRatio=({fg,bg})=>{
-    const channels=value=>(value.match(/[\\d.]+/g)||[]).slice(0,3).map(Number);
+    const channels=value=>(value.match(/[0-9.]+/g)||[]).slice(0,3).map(Number);
     const lum=value=>{
       const [r,g,b]=channels(value).map(c=>{
         const x=c/255;
