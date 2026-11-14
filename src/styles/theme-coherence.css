@@ -155,6 +155,7 @@
   color: #b1bed1;
 }
 :root[data-color-mode='dark'] .front-body .studio-primary-nav a[aria-current='page'] {
+  --surface-subtle: #242c39;
   background: rgba(198,215,247,.12) !important;
   color: #f2f5ff;
   border-color: rgba(198,215,247,.13);
@@ -165,6 +166,10 @@
 }
 :root[data-color-mode='dark'] .front-body .about-sidebar .workbench-product-card,
 :root[data-color-mode='dark'] .front-body .about-sidebar .about-quick-links a {
+  /* Legacy rows still read var(--bg). Override the token on the actual
+     element as well as the painted background for WebKit. */
+  --bg: #242c39;
+  --surface: #242c39;
   background: #242c39 !important;
   background-image: none !important;
   color: #dfe7f5;
@@ -207,6 +212,7 @@
   color: #b1bed1;
 }
 :root[data-color-mode='system'] .front-body .studio-primary-nav a[aria-current='page'] {
+  --surface-subtle: #242c39;
   background: rgba(198,215,247,.12) !important;
   color: #f2f5ff;
   border-color: rgba(198,215,247,.13);
@@ -217,6 +223,10 @@
 }
 :root[data-color-mode='system'] .front-body .about-sidebar .workbench-product-card,
 :root[data-color-mode='system'] .front-body .about-sidebar .about-quick-links a {
+  /* Legacy rows still read var(--bg). Override the token on the actual
+     element as well as the painted background for WebKit. */
+  --bg: #242c39;
+  --surface: #242c39;
   background: #242c39 !important;
   background-image: none !important;
   color: #dfe7f5;
