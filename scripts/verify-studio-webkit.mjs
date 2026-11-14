@@ -91,6 +91,56 @@ async function run(){
   await desktop.locator('body > .theme-menu-popover[data-theme-floating] [data-theme-value="system"]').click();
   assert.equal(await desktop.evaluate(()=>document.documentElement.dataset.colorMode),'system');
 
+
+  // Public theme regression: genuine button contrast in article prose and
+  // dark CSS-generated posters, while source media stays untouched.
+  const colorAudit=await browser.newPage({viewport:{width:1440,height:900}});
+  await colorAudit.goto(origin+'/',{waitUntil:'networkidle'});
+  const editorialSample=colorAudit.locator('.gallery-card--editorial .gallery-card-art').first();
+  const lightArt=await editorialSample.evaluate(el=>getComputedStyle(el).backgroundImage);
+  await colorAudit.evaluate(()=>{document.documentElement.dataset.colorMode='dark';});
+  const darkArt=await editorialSample.evaluate(el=>({
+    background:getComputedStyle(el).backgroundImage,
+    foreground:getComputedStyle(el).color,
+    filter:getComputedStyle(el).filter
+  }));
+  assert.notEqual(darkArt.background,lightArt,
+    'dark mode must redraw CSS-generated editorial posters, not show bright light artwork');
+  assert.match(darkArt.background,/linear-gradient/,
+    'dark editorial cards retain layered editorial art');
+  assert.equal(darkArt.filter,'none',
+    'dark-mode colors must be designed directly, not darkened by a blanket brightness filter');
+  await colorAudit.screenshot({path:'artifacts/studio-home-designed-dark.png',fullPage:true});
+  await colorAudit.goto(origin+'/about/',{waitUntil:'networkidle'});
+  const auditButton=colorAudit.locator('.about-prose .btn-primary').first();
+  const readButton=()=>auditButton.evaluate(el=>{
+    const style=getComputedStyle(el);
+    return {text:el.textContent?.trim(),fg:style.color,bg:style.backgroundColor};
+  });
+  const contrastRatio=({fg,bg})=>{
+    const channels=value=>(value.match(/[\\d.]+/g)||[]).slice(0,3).map(Number);
+    const lum=value=>{
+      const [r,g,b]=channels(value).map(c=>{
+        const x=c/255;
+        return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;
+      });
+      return r*.2126+g*.7152+b*.0722;
+    };
+    const a=lum(fg),b=lum(bg);
+    return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+  };
+  await colorAudit.evaluate(()=>{document.documentElement.dataset.colorMode='light';});
+  const aboutLight=await readButton();
+  assert.ok(aboutLight.text?.includes('GitHub') && contrastRatio(aboutLight)>=4.5,
+    'GitHub link label must be visible on its button in light mode: '+JSON.stringify(aboutLight));
+  await colorAudit.screenshot({path:'artifacts/studio-about-button-light.png'});
+  await colorAudit.evaluate(()=>{document.documentElement.dataset.colorMode='dark';});
+  const aboutDark=await readButton();
+  assert.ok(contrastRatio(aboutDark)>=4.5,
+    'GitHub link label must be visible on its button in dark mode: '+JSON.stringify(aboutDark));
+  await colorAudit.screenshot({path:'artifacts/studio-about-button-dark.png'});
+  await colorAudit.close();
+
   const motionCard=desktop.locator('.gallery-card--motion');
   assert.equal(await motionCard.count(),1,'one original motion demo belongs in homepage gallery');
   const motionEmbed=motionCard.locator('video[data-motion-video]');
