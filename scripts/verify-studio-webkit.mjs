@@ -421,6 +421,25 @@ async function run(){
     mobileMedia.widthDelta<1 && mobileMedia.heightDelta<1,
     'mobile must also have exactly two concentric surfaces and source-sized media');
 
+  // The last page element is the large brand wordmark; its bottom clearance
+  // must reserve the fixed dock (64px + bottom offset) on iPhone Safari.
+  const mobileFooter = await mobile.locator('.site-footer').evaluate(footer => {
+    const dock=document.querySelector('.studio-mobile-dock');
+    const dockStyle=getComputedStyle(dock);
+    const dockHeight=dock.getBoundingClientRect().height;
+    const dockBottom=parseFloat(dockStyle.bottom);
+    const pad=parseFloat(getComputedStyle(footer).paddingBottom);
+    return {
+      last:footer.lastElementChild?.className,
+      removedBottom:footer.querySelectorAll('.studio-footer-bottom').length,
+      pad,dockHeight,dockBottom
+    };
+  });
+  assert.ok(mobileFooter.last.includes('studio-footer-wordmark') &&
+    mobileFooter.removedBottom===0,
+    'giant MYZJX is retained as the final footer element');
+  assert.ok(mobileFooter.pad >= mobileFooter.dockHeight+mobileFooter.dockBottom+16,
+    'mobile footer must leave clear space below giant wordmark and above the fixed dock');
   await mobile.waitForTimeout(320);
   await mobile.screenshot({path:'artifacts/studio-home-mobile.png',fullPage:true});
   await mobile.screenshot({path:'artifacts/studio-chromatic-mobile.png',fullPage:false});
