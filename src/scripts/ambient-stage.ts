@@ -2,8 +2,7 @@
  * MYZJX / Chromatic Atmosphere v4
  * Two painted viewport layers crossfade between local image/video palettes;
  * the same light sits beneath the desktop glass rail and gallery.
- * Pointer coordinates affect only the active small card, never an expensive
- * full-viewport per-pointer shader.
+ * The page ambience follows scroll/focus, never mouse position.
  */
 type AmbientScene = {
   element: HTMLElement;
@@ -25,7 +24,6 @@ function bootAmbientStage(): void {
   )];
   const sources = [...cards, ...covers];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  const precisePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   let selected: HTMLElement | null = null;
   let pinned: HTMLElement | null = null;
@@ -160,34 +158,8 @@ function bootAmbientStage(): void {
     return;
   }
 
-  if (precisePointer) {
-    document.addEventListener('pointerover', event => {
-      const node = event.target;
-      if (!(node instanceof Element)) return;
-      const card = node.closest<HTMLElement>('.gallery-card');
-      if (!card) return;
-      pinned = card;
-      render(card,false,'hover');
-    }, {passive:true});
-
-    document.addEventListener('pointerout', event => {
-      const node = event.target;
-      if (!(node instanceof Element)) return;
-      const card = node.closest<HTMLElement>('.gallery-card');
-      if (!card || card!==pinned) return;
-      const next = event.relatedTarget;
-      if (next instanceof Node && card.contains(next)) return;
-      pinned = null;
-      card.style.removeProperty('--sheen-x');
-      card.style.removeProperty('--sheen-y');
-      const item = card.closest<HTMLElement>('.gallery-item');
-      item?.style.removeProperty('--local-glow-x');
-      item?.style.removeProperty('--local-glow-y');
-      scheduleRefresh();
-    }, {passive:true});
-
-
-  }
+  // Pointer movement now belongs exclusively to the cloth-pressure surface.
+  // Ambient colour changes by scroll or keyboard focus, not mouse hover.
 
   document.addEventListener('focusin', event => {
     const target = event.target;

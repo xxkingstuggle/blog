@@ -23,7 +23,7 @@ const imageAspect = isMotion ? 16 / 9 : image?.width && image?.height ? image.wi
 // Give screenshots, portraits and text covers frames shaped by their content.
 const stageAspect = imageAspect === null
   ? (title.length > 22 ? 0.96 : title.length > 12 ? 1.12 : 1.27)
-  : Math.max(0.82, Math.min(1.64, imageAspect * 0.93));
+  : imageAspect; // Intrinsic source ratio: no clamps, distortion, or 0.93 stage scaling.
 const aspectStyle = '--visual-aspect: ' + stageAspect.toFixed(3);
 const sharedName = transitionKey ? 'view-transition-name: ' + transitionKey.replace(/[^a-zA-Z0-9_-]/g, '-') : '';
 const visualStyle = [aspectStyle, sharedName].filter(Boolean).join('; ');
