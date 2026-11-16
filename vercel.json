@@ -18,6 +18,22 @@
       "destination": "https://blog-production.guozhongeba.workers.dev/admin/iteration/"
     },
     {
+      "source": "/admin/apps/studio-notes",
+      "destination": "https://blog-production.guozhongeba.workers.dev/admin/apps/studio-notes/"
+    },
+    {
+      "source": "/admin/apps/studio-notes/",
+      "destination": "https://blog-production.guozhongeba.workers.dev/admin/apps/studio-notes/"
+    },
+    {
+      "source": "/admin/apps",
+      "destination": "https://blog-production.guozhongeba.workers.dev/admin/apps/"
+    },
+    {
+      "source": "/admin/apps/",
+      "destination": "https://blog-production.guozhongeba.workers.dev/admin/apps/"
+    },
+    {
       "source": "/admin",
       "destination": "https://blog-production.guozhongeba.workers.dev/admin/"
     },
