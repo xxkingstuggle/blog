@@ -75,7 +75,7 @@ function previewForPost(post: (typeof posts)[number]) {
       <div class="gallery-item" data-gallery-kind="work" data-reveal>
         <GalleryCard href="/software/habitbloom/" title="HabitBloom"
           description="从一张愿意每天打开的习惯卡片开始，探索 Widget 和本地交互的真实边界。"
-          category="软件 / 个人原型" meta={habit.statusBadge}
+          category={'软件 / ' + habit.platformsLabel} meta={habit.statusBadge}
           image={habit.screenshot} tone="tool" index={4} transitionKey="work-habitbloom" />
       </div>
       {posts.slice(2).map((post, index) => (

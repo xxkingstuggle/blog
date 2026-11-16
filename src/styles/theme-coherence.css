@@ -156,6 +156,9 @@
 :root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-info > p {
   color: #b1bed1;
 }
+:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-meta {
+  color: #8f9eb5;
+}
 :root[data-color-mode='dark'] .front-body .studio-primary-nav a[aria-current='page'] {
   --surface-subtle: #242c39;
   background: #2a3445 !important;
@@ -222,6 +225,9 @@
 }
 :root[data-color-mode='system'] .front-body .gallery-card .gallery-card-info > p {
   color: #b1bed1;
+}
+:root[data-color-mode='system'] .front-body .gallery-card .gallery-card-meta {
+  color: #8f9eb5;
 }
 :root[data-color-mode='system'] .front-body .studio-primary-nav a[aria-current='page'] {
   --surface-subtle: #242c39;

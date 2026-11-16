@@ -164,6 +164,10 @@
 .comments-submit-note[data-state="error"] { color: var(--accent-contrast); }
 .comments-submit-note[data-state="loading"] { color: var(--text-muted); }
 
+@media (max-width: 720px) {
+	.comments-form input, .comments-form textarea { font-size: 16px; }
+}
+
 @media (max-width: 560px) {
 	.comments-heading-row, .comments-form-grid { display: grid; grid-template-columns: 1fr; align-items: start; }
 	.comments-heading-row { gap: 9px; }

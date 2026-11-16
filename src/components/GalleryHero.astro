@@ -7,9 +7,31 @@ const { post } = Astro.props;
 const image = post.data.cover;
 const transitionStyle = 'view-transition-name: article-' + post.id.replace(/[^a-zA-Z0-9_-]/g, '-');
 const ratio = image?.width && image?.height ? image.width / image.height : 1.72;
+
+const HERO_MEDIA_META: Record<string, { alt: string; caption: string }> = {
+  'usblinkmic-android-mac-bridge': {
+    alt: 'USBLinkMic Mac 4.0.10 开发版手机麦克风面板，设备标识已遮盖',
+    caption: '2026-10-23 真实运行截图：本机安装的 4.0.10 开发版。公开下载为 v4.0.8；本图不代表公开版外观或完整功能验收。',
+  },
+  'habitbloom-habit-tracker': {
+    alt: 'HabitBloom 项目品牌与习惯卡片定位示意图',
+    caption: '项目配图展示应用图标与核心方向；当前没有公开分发的真机安装包。',
+  },
+  'allow-discomfort': {
+    alt: '黑色液体玻璃表面开裂出荧光绿裂隙',
+    caption: '图 1 / 黑色玻璃上的微光，像一件东西还没成形时的样子。',
+  },
+};
+
+const mediaMeta = HERO_MEDIA_META[post.id];
+const altText = mediaMeta?.alt ?? (post.data.title + ' 的文章封面');
+const captionText = mediaMeta?.caption;
 ---
 {image && (
-  <div class="gallery-detail-cover gallery-detail-cover--image" data-glass-media style={transitionStyle + '; --detail-ratio: ' + ratio.toFixed(3)}>
-    <Image src={image} alt={post.data.title + ' 的文章封面'} widths={[760, 1200, 1800]} sizes="(max-width: 780px) 95vw, 1000px" format="webp" class="gallery-detail-image" />
-  </div>
+  <figure class="shell gallery-detail-figure">
+    <div class="gallery-detail-cover gallery-detail-cover--image" data-glass-media style={transitionStyle + '; --detail-ratio: ' + ratio.toFixed(3)}>
+      <Image src={image} alt={altText} widths={[760, 1200, 1800]} sizes="(max-width: 780px) 95vw, 1000px" format="webp" class="gallery-detail-image" />
+    </div>
+    {captionText && <figcaption class="gallery-detail-caption">{captionText}</figcaption>}
+  </figure>
 )}
