@@ -31,8 +31,9 @@ const isLong = title.length > 22;
 const editorialLayout = index % 3;
 const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : meta;
 ---
-<a href={href} class:list={['gallery-card', hasVisual ? 'gallery-card--image' : 'gallery-card--editorial', isMotion && 'gallery-card--motion', image && tone === 'tool' && 'gallery-card--software', 'gallery-card--tone-' + tone]} data-gallery-card aria-label={title}>
+<a href={href} data-motion-card data-motion-depth={hasVisual ? "" : undefined} class:list={['gallery-card', hasVisual ? 'gallery-card--image' : 'gallery-card--editorial', isMotion && 'gallery-card--motion', image && tone === 'tool' && 'gallery-card--software', 'gallery-card--tone-' + tone]} data-gallery-card aria-label={title}>
   <div
+    data-motion-surface
     data-glass-media={hasVisual ? '' : undefined}
     class:list={['gallery-card-visual', 'gallery-card-visual--' + tone, hasVisual ? 'gallery-card-visual--has-image' : 'gallery-card-visual--text']}
     style={visualStyle}
@@ -73,6 +74,7 @@ const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : met
         <span class="gallery-art-index">{String(index + 1).padStart(2, '0')} <span aria-hidden="true">/</span> XIN 的记录</span>
       </div>
     )}
+    <span class="motion-pressure" data-motion-halo aria-hidden="true"></span>
   </div>
   <div class="gallery-card-info">
     <div class="gallery-card-caption">
