@@ -4,11 +4,13 @@ import GalleryCard from '../components/GalleryCard.astro';
 import { getListedPosts, formatDate, getReadingTime, KIND_LABELS } from '../lib/posts';
 import { SOFTWARE_PRODUCTS, WORKBENCH_PROJECTS } from '../lib/software';
 import { siteConfig } from '../config';
-const posts = (await getListedPosts()).slice(0, 7);
+const listedPosts = await getListedPosts();
+const pinnedPost = listedPosts.find((post) => post.data.featured);
+const posts = listedPosts.filter((post) => post.id !== pinnedPost?.id).slice(0, pinnedPost ? 6 : 7);
 const usb = SOFTWARE_PRODUCTS[0];
 const habit = SOFTWARE_PRODUCTS[1];
 const workbench = WORKBENCH_PROJECTS.slice(0, 3);
-const total = posts.length + 3 + workbench.length;
+const total = posts.length + (pinnedPost ? 1 : 0) + 3 + workbench.length;
 // Keep a real product screenshot only once on the homepage. Articles that
 // reuse the same image receive a typographic cover instead of a duplicate.
 const usedImages = new Set<string>([usb.screenshot.src, habit.screenshot.src]);
@@ -50,6 +52,16 @@ function previewForPost(post: (typeof posts)[number]) {
     </div>
     <p class="gallery-index-count" id="gallery-live-count" role="status" aria-live="polite">正在展示 {total} 项内容</p>
     <div class="gallery-grid" id="home-gallery">
+      {pinnedPost && (
+        <div class="gallery-item" data-gallery-kind="writing" data-reveal>
+          <GalleryCard href={'/posts/' + pinnedPost.id + '/'} title={pinnedPost.data.title}
+            description={pinnedPost.data.description} category={KIND_LABELS[pinnedPost.data.kind]}
+            meta={formatDate(pinnedPost.data.pubDate) + ' · ' + getReadingTime(pinnedPost.body)}
+            tone={pinnedPost.data.kind === 'thought' ? 'thinking' : pinnedPost.data.kind}
+            image={previewForPost(pinnedPost)} video={pinnedPost.data.video} videoPoster={pinnedPost.data.videoPoster}
+            index={0} transitionKey={'article-' + pinnedPost.id} />
+        </div>
+      )}
       <div class="gallery-item" data-gallery-kind="work" data-reveal>
         <GalleryCard href="/software/usblinkmic/" title="USBLinkMic"
           description="把 Android 手机的麦克风连接到 Mac。真实产品，公开版本与技术限制都写清楚。"

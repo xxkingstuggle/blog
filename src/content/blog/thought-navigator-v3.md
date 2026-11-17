@@ -9,7 +9,8 @@ tags:
   - AI 协作开发
 kicker: AI WORKFLOW · THOUGHT NAVIGATOR
 draft: false
-listed: false
+listed: true
+featured: true
 kind: project
 presentation: article
 cover: ../../assets/projects/thought-navigator-cover.svg
