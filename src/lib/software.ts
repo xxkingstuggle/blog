@@ -55,18 +55,63 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {question:'已经可以保证所有手机都稳定使用吗？',answer:'还不能。已有公开包与实现，但系统网络能力、音频路由、锁屏和长期运行仍需要逐设备验证。遇到问题可以在公开仓库提交经过脱敏的复现步骤。'}]
   },
   {
-    slug:'habitbloom',name:'HabitBloom',category:'习惯卡片与 Widget 实践',tagline:'让今天的小事，有一张愿意点开的卡片',headline:'记录习惯，也练习给功能划边界。',
-    summary:'HabitBloom 用 SwiftUI、SwiftData 和 WidgetKit 探索卡片式习惯记录。这个个人项目还包含免费签名条件下的 HTTP 远端快照方案。它适合作为界面与约束设计案例，尚未成为可公开安装的产品。',
-    platforms:['iOS','iPadOS','Mac Catalyst'],platformsLabel:'iPhone · iPad · Mac',statusBadge:'个人原型 · 私有源码',statusTone:'source',latestVersion:'未公开发布',releaseDate:'2026-10-23 核对',
-    availabilitySummary:'私有源码，暂无公开 IPA / DMG，也未上架 App Store。本页提供工程说明，不提供下载。',availabilityNotice:'远端快照和 Widget 刷新有调度与网络限制；完整冲突解决 UI 与公开分发流程仍未完成，不承诺多端实时一致。',repoUrl:'',repoVisibility:'private',articleSlug:'habitbloom-habit-tracker',articleTitle:'HabitBloom：给习惯卡片 Widget 留一条远端快照路径',icon:habitbloomIcon,screenshot:habitbloomShot,screenshotAlt:'HabitBloom 项目图标展示，非运行界面',screenshotCaption:'HabitBloom 项目图标与配色展示，不是运行截图。不展示个人习惯、日历与备注数据。',verifiedAt:'2026-10-23',developmentVersion:'个人源码迭代',installedVersion:'本轮未做安装/运行验收',
-    contribution:'我负责产品范围、界面方向与集成，AI 助手参与实现与审查。案例仅描述已核对的代码设计，不把原型和静态说明当作多设备功能验收。',limitations:['源码私有且无公开安装包，访客暂时无法自行体验。','HTTP 快照不等于 WebSocket 实时推送；Widget 刷新受系统调度影响。','完整冲突解决 UI、iCloud、服务端推送与公开 IPA 发布流程尚未完成。'],sources:[],downloads:[],
-    highlights:[{title:'今天的卡片优先',body:'用图标、颜色与目标日期组织习惯，首页优先展示当天记录。'}, {title:'先存本地',body:'SwiftData 承担本地存储，远端使用 HTTP 快照；不将网络成功与本地记录混为一谈。'}, {title:'Widget 单独拿快照',body:'用预先整理的摘要减少小组件端的数据处理。免费签名和重签名环境需要单独验证。'}],
-    scenarios:[{scenario:'快速记录今天',pain:'不希望一次简单记录被复杂的配置和统计打断。',outcome:'尝试用卡片缩短记录路径；本轮未做用户效率测量。',mechanism:'SwiftUI 卡片 + SwiftData 本地记录。'}, {scenario:'让小组件拿到数据',pain:'个人签名条件下，主应用与 Widget 共享数据可能受限。',outcome:'实现 HTTP 快照路径；不承诺即时刷新或完整冲突处理。',mechanism:'Cloudflare Workers / Durable Objects 存取快照。'}],
-    workflow:[{step:'01',title:'界定今天要做的事',description:'为习惯选择图标、颜色和周期。',detail:'这是原型的交互设计说明。'}, {step:'02',title:'先完成本地记录',description:'通过卡片记录完成情况，数据保存在本地模型。',detail:'个人图片与备注不作为公开演示素材。'}, {step:'03',title:'单独验证远端与 Widget',description:'检查快照读取与更新触发时机。',detail:'仍需补多设备冲突与侧载环境验收。'}],
-    specs:[{label:'状态',value:'个人原型 / 私有源码 / 无公开包'},{label:'客户端',value:'SwiftUI · SwiftData · WidgetKit'},{label:'远端设计',value:'HTTP 快照 / Workers + Durable Objects'},{label:'未完成',value:'完整冲突 UI 与公开分发流程'}],
-    faq:[{question:'可以下载或查看源码吗？',answer:'暂时不可以。仓库为私有，没有公开安装包。这里保留的是设计案例与已知限制，未来如公开分发会单独更新。'}, {question:'它能实时同步所有设备吗？',answer:'本轮代码核对支持 HTTP 快照方案，没有将其确认为 WebSocket 实时同步。系统调度、离线恢复和多设备冲突仍需要更多验证。'}]
-  }
-];
+    slug:'habitbloom',name:'HabitBloom',category:'习惯记录 · iOS / Mac / WidgetKit',
+    tagline:'从一张习惯卡片，到真正能使用的系统小组件',
+    headline:'让今天的目标，变成愿意点开的卡片。',
+    summary:'HabitBloom 是一个以本地数据为核心的 SwiftUI 习惯打卡应用，包含习惯卡片、提醒、统计、交互式 Widget 与可选的 Cloudflare 快照备份。重点不在把功能堆满，而是把记录、小组件和数据回并组成完整的使用路径。',
+    platforms:['iPhone / iPad（SwiftUI）','Mac Catalyst','WidgetKit'],platformsLabel:'iOS · iPadOS · Mac',
+    statusBadge:'源码公开准备中 · 无安装包',statusTone:'source',
+    latestVersion:'源码版（未发布 IPA / DMG）',releaseDate:'2026-11-17 核对',
+    availabilitySummary:'当前可检查 SwiftUI、SwiftData、WidgetKit、Cloudflare Worker 的完整工程。代码仓库目前仍为私有，正在核对公开安全性；尚无公开 IPA、DMG 或 App Store 版本。公开后可用 Xcode 自行构建。',
+    availabilityNotice:'请勿把本页概念配图当作应用运行截图。远程快照需要自行部署并配置；小组件刷新受系统调度影响，且未完成跨设备冲突处理与完整真机回归。',
+    repoUrl:'https://github.com/xxkingstuggle/HabitBloom',repoVisibility:'private',
+    articleSlug:'habitbloom-habit-tracker',articleTitle:'HabitBloom：从习惯卡片到可交互 Widget 的工程实践',
+    icon:habitbloomIcon,screenshot:habitbloomShot,
+    screenshotAlt:'HabitBloom 品牌与习惯卡片视觉示意图，非真实运行界面',
+    screenshotCaption:'图为 HabitBloom 项目概念展示，不是实际运行截图。真实应用截图、侧载环境与 Mac Catalyst 运行验收正在补充。',
+    verifiedAt:'2026-11-17（公开源码与文档核对，不等于设备实测）',
+    developmentVersion:'已有本地记录、统计、Widget 与远程快照代码',
+    installedVersion:'本轮未连接真机或 Xcode，不能宣称安装验收通过',
+    contribution:'我负责产品范围、交互取舍和客户端/Widget/Worker 数据路径的组织，使用 AI 工具协助开发与代码审查。源码里的第三方平台能力归 Apple、Cloudflare 所有；实际运行结果以构建、测试和真机核验为准。',
+    limitations:[
+      '当前 GitHub 仓库仍为 Private；公开前仅仓库授权成员可查看代码。',
+      '尚无正式下载包，Xcode 模拟器、Mac Catalyst、侧载环境的全面回归结果待补。',
+      'CloudKit、推送提醒、完整的多设备冲突解决界面尚未实现。',
+      'Widget 的网络与刷新时机受系统控制；HTTP 快照不等于实时双向同步。',
+      '当前项目概念图不是应用截图；后续补充真实界面、Widget 与测试证据。'
+    ],
+    sources:[],
+    downloads:[],
+    highlights:[
+      {title:'卡片式日常打卡',body:'SwiftUI 提供习惯配置、颜色/图标/卡片样式与每日分组；SwiftData 本地保存习惯、打卡记录和备注。'},
+      {title:'交互式桌面小组件',body:'WidgetKit 提供单习惯、多习惯与进度摘要；通过 App Intents 处理小组件打卡，并在主应用启动时回并状态。'},
+      {title:'可选的远程快照',body:'App Group 可用时读取本地快照，部分侧载场景下通过 Cloudflare Worker / Durable Objects 读取远端快照；不将其称为实时同步。'},
+      {title:'测试与工程边界',body:'仓库包含核心逻辑的 smoke/stress 检查入口、设备测试清单和签名权限说明，记录哪些功能已实现、哪些仍需实测。'}
+    ],
+    scenarios:[
+      {scenario:'每天只想快速完成打卡',pain:'不希望一个轻量记录工具被复杂的账户流程和云依赖拖住。',outcome:'本地优先的习惯卡片、提醒和连续天数统计；无需部署远程服务器也能作为本地应用使用。',mechanism:'SwiftUI · SwiftData · UserNotifications'},
+      {scenario:'在桌面小组件里直接操作',pain:'Widget 需要独立展示数据，交互结果也要回到主 App。',outcome:'通过快照提供小组件展示状态，通过 App Intent 与后续回并同步用户的打卡操作。',mechanism:'WidgetKit · App Intents · App Group'},
+      {scenario:'侧载时共享能力不稳定',pain:'免费签名或重签名可能造成 App Group 读写不稳定。',outcome:'增加可选 HTTP 远端快照路径，减少对单一共享机制的依赖；网络和刷新限制依旧存在。',mechanism:'Cloudflare Workers · Durable Objects · HTTP'}
+    ],
+    workflow:[
+      {step:'01',title:'检查和构建源码',description:'仓库公开后按 README 安装 Xcode/Swift 工具链，从工程运行 iOS 模拟器或 Mac Catalyst。',detail:'暂无可直接下载安装的公开包；构建与签名取决于本机环境。'},
+      {step:'02',title:'体验本地功能',description:'创建习惯卡片，检查打卡、提醒、统计页面和 Widget 显示。',detail:'不配置远程服务，也可以先检查主要本地路径。'},
+      {step:'03',title:'按需验证远程功能',description:'依照 REMOTE_SYNC.md 自行部署 Worker，并在本地忽略配置中设置地址和密钥。',detail:'需独立验证刷新时机、侧载限制与异常回退，不复用作者密钥。'}
+    ],
+    specs:[
+      {label:'客户端',value:'SwiftUI · SwiftData · WidgetKit'},
+      {label:'远程选项',value:'Cloudflare Workers · Durable Objects'},
+      {label:'构建',value:'Xcode · iOS Simulator · Mac Catalyst'},
+      {label:'自动化检查',value:'HabitCoreSmokeTests / HabitCoreStressTests（仓库提供）'},
+      {label:'开源状态',value:'Public 审核中；目前仓库仍为 Private'},
+      {label:'分发状态',value:'暂未发布 IPA / DMG / App Store 版本'}
+    ],
+    faq:[
+      {question:'已经能直接下载 HabitBloom 吗？',answer:'目前没有公开安装包或 App Store 版本。完成源码公开后，可自行克隆仓库并用 Xcode 编译。'},
+      {question:'为什么有云端功能，却不能叫实时同步？',answer:'远程部分实现 HTTP 快照与轻量文字备份。WidgetKit 刷新、离线操作和多设备冲突仍受限制，不能保证实时一致。'},
+      {question:'这页面为什么还没有 App 真实截图？',answer:'当前复用的素材是项目概念图而非运行界面。正式展示会补真实手机界面、小组件和必要的脱敏测试记录，不能拿概念图充当成品截图。'}
+    ]
+  }];
 export const WORKBENCH_PROJECTS = [
   {name:'Colorful',status:'私有原型 / 浏览器工具',summary:'让明确启用的 Chromium PWA 使用主题色。重点是默认关闭、域名继承与可恢复的设置。',href:'/posts/browser-tools-boundaries/#colorful'},
   {name:'Linux.do 标题检索',status:'开发札记 / 用户脚本',summary:'只索引公开主题标题，在本地检索。遇到限流或挑战就停下，不越过站点权限。',href:'/posts/browser-tools-boundaries/#linuxdo'},
