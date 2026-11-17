@@ -52,15 +52,27 @@ const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : met
         </span>
       </>
     ) : image ? (
-      <Image
-        src={image}
-        alt={title + ' 的作品预览'}
-        widths={[420, 680, 960]}
-        sizes="(max-width: 720px) calc(100vw - 46px), (max-width: 1300px) 40vw, 30vw"
-        format="webp"
-        class="gallery-card-image"
-        loading={index < 3 ? 'eager' : 'lazy'}
-      />
+      image.format === 'svg' ? (
+        <img
+          src={image.src}
+          alt={title + ' 的作品预览'}
+          width={image.width}
+          height={image.height}
+          class="gallery-card-image"
+          loading={index < 3 ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ) : (
+        <Image
+          src={image}
+          alt={title + ' 的作品预览'}
+          widths={[420, 680, 960]}
+          sizes="(max-width: 720px) calc(100vw - 46px), (max-width: 1300px) 40vw, 30vw"
+          format="webp"
+          class="gallery-card-image"
+          loading={index < 3 ? 'eager' : 'lazy'}
+        />
+      )
     ) : (
       <div class:list={['gallery-card-art', isLong && 'gallery-card-art--long', 'gallery-card-art--layout-' + editorialLayout]}>
         <span class="gallery-art-motif" aria-hidden="true"></span>
