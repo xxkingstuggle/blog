@@ -28,7 +28,7 @@ const altText = mediaMeta?.alt ?? (post.data.title + ' 的文章封面');
 const captionText = mediaMeta?.caption;
 ---
 {image && (
-  <figure class="shell gallery-detail-figure">
+  <figure class:list={["shell gallery-detail-figure", { "gallery-detail-figure--compact": post.id === "thought-navigator-v3" }]}>
     <div class="gallery-detail-cover gallery-detail-cover--image" data-glass-media style={transitionStyle + '; --detail-ratio: ' + ratio.toFixed(3)}>
       {image.src.endsWith('.svg') ? (
         <img src={image.src} alt={altText} width={image.width} height={image.height} class="gallery-detail-image" loading="eager" decoding="async" />
