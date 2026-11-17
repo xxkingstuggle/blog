@@ -302,3 +302,50 @@
   }
   .front-body .gallery-card .gallery-card-visual::after {display:none !important;}
 }
+
+
+/* Motion Lite: one reusable compositor-based interaction surface.
+   Only the prepainted 200px halo is translated, never a moving CSS gradient.
+   Retain the existing two concentric rounded layers and native media ratio. */
+.front-body [data-motion-card] [data-motion-surface] {
+  transform: translate3d(0, var(--motion-scroll-y, 0px), 0)
+    perspective(1100px)
+    rotateX(var(--motion-tilt-x, 0deg))
+    rotateY(var(--motion-tilt-y, 0deg));
+  transition: none;
+  backface-visibility: hidden;
+}
+.front-body [data-motion-card] [data-motion-halo] {
+  display: block;
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-250px, -250px, 0);
+  background: radial-gradient(circle at center,
+    rgba(9, 35, 31, .12) 0%, rgba(255,255,255,.04) 30%,
+    rgba(255,255,255,.29) 44%, transparent 72%);
+  mix-blend-mode: soft-light;
+}
+.front-body [data-motion-card][data-motion-active] [data-motion-surface] {
+  will-change: transform;
+}
+.front-body [data-motion-card][data-motion-active] [data-motion-halo] {
+  will-change: transform, opacity;
+}
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .front-body [data-motion-card] [data-motion-surface] { transform: none !important; }
+  .front-body [data-motion-card] [data-motion-halo] { display: none !important; }
+}
+:root[data-motion-tier="standard"] .front-body [data-motion-card] [data-motion-surface],
+:root[data-motion-tier="lite"] .front-body [data-motion-card] [data-motion-surface] {
+  transform: none !important;
+}
+:root[data-motion-tier="lite"] .front-body [data-motion-card] [data-motion-halo] {
+  display: none !important;
+}
