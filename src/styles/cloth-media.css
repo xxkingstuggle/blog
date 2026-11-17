@@ -307,7 +307,8 @@
 /* Motion Lite: one reusable compositor-based interaction surface.
    Only the prepainted 200px halo is translated, never a moving CSS gradient.
    Retain the existing two concentric rounded layers and native media ratio. */
-.front-body [data-motion-card] [data-motion-surface] {
+.front-body [data-motion-card][data-motion-visible] [data-motion-surface],
+.front-body [data-motion-card][data-motion-active] [data-motion-surface] {
   transform: translate3d(0, var(--motion-scroll-y, 0px), 0)
     perspective(1100px)
     rotateX(var(--motion-tilt-x, 0deg))
