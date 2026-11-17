@@ -18,6 +18,9 @@
   const lowCpu = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
   const lowRam = navigator.deviceMemory && navigator.deviceMemory <= 4;
   const supports3d = !!(window.CSS && CSS.supports && CSS.supports('transform', 'translate3d(1px,1px,0)'));
+  const safariVersion = navigator.userAgent.match(/Version\/(\d+)/);
+  const oldSafariVersion = /Safari\//.test(navigator.userAgent) && !/(Chrome|Chromium|CriOS|Edg|FxiOS)\//.test(navigator.userAgent) &&
+    !!safariVersion && Number(safariVersion[1]) < 18;
   let preference = 'auto';
   let tier = 'standard';
   let active = null;
@@ -32,7 +35,7 @@
   function getTier() {
     if ((prefersReduced && prefersReduced.matches) || !supports3d) return 'lite';
     if (preference !== 'auto') return preference;
-    if (saveData || lowRam || lowCpu || !hasFinePointer) return 'standard';
+    if (saveData || lowRam || lowCpu || oldSafariVersion || !hasFinePointer) return 'standard';
     return 'enhanced';
   }
   function updateTier() {
@@ -68,7 +71,14 @@
 
   function enter(item, ev) {
     if (tier === 'lite' || !hasFinePointer) return;
-    if (active && active !== item) leave(active);
+    if (active && active !== item) {
+      const previous = active;
+      previous.card.removeAttribute('data-motion-active');
+      previous.alpha = previous.targetAlpha = previous.ox = previous.oy = 0;
+      previous.surface.style.removeProperty('--motion-tilt-x');
+      previous.surface.style.removeProperty('--motion-tilt-y');
+      if (previous.halo) previous.halo.style.opacity = '0';
+    }
     active = item;
     item.rect = item.surface.getBoundingClientRect();
     item.card.setAttribute('data-motion-active', '');
@@ -170,6 +180,7 @@
         const item = cards.find(x => x.card === entry.target);
         if (!item) continue;
         item.visible = entry.isIntersecting;
+        item.card.toggleAttribute('data-motion-visible', item.visible);
         if (item.visible && !item.entered) {
           item.entered = true;
           const wrapper = item.card.closest('.gallery-item');
@@ -184,7 +195,7 @@
       scheduleScroll();
     }, { rootMargin: '12% 0px', threshold: .01 });
     cards.forEach(item => observer.observe(item.card));
-  } else cards.forEach(item => item.visible = true);
+  } else cards.forEach(item => { item.visible = true; item.card.setAttribute('data-motion-visible', ''); });
   window.addEventListener('scroll', scheduleScroll, { passive: true });
   window.addEventListener('resize', () => {
     if (active) active.rect = active.surface.getBoundingClientRect();
