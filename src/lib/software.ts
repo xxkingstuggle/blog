@@ -30,7 +30,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     articleSlug:'usblinkmic-android-mac-bridge',articleTitle:'USBLinkMic：把 Android 麦克风与网络接入 Mac',
     icon:usblinkmicIcon,screenshot:usblinkmicShot,screenshotAlt:'USBLinkMic Mac 4.0.10 开发版的手机麦克风面板，设备标识已遮盖',
     screenshotCaption:'2026-10-23 采集的真实 Mac 界面，Mac / Android 安装元数据均为 4.0.10（开发版，未公开发布）。只展示当前界面与状态，不代表公开 v4.0.8 的外观或完整功能验收。设备标识已遮盖。Android 界面截图待补，本图仅展示 Mac。',
-    verifiedAt:'2026-10-23',developmentVersion:'4.0.10 · 有未提交修改',installedVersion:'Mac / Android 4.0.10',
+    verifiedAt:'2026-11-17（新增开发版界面截图，非设备回归验收）',developmentVersion:'Mac v4.0.17 · 本次真实截图',installedVersion:'Mac v4.0.17（提供的截图）；未在本轮重新安装实测',
     contribution:'我负责需求取舍、跨平台集成、维护与验收，Codex 等 AI 助手参与实现和审查。项目复用 Android platform-tools、Gnirehtet 的 Java relay，随包保留 OpenJDK 运行时与许可，并通过外部 BlackHole 虚拟声卡对接音频输入；这些第三方成果不属于个人从零实现。',
     limitations:['跨机型、息屏、插拔与长时间运行的完整 T01–T24 设备验收仍待完成。','当前截图来自开发版 4.0.10，不能据此认定公开 v4.0.8 已包含后续修复。','收到 PCM 帧不等于会议软件已收到可听声音；音频路由与系统输入需另行确认。','未承诺普遍的低延迟数值、功耗收益或所有 Android ROM 的网络兼容性。','无线麦克风链路未加密，只适合可信局域网。'],
     sources:[{label:'v4.0.8 发行页与文件',url:`${release}/tag/v4.0.8`},{label:'公开版安装说明',url:`${release}/download/v4.0.8/INSTALL.md`},{label:'依赖与来源',url:'https://github.com/xxkingstuggle/usblinkmic/blob/v4.0.8/docs/dependencies.md'}],

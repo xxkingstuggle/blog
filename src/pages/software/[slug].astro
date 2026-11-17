@@ -33,6 +33,38 @@ const { product } = Astro.props;
       </div>
     </section>
   )}
+
+  {product.slug==='usblinkmic' && (
+    <section class="shell software-section" aria-labelledby="usblinkmic-real-screenshots">
+      <div class="section-header-bar" data-reveal>
+        <div>
+          <span class="small-label">真实界面 / USER-SUPPLIED SCREENSHOTS</span>
+          <h2 id="usblinkmic-real-screenshots">不仅是一个窗口，还能实际管理麦克风与 USB 网络。</h2>
+        </div>
+      </div>
+      <p class="usblinkmic-capture-notice">以下来自 v4.0.17 Mac 开发版实际截图，已遮盖设备标识。公开下载包与当前开发界面可能不同；局部状态显示“就绪”不代表已经完成全部音频或公网链路验收。</p>
+      <div class="usblinkmic-real-gallery">
+        <figure class="usblinkmic-real-shot">
+          <a href="/media/usblinkmic/network.svg" target="_blank" rel="noopener noreferrer" aria-label="查看 USB 网络共享截图大图">
+            <img src="/media/usblinkmic/network.svg" width="1100" height="829" loading="lazy" decoding="async" alt="Mac 开发版 USBLinkMic 网络共享页面，展示手机给 Mac、Mac 给手机两个方向，设备标识已遮盖" />
+          </a>
+          <figcaption><strong>01 / USB 网络共享</strong> 两个方向共享同一条 USB 链路，页面区分 NCM 就绪、路由与联网条件。</figcaption>
+        </figure>
+        <figure class="usblinkmic-real-shot">
+          <a href="/media/usblinkmic/microphone.svg" target="_blank" rel="noopener noreferrer" aria-label="查看手机麦克风截图大图">
+            <img src="/media/usblinkmic/microphone.svg" width="1100" height="829" loading="lazy" decoding="async" alt="Mac 开发版 USBLinkMic 手机麦克风页，展示 USB 或 Wi-Fi 通道和 BlackHole 音频输出配置" />
+          </a>
+          <figcaption><strong>02 / 手机麦克风</strong> 连接、传输通道、试听与虚拟麦克风输出集中管理；当前截图为尚未开始拾音的状态。</figcaption>
+        </figure>
+        <figure class="usblinkmic-real-shot usblinkmic-real-shot--menu">
+          <a href="/media/usblinkmic/menu.svg" target="_blank" rel="noopener noreferrer" aria-label="查看菜单栏截图大图">
+            <img src="/media/usblinkmic/menu.svg" width="676" height="462" loading="lazy" decoding="async" alt="USBLinkMic 菜单栏快捷控制，可启动麦克风、查看 USB 共享状态并打开主窗口" />
+          </a>
+          <figcaption><strong>03 / 菜单栏快捷入口</strong> 不打开主窗口也能查看连接状态并操作常用功能。</figcaption>
+        </figure>
+      </div>
+    </section>
+  )}
   <section class="shell software-section" aria-labelledby="capabilities-heading"><div class="section-header-bar" data-reveal><div><span class="small-label">做什么 / 怎样做</span><h2 id="capabilities-heading">{product.tagline}</h2></div></div><div class="software-grid-2">{product.highlights.map(item=><article class="software-feature-card"><h3>{item.title}</h3><p>{item.body}</p></article>)}</div></section>
   <section class="shell software-section" aria-labelledby="scenarios-heading"><div class="section-header-bar" data-reveal><h2 id="scenarios-heading">放进具体的使用场景</h2></div><div class="software-grid-3">{product.scenarios.map(item=><article class="software-scenario-card"><h3>{item.scenario}</h3><p>{item.pain}</p><p>{item.outcome}</p><p class="small-label">{item.mechanism}</p></article>)}</div></section>
   <section class="shell software-section" id="downloads" aria-labelledby="start-heading"><div class="section-header-bar" data-reveal><div><span class="small-label">开始之前</span><h2 id="start-heading">{product.downloads.length ? '选择公开安装包' : '目前以案例展示'}</h2><p>{product.availabilitySummary}</p></div></div>
@@ -53,4 +85,16 @@ const { product } = Astro.props;
     .habitbloom-architecture-grid { grid-template-columns: 1fr; gap: 24px; }
     .habitbloom-architecture-figure { max-width: 780px; }
   }
+</style>
+
+<style>
+  .usblinkmic-capture-notice { margin: 0 0 24px; max-width: 78ch; color: var(--text-secondary); font-size: 13.5px; line-height: 1.8; }
+  .usblinkmic-real-gallery { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 26px; align-items: start; }
+  .usblinkmic-real-shot { margin:0; min-width:0; }
+  .usblinkmic-real-shot a { display:block; overflow:hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-subtle); }
+  .usblinkmic-real-shot img { display:block; width:100%; height:auto; }
+  .usblinkmic-real-shot figcaption { margin:11px 2px 0; font-size:12.5px; line-height:1.75; color:var(--text-secondary); }
+  .usblinkmic-real-shot figcaption strong { font-weight:700; color:var(--text); }
+  .usblinkmic-real-shot--menu { max-width:500px; }
+  @media (max-width: 850px) { .usblinkmic-real-gallery { grid-template-columns:1fr; gap:24px; } }
 </style>
