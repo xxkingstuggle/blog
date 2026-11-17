@@ -32,7 +32,7 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 > 我只负责说清楚遇到了什么问题。要不要用思考方法、用哪一种、什么时候停，让 AI 自己判断。
 
-这就是我做「思路导航 V3（Thought Navigator）」的起点。
+这就是我做「思路导航（Thought Navigator）」的起点。
 
 ## 最初的方向差一点就走偏了
 
@@ -95,7 +95,7 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 ## 技术上，它究竟是什么
 
-思路导航 V3 是一个面向 **Codex 插件机制**的 Skill 路由项目，不是独立训练的大模型。
+思路导航是一个面向 **Codex 插件机制**的 Skill 路由项目，不是独立训练的大模型。
 
 我做的工作主要在入口设计、能力目录、提示词约束和插件组织上：整理适用边界，让模型按需读取方法正文，处理重复入口、误触发和方法冲突，并把它整理成可安装的插件结构。
 
@@ -124,6 +124,6 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 ---
 
-**项目与源码：** [思路导航 V3 · GitHub](https://github.com/xxkingstuggle/thought-navigator-v3)
+**项目与源码：** [思路导航 · GitHub](https://github.com/xxkingstuggle/thought-navigator-v3)
 
 **相关资料：** [路由技能入口](https://github.com/xxkingstuggle/thought-navigator-v3/blob/main/plugin/thought-navigator/skills/thought-navigator/SKILL.md) · [能力目录](https://github.com/xxkingstuggle/thought-navigator-v3/blob/main/plugin/thought-navigator/skills/thought-navigator/references/catalog.md) · [来源及许可说明](https://github.com/xxkingstuggle/thought-navigator-v3/blob/main/plugin/thought-navigator/NOTICE)
