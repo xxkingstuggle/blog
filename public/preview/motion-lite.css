@@ -82,3 +82,11 @@ button:focus-visible,a:focus-visible{outline:3px solid #4d9688;outline-offset:4p
 @media(max-width:760px){.site{display:block}.rail{height:auto;position:relative;padding:14px 20px;border-right:0;border-bottom:1px solid var(--rule);display:flex;flex-direction:row;justify-content:space-between;align-items:center}.rail-lab,.rail-nav,.rail-bottom{display:none}.mark{font-size:20px}.rail:after{content:"PREVIEW / EXPERIMENT";font-size:10px;letter-spacing:.1em;color:var(--muted)}.topline{height:60px}.hero{padding:74px 0 60px}.hero-bottom{display:block}.hero .corner{display:block;margin-top:24px}.toolbar{display:block;padding-top:38px}.motion-panel{margin-top:24px}.gallery-grid{grid-template-columns:1fr;gap:22px}.gallery-item:nth-child(2),.gallery-item:nth-child(4){padding-top:0}.gallery-card .visual-inner{aspect-ratio:1.44}.note{display:block}.note .pill{display:inline-block;margin-top:22px}.footer{flex-direction:column;gap:12px}}
 @media(max-width:390px){.main{padding-inline:18px}.hero h1{font-size:47px}.motion-panel button{padding:9px 11px}.visual-inner .cover-caption{left:17px;bottom:18px}.visual-inner .editorial-cover{padding:20px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}.gallery-card .visual-inner{transform:none!important}.motion-pressure{display:none!important}}
+
+/* Safari 14 and earlier: media retains its frame even without aspect-ratio. */
+@supports not (aspect-ratio:1/1) {
+  .gallery-card .visual-inner{height:290px}
+  .gallery-card .visual-inner.is-wide{height:280px}
+  .gallery-card .visual-inner.is-square{height:330px}
+  @media(max-width:760px){.gallery-card .visual-inner{height:240px}}
+}
