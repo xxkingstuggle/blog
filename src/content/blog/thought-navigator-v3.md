@@ -21,6 +21,11 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 **我到底该用哪一种方法？**
 
+<figure class="case-study-figure">
+  <img src="/media/thought-navigator-v3/01-method-overload.svg" alt="第一性原理、双向钢人等方法不断增加，用户反而卡在该选哪个方法" width="1280" height="720" loading="lazy" decoding="async" />
+  <figcaption>图 1 · 有很多方法，不代表能更快解决问题。选方法本身也有成本。</figcaption>
+</figure>
+
 方法越多，选择方法本身反而成了一件需要思考的事。我明明是想借助 AI 把问题解决掉，最后却变成了我得先研究工具，才能开始解决问题。
 
 后来我想，为什么不能反过来？
@@ -45,17 +50,10 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 如果够，就直接回答。只有确实需要别的方法时，才从能力目录里查找、读取对应的 Skill 正文，再拿来处理问题。
 
-~~~text
-你主动 @思路导航，描述问题
-           ↓
-模型判断：普通回答是否足够？
-    ├─ 足够 → 直接回答
-    └─ 不足 → 查目录 → 按需读取 Skill
-                          ↓
-                    解决当前问题
-                          ↓
-                   够用了，就停止
-~~~
+<figure class="case-study-figure">
+  <img src="/media/thought-navigator-v3/02-routing-decision.svg" alt="用户提出问题后先判断普通回答是否足够，足够就直接回答，否则才查目录并读取 Skill 解决当前问题" width="1280" height="720" loading="lazy" decoding="async" />
+  <figcaption>图 2 · 这是设计上的选择流程示意，并非一次真实运行的调用日志。</figcaption>
+</figure>
 
 后来我发现，这个「可以不用」的出口，比一开始想象的还重要。
 
@@ -100,6 +98,11 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 思路导航 V3 是一个面向 **Codex 插件机制**的 Skill 路由项目，不是独立训练的大模型。
 
 我做的工作主要在入口设计、能力目录、提示词约束和插件组织上：整理适用边界，让模型按需读取方法正文，处理重复入口、误触发和方法冲突，并把它整理成可安装的插件结构。
+
+<figure class="case-study-figure">
+  <img src="/media/thought-navigator-v3/03-plugin-structure.svg" alt="思路导航的 Codex 插件结构：路由入口、能力目录、方法正文、来源记录" width="1280" height="720" loading="lazy" decoding="async" />
+  <figcaption>图 3 · 根据公开仓库文件组织绘制的结构示意；完整实现可在文末 GitHub 查阅。</figcaption>
+</figure>
 
 公开版本保留了方法的来源与授权记录。**这些思考方法不是我原创的。** 项目基于 [LearnPrompt/laoyeye](https://github.com/LearnPrompt/laoyeye) 收录的内容做非官方 Codex 适配，另外还有相应的第三方来源和许可说明。我的工作重点是如何组织、选择和使用它们。
 
