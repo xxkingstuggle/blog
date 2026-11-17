@@ -451,3 +451,46 @@
 		display: none;
 	}
 }
+
+/* Thought Navigator editorial article: desktop hero is an illustration, not a full-width poster. */
+@media (min-width: 780px) {
+  .front-body .gallery-detail-figure--compact {
+    width: min(100% - 32px, 780px);
+    max-width: 780px;
+    margin: 24px auto 0;
+  }
+  .front-body .gallery-detail-figure--compact .gallery-detail-cover {
+    max-height: 439px;
+    aspect-ratio: 16 / 9;
+  }
+}
+@media (max-width: 779px) {
+  .front-body .gallery-detail-figure--compact {
+    width: auto;
+    max-width: none;
+  }
+}
+.front-body .article-prose .case-study-figure {
+  width: 100%;
+  max-width: 780px;
+  margin: 28px auto 38px;
+}
+.front-body .article-prose .case-study-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #f8f1e4;
+}
+.front-body .article-prose .case-study-figure figcaption {
+  margin: 10px 4px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+}
+@media (max-width: 779px) {
+  .front-body .article-prose .case-study-figure { margin: 22px auto 30px; }
+  .front-body .article-prose .case-study-figure img { border-radius: 12px; }
+}
