@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
-import { webkit } from 'playwright';
+import { chromium, webkit } from 'playwright';
 
 const origin='http://127.0.0.1:4373';
 const server=spawn('npm',['run','preview','--','--host','127.0.0.1','--port','4373'],
@@ -29,7 +29,7 @@ async function ensureWithinViewport(page,label){
 }
 async function run(){
   await awaitReady();
-  browser=await webkit.launch({headless:true});
+  browser=await (process.env.VISUAL_BROWSER === 'chromium' ? chromium : webkit).launch({headless:true});
   mkdirSync('artifacts',{recursive:true});
 
   const desktop=await browser.newPage({viewport:{width:1440,height:900}});
@@ -435,7 +435,11 @@ async function run(){
     'media stage must no longer have a coloured third-layer well behind the image');
   await mediaCards.last().screenshot({path:'artifacts/studio-glass-card.png'});
   await desktop.evaluate(()=>window.scrollTo(0,0));
-  await desktop.locator('.gallery-card').first().click();
+  // The first card may be a featured article. Never infer destination from
+  // position: target the actual product URL so editorial reordering is safe.
+  const usbLinkMicCard=desktop.locator('a.gallery-card[href="/software/usblinkmic/"]');
+  assert.equal(await usbLinkMicCard.count(),1,'USBLinkMic gallery link must be present exactly once');
+  await usbLinkMicCard.click();
   await desktop.waitForURL('**/software/usblinkmic/');
   assert.ok(await desktop.locator('h1').first().isVisible());
   await desktop.waitForFunction(() =>
@@ -490,10 +494,14 @@ async function run(){
       const r=el.getBoundingClientRect(), p=img.getBoundingClientRect();
       return {radius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
         imgRadius:parseFloat(getComputedStyle(img).borderTopLeftRadius),
-        ratio:parseFloat(getComputedStyle(el).aspectRatio),
+        ratio:(() => {
+          const [width, height] = getComputedStyle(el).aspectRatio.split('/').map(Number);
+          return Number.isFinite(height) && height > 0 ? width / height : width;
+        })(),
         actual:r.width/r.height,
         widthDelta:Math.abs(r.width-p.width),heightDelta:Math.abs(r.height-p.height)};
     });
+    console.log('Article geometry:',JSON.stringify({url:desktop.url(),...coverGeometry}));
     assert.ok(coverGeometry.radius>=10 && coverGeometry.imgRadius<.2 &&
       Math.abs(coverGeometry.ratio-coverGeometry.actual)<.03 &&
       coverGeometry.widthDelta<1 && coverGeometry.heightDelta<1,
@@ -666,7 +674,8 @@ async function run(){
   assert.ok(revision>=1);
   await mobile.locator('#note-history').click();
   await mobile.locator('#note-history-panel:not([hidden])').waitFor();
-  assert.ok(await mobile.locator('#note-history-list li').count()>=1);
+  // Panel visibility precedes the async history fetch; wait for actual content.
+  await mobile.locator('#note-history-list li').first().waitFor({state:'visible',timeout:8000});
   // Emulate a second device writing to D1 while the mobile editor is clean.
   saved={title:'Another device',body:'Remote changes were saved'};
   revision++;
