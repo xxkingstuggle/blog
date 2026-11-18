@@ -10,7 +10,7 @@
  */
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { webkit } from 'playwright';
+import { webkit, chromium } from 'playwright';
 
 const output = 'artifacts/visual-review';
 const origin = (process.env.VISUAL_REVIEW_URL || 'http://127.0.0.1:4375').replace(/\/$/, '');
@@ -127,6 +127,42 @@ async function captureMotion() {
   if (failure) throw failure;
 }
 
+async function capturePageJourney() {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    recordVideo: { dir: output, size: { width: 1440, height: 900 } }
+  });
+  const page = await context.newPage();
+  const video = page.video();
+  let failure;
+  try {
+    await page.goto(origin + '/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(450);
+    await page.locator('.gallery-card').first().hover();
+    await page.waitForTimeout(350);
+    await page.evaluate(() => window.scrollBy(0, 550));
+    await page.waitForTimeout(550);
+    await page.evaluate(() => window.scrollBy(0, 550));
+    await page.waitForTimeout(550);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(450);
+    await page.locator('[data-gallery-filter="writing"]').click();
+    await page.waitForTimeout(450);
+    await page.locator('[data-gallery-filter="all"]').click();
+    await page.waitForTimeout(350);
+    await page.goto(origin + '/software/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(600);
+    await page.goto(origin + '/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(350);
+  } catch (error) { failure = error; }
+  finally {
+    await page.close();
+    if (video) await video.saveAs(output + '/page-journey.webm');
+    await context.close();
+  }
+  if (failure) throw failure;
+}
+
 function report(results) {
   const rows = results.map(item => {
     const warnings = [
@@ -140,7 +176,7 @@ function report(results) {
   const lines = [
     '# MYZJX 视觉验收证据（待人工审查）',
     '',
-    '此报告由真实 WebKit 渲染生成；截图与视频不是设计合格证明。无需重启 Vercel 或修改线上站。',
+    '此报告由真实浏览器渲染生成（浏览器：' + (process.env.VISUAL_BROWSER || 'webkit') + '）；截图与视频不是设计合格证明。无需重启 Vercel 或修改线上站。',
     '',
     '| 场景 | 视口/主题 | 证据 | 自动发现 |',
     '|---|---|---|---|',
@@ -149,6 +185,10 @@ function report(results) {
     '## 鼠标交互',
     '',
     '[静止](hover-before.png) · [按压](hover-pressed.png) · [离开](hover-released.png) · [完整录像](hover-motion.webm)',
+    '',
+    '## 全站动效路径',
+    '',
+    '[首页滚动／筛选／跨页面录像](page-journey.webm)（验证执行过操作，是否自然仍需审美判断）',
     '',
     '## 人工视觉验收（必须填写，不能由 Agent 自称通过）',
     '',
@@ -178,10 +218,12 @@ async function main() {
   }
   try {
     await waitForPreview();
-    browser = await webkit.launch({ headless: true });
+    const engine = process.env.VISUAL_BROWSER === 'chromium' ? chromium : webkit;
+    browser = await engine.launch({ headless: true });
     const results = [];
     for (const testCase of cases) results.push(await capture(testCase));
     await captureMotion();
+    await capturePageJourney();
     report(results);
     console.log('Visual evidence collected: ' + output + '/REVIEW.md');
     const warnings = results.filter(item => item.overflow || item.brokenImages.length || item.errors.length);

@@ -18,6 +18,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: node scripts/verify-visual-architecture.mjs
       - run: npm run check
       - run: npm test
       - run: npm run build
