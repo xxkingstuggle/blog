@@ -43,6 +43,9 @@ on:
       - 'src/pages/admin-shell/iteration/index.astro'
       - 'scripts/verify-iteration-webkit.mjs'
       - '.github/workflows/verify-iteration-webkit.yml'
+      - 'scripts/collect-visual-evidence.mjs'
+      - 'docs/visual-quality-loop.md'
+      - 'AGENTS.md'
   workflow_dispatch:
 
 permissions:
@@ -69,6 +72,8 @@ jobs:
         run: node scripts/verify-iteration-webkit.mjs
       - name: Exercise public gallery and private applications in WebKit
         run: node scripts/verify-studio-webkit.mjs
+      - name: Collect candidate visual evidence for human review
+        run: node scripts/collect-visual-evidence.mjs
       - name: Capture Godly reference pages (best effort)
         run: node scripts/capture-godly-reference.mjs
         continue-on-error: true
@@ -77,6 +82,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: studio-and-iteration-webkit-snapshots
-          path: artifacts/*.png
+          path: |
+            artifacts/*.png
+            artifacts/visual-review/**
           if-no-files-found: ignore
           retention-days: 3
