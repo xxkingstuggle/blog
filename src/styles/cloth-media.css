@@ -153,31 +153,9 @@
   animation: none !important;
 }
 
-/* A tiny dimple in the surface, not a black halo following the cursor.
-   Inner centre = a little darker; outer rim = softly raised highlight.
-   The same local optical response works for image, video and text covers. */
-.front-body .gallery-card .gallery-card-visual::after,
-.front-body .gallery-card .gallery-card-visual--has-image::after,
-.front-body .gallery-card .gallery-card-visual--text::after {
-  content: '';
-  display: block;
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  transform: none;
-  border-radius: inherit;
-  opacity: var(--pressure-opacity, 0);
-  background:
-    radial-gradient(ellipse 90px 72px at var(--pressure-x) var(--pressure-y),
-      transparent 0%,
-      rgba(255,255,255,.015) 30%,
-      rgba(255,255,255,.085) 49%,
-      rgba(255,255,255,.03) 64%,
-      transparent 84%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
-  transition: opacity .12s linear;
-}
+/* The previous ::after radial glow is intentionally gone.
+   The final visual gate below disables this legacy pseudo-element entirely.
+   Keep the actual local card transform rather than resurrecting the glow. */
 /* The visual sheet flexes inwards by ~0.2%, and changes angle <= 0.6deg.
    The surrounding shell remains stationary: that's what conveys pressure. */
 @media (hover:hover) and (pointer:fine) {
@@ -195,26 +173,10 @@
       scale(.991);
   }
 }
-:root[data-color-mode='dark'] .front-body .gallery-card .gallery-card-visual::after {
-  background:
-    radial-gradient(ellipse 90px 72px at var(--pressure-x) var(--pressure-y),
-      transparent 0%,
-      rgba(225,236,255,.008) 30%,
-      rgba(225,236,255,.065) 49%,
-      rgba(225,236,255,.02) 65%,
-      transparent 84%);
-}
-@media (prefers-color-scheme:dark) {
-  :root[data-color-mode='system'] .front-body .gallery-card .gallery-card-visual::after {
-    background:
-      radial-gradient(ellipse 90px 72px at var(--pressure-x) var(--pressure-y),
-        transparent 0%,rgba(225,236,255,.008) 30%,
-        rgba(225,236,255,.065) 49%,transparent 84%);
-  }
-}
 /* Article imagery also follows its source ratio and fills the frame. */
 .front-body .gallery-detail-cover--image {
   aspect-ratio: var(--detail-ratio, 16/9);
+  border: 0;
   padding: 0;
   display: block;
   overflow: hidden;
