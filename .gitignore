@@ -31,3 +31,6 @@ pnpm-debug.log*
 /BLOCKED.md
 
 /.playwright-cli/
+
+# generated screenshots, videos and visual QA reports
+/artifacts/
