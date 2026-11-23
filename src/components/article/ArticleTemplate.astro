@@ -4,6 +4,7 @@ import GalleryHero from '../GalleryHero.astro';
 import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
 import { getSoftwareByArticleSlug } from '../../lib/software';
 import ArticleRail from './ArticleRail.astro';
+import MobileToc from './MobileToc.astro';
 import NextArticle from './NextArticle.astro';
 import CommentsPanel from './CommentsPanel.astro';
 
@@ -16,10 +17,11 @@ interface HeadingItem {
 interface Props {
 	post: BlogPost;
 	headings: HeadingItem[];
+	prevPost?: BlogPost | null;
 	nextPost?: BlogPost | null;
 }
 
-const { post, headings, nextPost } = Astro.props;
+const { post, headings, prevPost, nextPost } = Astro.props;
 const description = post.data.description;
 const kindLabel = KIND_LABELS[post.data.kind] || '思考';
 const kicker = post.data.kicker || kindLabel;
@@ -96,11 +98,12 @@ const linkedSoftware = getSoftwareByArticleSlug(post.id);
 <!-- Article Body & TOC Rail -->
 <div class="shell article-layout">
 	<article class="article-content-wrapper">
+		<MobileToc headings={headings} />
 		<div class="article-prose">
 			<slot />
 		</div>
 		<CommentsPanel post={post} />
-		{nextPost && <NextArticle post={nextPost} />}
+		{(prevPost || nextPost) && <NextArticle prevPost={prevPost} post={nextPost} />}
 	</article>
 
 	<ArticleRail headings={headings} />

@@ -8,16 +8,31 @@ import { render } from 'astro:content';
 export async function getStaticPaths() {
 	const posts = await getPublishedPosts();
 	const listedPosts = posts.filter((post) => post.data.listed !== false);
-	return posts.map((post) => ({
-		params: { slug: post.id },
-		props: {
-			post,
-			nextPost: listedPosts.find((candidate) => candidate.data.pubDate.valueOf() < post.data.pubDate.valueOf()) ?? null,
-		},
-	}));
+	return posts.map((post) => {
+		const listedIndex = listedPosts.findIndex((candidate) => candidate.id === post.id);
+		let prevPost = null;
+		let nextPost = null;
+		if (listedIndex !== -1) {
+			prevPost = listedIndex > 0 ? listedPosts[listedIndex - 1] : null;
+			nextPost = listedIndex < listedPosts.length - 1 ? listedPosts[listedIndex + 1] : null;
+		} else {
+			const postTime = post.data.pubDate.valueOf();
+			nextPost = listedPosts.find((candidate) => candidate.data.pubDate.valueOf() < postTime) ?? null;
+			const newerCandidates = listedPosts.filter((candidate) => candidate.data.pubDate.valueOf() > postTime);
+			prevPost = newerCandidates.length > 0 ? newerCandidates[newerCandidates.length - 1] : null;
+		}
+		return {
+			params: { slug: post.id },
+			props: {
+				post,
+				prevPost,
+				nextPost,
+			},
+		};
+	});
 }
 
-const { post, nextPost } = Astro.props;
+const { post, prevPost, nextPost } = Astro.props;
 const { Content, headings } = await render(post);
 const description = post.data.description;
 const isFeature = post.data.presentation === 'feature';
@@ -28,14 +43,14 @@ const isFeature = post.data.presentation === 'feature';
 	description={description}
 	image={post.data.cover}
 	ogType="article"
-	noindex={false}
+	noindex={post.data.listed === false}
 >
 	{isFeature ? (
-		<FeatureTemplate post={post} headings={headings} nextPost={nextPost}>
+		<FeatureTemplate post={post} headings={headings} prevPost={prevPost} nextPost={nextPost}>
 			<Content />
 		</FeatureTemplate>
 	) : (
-		<ArticleTemplate post={post} headings={headings} nextPost={nextPost}>
+		<ArticleTemplate post={post} headings={headings} prevPost={prevPost} nextPost={nextPost}>
 			<Content />
 		</ArticleTemplate>
 	)}

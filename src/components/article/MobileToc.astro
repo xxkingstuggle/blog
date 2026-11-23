@@ -1,0 +1,34 @@
+---
+interface HeadingItem {
+	depth: number;
+	slug: string;
+	text: string;
+}
+
+interface Props {
+	headings: HeadingItem[];
+}
+
+const { headings } = Astro.props;
+const filteredHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+{filteredHeadings.length > 0 && (
+	<details class="article-mobile-toc" data-mobile-toc>
+		<summary class="article-mobile-toc-summary">
+			<span class="article-mobile-toc-title">SECTIONS / 章节目录</span>
+			<span class="article-mobile-toc-meta">{filteredHeadings.length} 节</span>
+		</summary>
+		<nav aria-label="移动端章节导航">
+			<ol class="article-mobile-toc-list">
+				{filteredHeadings.map((heading) => (
+					<li class:list={[{ 'is-sub': heading.depth === 3 }]}>
+						<a href={`#${heading.slug}`} data-mobile-toc-link>
+							{heading.text}
+						</a>
+					</li>
+				))}
+			</ol>
+		</nav>
+	</details>
+)}

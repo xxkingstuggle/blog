@@ -2,18 +2,35 @@
 import type { BlogPost } from '../../lib/posts';
 
 interface Props {
-	post?: BlogPost;
+	prevPost?: BlogPost | null;
+	post?: BlogPost | null;
 }
 
-const { post } = Astro.props;
+const { prevPost, post } = Astro.props;
+const hasBoth = Boolean(prevPost && post);
 ---
 
-{post && (
-	<section class="next-article-section" aria-label="下一篇阅读">
-		<div class="next-article-label">NEXT DISPATCH / 下一篇</div>
-		<a class="next-article-card" href={`/posts/${post.id}/`}>
-			<h4>{post.data.title}</h4>
-			<p>{post.data.description}</p>
-		</a>
+{(prevPost || post) && (
+	<section class="next-article-section" aria-label="上下篇阅读导航">
+		<div class:list={['next-article-grid', { 'next-article-grid--dual': hasBoth }]}>
+			{prevPost && (
+				<div class="next-article-slot">
+					<div class="next-article-label">NEWER DISPATCH / 更新一篇</div>
+					<a class="next-article-card" href={`/posts/${prevPost.id}/`}>
+						<h4>{prevPost.data.title}</h4>
+						<p>{prevPost.data.description}</p>
+					</a>
+				</div>
+			)}
+			{post && (
+				<div class="next-article-slot">
+					<div class="next-article-label">OLDER DISPATCH / 更早一篇</div>
+					<a class="next-article-card" href={`/posts/${post.id}/`}>
+						<h4>{post.data.title}</h4>
+						<p>{post.data.description}</p>
+					</a>
+				</div>
+			)}
+		</div>
 	</section>
 )}

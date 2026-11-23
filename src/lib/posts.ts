@@ -58,6 +58,25 @@ export async function getNextListedPost(current: BlogPost) {
 	return posts.find((post) => post.data.pubDate.valueOf() < current.data.pubDate.valueOf()) ?? null;
 }
 
+export async function getAdjacentListedPosts(current: BlogPost): Promise<{
+	newerPost: BlogPost | null;
+	olderPost: BlogPost | null;
+}> {
+	const posts = await getListedPosts();
+	const currentIndex = posts.findIndex((post) => post.id === current.id);
+	if (currentIndex !== -1) {
+		return {
+			newerPost: currentIndex > 0 ? posts[currentIndex - 1] : null,
+			olderPost: currentIndex < posts.length - 1 ? posts[currentIndex + 1] : null,
+		};
+	}
+	const currentTime = current.data.pubDate.valueOf();
+	const olderPost = posts.find((post) => post.data.pubDate.valueOf() < currentTime) ?? null;
+	const newerCandidates = posts.filter((post) => post.data.pubDate.valueOf() > currentTime);
+	const newerPost = newerCandidates.length > 0 ? newerCandidates[newerCandidates.length - 1] : null;
+	return { newerPost, olderPost };
+}
+
 export function formatDate(date: Date) {
 	return new Intl.DateTimeFormat('zh-CN', {
 		year: 'numeric',

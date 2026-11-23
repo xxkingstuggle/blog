@@ -43,8 +43,61 @@ function initReadingProgress(): void {
 	}
 }
 
-if (document.readyState === 'loading') {
-	document.addEventListener('DOMContentLoaded', initReadingProgress, { once: true });
-} else {
+function initMobileToc(): void {
+	document.querySelectorAll<HTMLDetailsElement>('[data-mobile-toc]').forEach((toc) => {
+		toc.querySelectorAll<HTMLAnchorElement>('[data-mobile-toc-link]').forEach((link) => {
+			link.addEventListener('click', () => {
+				toc.open = false;
+			});
+		});
+	});
+}
+
+function initCodeCopyButtons(): void {
+	const codeBlocks = document.querySelectorAll<HTMLPreElement>('.article-prose pre');
+	codeBlocks.forEach((pre) => {
+		if (pre.parentElement?.classList.contains('article-code-block')) return;
+		const wrapper = document.createElement('div');
+		wrapper.className = 'article-code-block';
+		pre.parentNode?.insertBefore(wrapper, pre);
+		wrapper.append(pre);
+
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'code-copy-btn';
+		button.textContent = '复制';
+		button.setAttribute('aria-label', '复制代码');
+
+		let resetTimer: number | undefined;
+		button.addEventListener('click', async () => {
+			const codeNode = pre.querySelector('code');
+			const text = (codeNode ?? pre).textContent ?? '';
+			try {
+				await navigator.clipboard.writeText(text);
+				button.textContent = '已复制';
+				button.dataset.copied = 'true';
+			} catch {
+				button.textContent = '复制失败';
+			}
+			if (resetTimer) window.clearTimeout(resetTimer);
+			resetTimer = window.setTimeout(() => {
+				button.textContent = '复制';
+				delete button.dataset.copied;
+			}, 1800);
+		});
+
+		wrapper.append(button);
+	});
+}
+
+function initArticleEnhancements(): void {
 	initReadingProgress();
+	initMobileToc();
+	initCodeCopyButtons();
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initArticleEnhancements, { once: true });
+} else {
+	initArticleEnhancements();
 }

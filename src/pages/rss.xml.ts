@@ -15,19 +15,29 @@ function escapeCdata(value: string) {
 	return value.replace(/\]\]>/g, ']]]]><![CDATA[>');
 }
 
+function cleanBodyForRss(body: string) {
+	return body
+		.replace(/^\s*import\s+[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, '')
+		.replace(/<[A-Z][A-Za-z0-9]*\b[\s\S]*?\/>/g, '')
+		.replace(/\n{3,}/g, '\n\n')
+		.trim();
+}
+
 export async function GET() {
 	const posts = await getListedPosts();
 	const items = posts.map((post) => {
 		const url = new URL(`/posts/${post.id}/`, siteConfig.url).toString();
+		const categories = post.data.tags.length > 0
+			? `\n\t\t\t<category>${post.data.tags.map(escapeXml).join('</category><category>')}</category>`
+			: '';
 		return `
 		<item>
 			<title>${escapeXml(post.data.title)}</title>
 			<link>${url}</link>
 			<guid>${url}</guid>
 			<description>${escapeXml(post.data.description)}</description>
-			<pubDate>${post.data.pubDate.toUTCString()}</pubDate>
-			<category>${post.data.tags.map(escapeXml).join('</category><category>')}</category>
-				<content:encoded><![CDATA[${escapeCdata(post.body ?? '')}]]></content:encoded>
+			<pubDate>${post.data.pubDate.toUTCString()}</pubDate>${categories}
+			<content:encoded><![CDATA[${escapeCdata(cleanBodyForRss(post.body ?? ''))}]]></content:encoded>
 		</item>`;
 	}).join('');
 

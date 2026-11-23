@@ -47,8 +47,17 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 					type="search"
 					id="post-search"
 					aria-label="搜索文章标题、摘要或标签"
-					placeholder="搜索标题、关键词或标签…"
+					placeholder="搜索标题、关键词或标签… (按 / 聚焦)"
 				/>
+				<button
+					type="button"
+					id="post-search-clear"
+					class="index-search-clear"
+					aria-label="清空搜索词"
+					hidden
+				>
+					×
+				</button>
 			</label>
 		</div>
 
@@ -80,9 +89,12 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 			))}
 		</div>
 
-		<p id="posts-empty" class="index-empty" hidden>
-			没有找到匹配的文章。试试清除搜索词或切换上方分类。
-		</p>
+		<div id="posts-empty" class="index-empty" hidden>
+			<p>没有找到匹配的文章。试试清除搜索词或切换上方分类。</p>
+			<button type="button" id="posts-reset" class="index-empty-reset" data-filter="all">
+				清除筛选条件
+			</button>
+		</div>
 	</section>
 </BaseLayout>
 
@@ -110,6 +122,7 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
+		min-height: 38px;
 		border: 1px solid transparent;
 		padding: 7px 14px;
 		border-radius: var(--radius-pill);
@@ -139,6 +152,7 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 		display: flex;
 		align-items: center;
 		gap: 8px;
+		min-height: 40px;
 		padding: 6px 12px;
 		border: 1px solid var(--line);
 		border-radius: var(--radius-pill);
@@ -159,6 +173,29 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 	.index-search:focus-within {
 		border-color: var(--accent-contrast);
 	}
+	.index-search-clear {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		padding: 0;
+		border: 0;
+		border-radius: 999px;
+		background: var(--surface-subtle);
+		color: var(--text-secondary);
+		font-size: 14px;
+		line-height: 1;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+	.index-search-clear:hover {
+		background: var(--text);
+		color: var(--bg);
+	}
+	.index-search-clear[hidden] {
+		display: none;
+	}
 	.index-count {
 		font-family: var(--font-mono);
 		font-size: 12px;
@@ -174,33 +211,84 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 		border-radius: var(--radius-md);
 		margin-top: 20px;
 	}
+	.index-empty p {
+		margin: 0 0 14px;
+	}
+	.index-empty-reset {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 38px;
+		padding: 8px 16px;
+		border-radius: var(--radius-pill);
+		border: 1px solid var(--line);
+		background: var(--bg);
+		color: var(--text);
+		font-size: 13px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease;
+	}
+	.index-empty-reset:hover {
+		border-color: var(--text);
+		background: var(--surface-subtle);
+	}
 	.post-index-item[hidden],
 	.index-empty[hidden] {
 		display: none;
 	}
-	@media (max-width: 640px) {
+	@media (max-width: 720px) {
 		.index-tools {
 			padding: var(--space-4);
 		}
+		.index-filter {
+			min-height: 40px;
+		}
 		.index-search {
 			width: 100%;
+			min-height: 44px;
 		}
 		.index-search input {
 			width: 100%;
+			font-size: 16px;
 		}
 	}
 </style>
 
 <script>
-	const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+	const buttons = document.querySelectorAll<HTMLButtonElement>('.index-filter[data-filter]');
 	const items = document.querySelectorAll<HTMLElement>('.post-index-item');
 	const search = document.getElementById('post-search') as HTMLInputElement | null;
+	const clearBtn = document.getElementById('post-search-clear') as HTMLButtonElement | null;
+	const resetBtn = document.getElementById('posts-reset') as HTMLButtonElement | null;
 	const count = document.getElementById('index-count');
 	const empty = document.getElementById('posts-empty');
+	const validKinds = new Set(['all', 'project', 'thought', 'update']);
 	let activeFilter = 'all';
 
-	function updateIndex() {
-		const term = search?.value.trim().toLocaleLowerCase() ?? '';
+	function syncButtons() {
+		buttons.forEach((item) =>
+			item.setAttribute('aria-pressed', String((item.dataset.filter ?? 'all') === activeFilter))
+		);
+	}
+
+	function syncUrl(rawQuery: string) {
+		const params = new URLSearchParams(window.location.search);
+		if (activeFilter !== 'all') params.set('kind', activeFilter);
+		else params.delete('kind');
+		if (rawQuery) params.set('q', rawQuery);
+		else params.delete('q');
+		const query = params.toString();
+		const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+		if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
+			window.history.replaceState(null, '', nextUrl);
+		}
+	}
+
+	function updateIndex(syncHistory = true) {
+		const rawQuery = search?.value.trim() ?? '';
+		const term = rawQuery.toLocaleLowerCase();
+		if (clearBtn) clearBtn.hidden = (search?.value.length ?? 0) === 0;
 		let visible = 0;
 		items.forEach((item) => {
 			item.hidden = !(
@@ -211,14 +299,50 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 		});
 		if (count) count.textContent = `共 ${visible} 篇已发布文章`;
 		if (empty) empty.hidden = visible !== 0;
+		if (syncHistory) syncUrl(rawQuery);
+	}
+
+	const initialParams = new URLSearchParams(window.location.search);
+	const initialKind = initialParams.get('kind');
+	const initialQuery = initialParams.get('q');
+	if (initialKind && validKinds.has(initialKind)) {
+		activeFilter = initialKind;
+		syncButtons();
+	}
+	if (initialQuery && search) {
+		search.value = initialQuery;
+	}
+	if (initialKind || initialQuery) {
+		updateIndex(false);
 	}
 
 	buttons.forEach((button) =>
 		button.addEventListener('click', () => {
 			activeFilter = button.dataset.filter ?? 'all';
-			buttons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+			syncButtons();
 			updateIndex();
 		})
 	);
-	search?.addEventListener('input', updateIndex);
+	search?.addEventListener('input', () => updateIndex());
+	clearBtn?.addEventListener('click', () => {
+		if (!search) return;
+		search.value = '';
+		updateIndex();
+		search.focus();
+	});
+	resetBtn?.addEventListener('click', () => {
+		activeFilter = 'all';
+		if (search) search.value = '';
+		syncButtons();
+		updateIndex();
+	});
+	document.addEventListener('keydown', (event) => {
+		if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+		const active = document.activeElement as HTMLElement | null;
+		const tag = active?.tagName;
+		if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active?.isContentEditable) return;
+		event.preventDefault();
+		search?.focus();
+		search?.select();
+	});
 </script>
