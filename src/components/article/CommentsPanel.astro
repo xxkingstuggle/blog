@@ -136,7 +136,28 @@ const { post } = Astro.props;
 
 	const fields = form?.querySelector<HTMLFieldSetElement>('[data-comments-fields]');
 	if (fields && slug) fields.disabled = false;
-	void loadComments();
+
+	let hasRequestedComments = false;
+	function requestCommentsOnce() {
+		if (hasRequestedComments) return;
+		hasRequestedComments = true;
+		void loadComments();
+	}
+
+	if (panel && 'IntersectionObserver' in window) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((entry) => entry.isIntersecting)) {
+					observer.disconnect();
+					requestCommentsOnce();
+				}
+			},
+			{ rootMargin: '320px 0px' }
+		);
+		observer.observe(panel);
+	} else {
+		requestCommentsOnce();
+	}
 </script>
 
 <style>

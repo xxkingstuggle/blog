@@ -60,6 +60,7 @@ const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : met
           height={image.height}
           class="gallery-card-image"
           loading={index < 3 ? 'eager' : 'lazy'}
+          fetchpriority={index === 0 ? 'high' : undefined}
           decoding="async"
         />
       ) : (
@@ -71,6 +72,8 @@ const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : met
           format="webp"
           class="gallery-card-image"
           loading={index < 3 ? 'eager' : 'lazy'}
+          fetchpriority={index === 0 ? 'high' : undefined}
+          decoding="async"
         />
       )
     ) : (

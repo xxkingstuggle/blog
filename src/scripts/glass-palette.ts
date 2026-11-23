@@ -11,6 +11,17 @@ type WeightedColor = { r: number; g: number; b: number; weight: number; hue: num
 const SAMPLE_SIZE = 36;
 const paletteCache = new Map<string, Palette>();
 const processed = new WeakSet<HTMLElement>();
+let sharedCanvas: HTMLCanvasElement | null = null;
+let sharedContext: CanvasRenderingContext2D | null = null;
+
+function getSampleContext(): CanvasRenderingContext2D | null {
+  if (sharedContext) return sharedContext;
+  sharedCanvas = document.createElement('canvas');
+  sharedCanvas.width = SAMPLE_SIZE;
+  sharedCanvas.height = SAMPLE_SIZE;
+  sharedContext = sharedCanvas.getContext('2d', { willReadFrequently: true });
+  return sharedContext;
+}
 
 function hueDegrees(r: number, g: number, b: number, maximum: number, chroma: number): number {
   if (chroma <= 0) return 0;
@@ -28,13 +39,11 @@ function roundedColor(color: WeightedColor): string {
 
 function extractPalette(image: HTMLImageElement): Palette | null {
   if (!image.naturalWidth || !image.naturalHeight) return null;
-  const canvas = document.createElement('canvas');
-  canvas.width = SAMPLE_SIZE;
-  canvas.height = SAMPLE_SIZE;
 
   try {
-    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const context = getSampleContext();
     if (!context) return null;
+    context.clearRect(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     context.drawImage(image, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     const pixels = context.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE).data;
     // Neutral accumulators cover dark/monochrome interface screenshots where
@@ -97,9 +106,6 @@ function extractPalette(image: HTMLImageElement): Palette | null {
   } catch {
     // Cross-origin or undecodable images retain the CSS neutral fallback.
     return null;
-  } finally {
-    canvas.width = 0;
-    canvas.height = 0;
   }
 }
 
@@ -162,7 +168,9 @@ function attachSurface(surface: HTMLElement): void {
 }
 
 function installGlassPalette(): void {
-  document.querySelectorAll<HTMLElement>('[data-glass-media]').forEach(attachSurface);
+  const surfaces = document.querySelectorAll<HTMLElement>('[data-glass-media]');
+  if (!surfaces.length) return;
+  surfaces.forEach(attachSurface);
 }
 
 if (document.readyState === 'loading') {

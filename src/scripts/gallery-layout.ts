@@ -26,16 +26,21 @@ function installGalleryLayout(): void {
       }
 
       grid.dataset.masonry = 'true';
+      const updates: Array<{ item: HTMLElement; expected: string | null }> = [];
       for (const item of items) {
         if (item.hidden) {
-          item.style.removeProperty('grid-row-end');
+          if (item.style.gridRowEnd) updates.push({ item, expected: null });
           continue;
         }
         const height = item.getBoundingClientRect().height;
         if (height < 1) continue;
         const span = Math.max(1, Math.ceil((height + GAP) / (ROW + GAP)));
         const expected = 'span ' + span;
-        if (item.style.gridRowEnd !== expected) item.style.gridRowEnd = expected;
+        if (item.style.gridRowEnd !== expected) updates.push({ item, expected });
+      }
+      for (const { item, expected } of updates) {
+        if (expected === null) item.style.removeProperty('grid-row-end');
+        else item.style.gridRowEnd = expected;
       }
     };
 

@@ -125,19 +125,5 @@ const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
 </style>
 
 <script>
-	// Reading progress bar tracker
-	const progressBar = document.getElementById('reading-progress');
-	if (progressBar) {
-		const updateProgress = () => {
-			const scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
-			if (scrollTotal > 0) {
-				const progress = (window.scrollY / scrollTotal) * 100;
-				progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
-			}
-		};
-
-		window.addEventListener('scroll', updateProgress, { passive: true });
-		window.addEventListener('resize', updateProgress, { passive: true });
-		updateProgress();
-	}
+	import '../../scripts/reading-progress';
 </script>

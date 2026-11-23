@@ -7,9 +7,18 @@
 	left: 0;
 	height: 3px;
 	background: var(--accent);
-	width: 0%;
+	width: 100%;
+	transform: scaleX(0);
+	transform-origin: left center;
+	will-change: transform;
 	z-index: 1000;
-	transition: width 50ms linear;
+	transition: transform 50ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.reading-progress-bar {
+		transition: none;
+	}
 }
 
 /* Article Header */

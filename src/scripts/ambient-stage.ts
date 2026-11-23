@@ -31,12 +31,12 @@ function bootAmbientStage(): void {
   let hasRendered = false;
   let pendingScroll = false;
 
-  function visible(element: HTMLElement): boolean {
-    if (element.closest('[hidden]')) return false;
+  function visibleRect(element: HTMLElement): DOMRect | null {
+    if (element.closest('[hidden]')) return null;
     const rect = element.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0 &&
+    return (rect.width > 0 && rect.height > 0 &&
       rect.bottom > 0 && rect.top < innerHeight &&
-      rect.right > 0 && rect.left < innerWidth;
+      rect.right > 0 && rect.left < innerWidth) ? rect : null;
   }
 
   function enhance(rgb: string, fallback: [number,number,number]): string {
@@ -60,14 +60,14 @@ function bootAmbientStage(): void {
       Math.round(center + (v-average)*boost)))).join(', ');
   }
 
-  function sceneFor(element: HTMLElement): AmbientScene {
+  function sceneFor(element: HTMLElement, cachedRect?: DOMRect): AmbientScene {
     const surface = element.matches('.gallery-card')
       ? element.querySelector<HTMLElement>('[data-glass-media]') ?? element
       : element;
     const css = getComputedStyle(surface);
     const rawPrimary = css.getPropertyValue('--glass-primary-rgb').trim();
     const rawSecondary = css.getPropertyValue('--glass-secondary-rgb').trim();
-    const rect = element.getBoundingClientRect();
+    const rect = cachedRect ?? element.getBoundingClientRect();
     return {
       element,
       primary: enhance(rawPrimary, [112,125,214]),
@@ -89,7 +89,7 @@ function bootAmbientStage(): void {
     }
   }
 
-  function render(element: HTMLElement, force = false, intent: 'hover'|'focus'|'scroll' = 'scroll') {
+  function render(element: HTMLElement, force = false, intent: 'hover'|'focus'|'scroll' = 'scroll', cachedRect?: DOMRect) {
     if (element === selected && !force) {
       field!.dataset.ambientIntent = intent;
       return;
@@ -97,7 +97,7 @@ function bootAmbientStage(): void {
     selected = element;
     field!.dataset.ambientScene = 'active';
     field!.dataset.ambientIntent = intent;
-    const scene = sceneFor(element);
+    const scene = sceneFor(element, cachedRect);
     const next = hasRendered ? 1 - selectedLayer : 0;
     const layer = layers[next];
     layer.style.setProperty('--ambient-primary-rgb', scene.primary);
@@ -116,25 +116,27 @@ function bootAmbientStage(): void {
     markActive(element);
   }
 
-  function closestVisible(): HTMLElement | null {
-    let result: HTMLElement | null = null;
+  function closestVisible(): { element: HTMLElement; rect: DOMRect } | null {
+    let result: { element: HTMLElement; rect: DOMRect } | null = null;
     let minDistance = Infinity;
     for (const element of sources) {
-      if (!visible(element)) continue;
-      const rect = element.getBoundingClientRect();
+      const rect = visibleRect(element);
+      if (!rect) continue;
       const midpoint = rect.top + Math.min(rect.height*.5,innerHeight*.37);
       const distance = Math.abs(midpoint-innerHeight*.49);
-      if (distance < minDistance) {minDistance = distance;result = element;}
+      if (distance < minDistance) {minDistance = distance;result = { element, rect };}
     }
     return result;
   }
 
   function refreshVisible(): void {
     pendingScroll = false;
-    if (pinned && visible(pinned)) return;
-    if (pinned && !visible(pinned)) pinned = null;
+    if (pinned) {
+      if (visibleRect(pinned)) return;
+      pinned = null;
+    }
     const nearest = closestVisible();
-    if (nearest) render(nearest,false,'scroll');
+    if (nearest) render(nearest.element,false,'scroll',nearest.rect);
     else {
       field!.dataset.ambientScene = 'rest';
       markActive(null);
