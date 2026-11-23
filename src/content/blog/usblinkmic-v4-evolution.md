@@ -20,7 +20,7 @@ cover: ../../assets/projects/usblinkmic-mac.png
 本文记录从 `v4.0.8` 到 `v4.0.17` 的三项核心工程演进。
 
 <figure class="case-study-figure">
-  <img src="/media/usblinkmic/workspace-devices-dark.png" alt="USBLinkMic v4.0.17 深色模式设备工作区界面" width="1600" height="1029" loading="lazy" decoding="async" />
+  <img src="/media/usblinkmic/workspace-devices-dark.webp" alt="USBLinkMic v4.0.17 深色模式设备工作区界面" width="1600" height="1029" loading="lazy" decoding="async" />
   <figcaption>图 1 · USBLinkMic v4.0.17 深色模式【设备】工作区：集中展示已连接 Android 设备、USB 充电与链路就绪状态（设备标识已遮盖）。</figcaption>
 </figure>
 
@@ -34,7 +34,7 @@ cover: ../../assets/projects/usblinkmic-mac.png
 - **移动端（Android）前台服务保活与握手校验**：Android 采集服务在检测到远端断开且用户未主动点击“停止”时，保持采集就绪并监听重连握手；同时通过会话代数（Session Generation）隔离新旧连接，防止旧 Socket 延迟到达的断开事件误杀刚刚建立的新连接。
 
 <figure class="case-study-figure">
-  <img src="/media/usblinkmic/workspace-microphone-dark.png" alt="USBLinkMic v4.0.17 深色模式手机麦克风页面" width="1600" height="1029" loading="lazy" decoding="async" />
+  <img src="/media/usblinkmic/workspace-microphone-dark.webp" alt="USBLinkMic v4.0.17 深色模式手机麦克风页面" width="1600" height="1029" loading="lazy" decoding="async" />
   <figcaption>图 2 · v4.0.17 【手机麦克风】工作区：支持 USB ADB 与局域网通道切换、实时电平监测与 BlackHole 2ch 输出绑定。</figcaption>
 </figure>
 
@@ -46,7 +46,7 @@ cover: ../../assets/projects/usblinkmic-mac.png
 2. **USB 充电与功耗状态可视化**：在设备工作区新增了针对 Android 电池状态、充电电流方向与 USB 供电握手的实时解析，帮助用户在高负载双向供网时直观确认手机是否处于有效补电状态。
 
 <figure class="case-study-figure">
-  <img src="/media/usblinkmic/workspace-macInternet-dark.png" alt="USBLinkMic v4.0.17 Mac 网络给手机页面" width="1600" height="1029" loading="lazy" decoding="async" />
+  <img src="/media/usblinkmic/workspace-macInternet-dark.webp" alt="USBLinkMic v4.0.17 Mac 网络给手机页面" width="1600" height="1029" loading="lazy" decoding="async" />
   <figcaption>图 3 · v4.0.17 【Mac 网络给手机】工作区：把 ADB reverse、Java Relay 与 Android VPNService 状态拆分为可逐项核查的步骤。</figcaption>
 </figure>
 
@@ -58,7 +58,7 @@ cover: ../../assets/projects/usblinkmic-mac.png
 - **严苛的发版自动化校验（`verify-release.py`）**：每一次打包发版都会自动校验内置 `companion.apk` 与独立发行 `USBLinkMic-4.0.17.apk` 的 SHA-256 一致性、核对包内全部 **54 项运行时资源哈希**、验证 macOS 签名与 DMG 分区表，并确保没有任何测试夹具（Fixtures）或签名密钥（`.jks`）混入发行包。
 
 <figure class="case-study-figure">
-  <img src="/media/usblinkmic/workspace-logs-dark.png" alt="USBLinkMic v4.0.17 诊断日志工作区" width="1600" height="1029" loading="lazy" decoding="async" />
+  <img src="/media/usblinkmic/workspace-logs-dark.webp" alt="USBLinkMic v4.0.17 诊断日志工作区" width="1600" height="1029" loading="lazy" decoding="async" />
   <figcaption>图 4 · v4.0.17 【日志】工作区：所有连接握手、音频缓冲与网络转发动作均可实时追踪。</figcaption>
 </figure>
 

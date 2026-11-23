@@ -100,10 +100,10 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     galleryHeading:'从浏览器捕获到原生分片落盘的完整闭环。',
     galleryNotice:'以下为 zjx-download v2.0.4 在 macOS 上的真实运行截图（涵盖浅色与深色主题、主队列窗口及单任务分片详情）。',
     gallery:[
-      {src:'/media/zjx-download/main-window.png',width:1600,height:1197,alt:'zjx-download 主窗口真实运行截图',title:'01 / 原生主队列与分类视图',caption:'集中管理进行中、已完成与排队任务，支持 cURL 导入、批量添加与速率限制。'},
-      {src:'/media/zjx-download/task-complete.png',width:1600,height:889,alt:'zjx-download 下载完成弹窗与校验面板',title:'02 / 任务完成与文件校验',caption:'下载完成后可直接校验文件摘要、定位 Finder 路径或复核连接分片。'},
-      {src:'/media/zjx-download/app-home-dark.png',width:1840,height:964,alt:'zjx-download 深色模式主界面',title:'03 / 深色模式工作台',caption:'原生 SwiftUI 适配 macOS 深色外观，保持高对比度状态指示。'},
-      {src:'/media/zjx-download/app-download-dark.png',width:1840,height:964,alt:'zjx-download 深色模式分片下载进度',title:'04 / 多连接并发分片',caption:'每个分片独立持久化偏移量，暂停或异常退出后从已提交检查点恢复。'}
+      {src:'/media/zjx-download/main-window.webp',width:1600,height:1197,alt:'zjx-download 主窗口真实运行截图',title:'01 / 原生主队列与分类视图',caption:'集中管理进行中、已完成与排队任务，支持 cURL 导入、批量添加与速率限制。'},
+      {src:'/media/zjx-download/task-complete.webp',width:1600,height:889,alt:'zjx-download 下载完成弹窗与校验面板',title:'02 / 任务完成与文件校验',caption:'下载完成后可直接校验文件摘要、定位 Finder 路径或复核连接分片。'},
+      {src:'/media/zjx-download/app-home-dark.webp',width:1840,height:964,alt:'zjx-download 深色模式主界面',title:'03 / 深色模式工作台',caption:'原生 SwiftUI 适配 macOS 深色外观，保持高对比度状态指示。'},
+      {src:'/media/zjx-download/app-download-dark.webp',width:1840,height:964,alt:'zjx-download 深色模式分片下载进度',title:'04 / 多连接并发分片',caption:'每个分片独立持久化偏移量，暂停或异常退出后从已提交检查点恢复。'}
     ],
     verifiedAt:'2026-11-24（11 项核心 XCTest 全绿，v2.0.4 双架构签名通过）',
     developmentVersion:'v2.0.4 / build 20261117.2',
@@ -170,10 +170,10 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     galleryHeading:'不打断对话流，在窄栏与弹窗中掌控全部路由细节。',
     galleryNotice:'以下为 Route Lens v1.3.1 自动化 UI 预览与验证生成的真实界面截图，涵盖深浅色右侧窄栏与中英双语配置弹窗。',
     gallery:[
-      {src:'/media/route-lens/rail-system-dark.png',width:1280,height:900,alt:'Route Lens 深色模式右侧窄栏',title:'01 / 深色模式右侧窄栏',caption:'通过 Shadow DOM 注入在页面右侧，不污染宿主样式，实时呈现请求与响应模型对照。'},
-      {src:'/media/route-lens/rail-default-light.png',width:1280,height:900,alt:'Route Lens 浅色模式右侧窄栏',title:'02 / 浅色模式与多字段视图',caption:'清晰区分“字段一致”“显式路由转换”与“字段缺失/冲突”状态。'},
-      {src:'/media/route-lens/popup-zh-light.png',width:360,height:740,alt:'Route Lens 中文浅色配置弹窗',title:'03 / 中文外观与字段控制弹窗',caption:'支持调节窄栏宽度、高度、上下位置、可见字段及一键恢复默认外观。',narrow:true},
-      {src:'/media/route-lens/popup-en-dark.png',width:360,height:740,alt:'Route Lens 英文深色配置弹窗',title:'04 / 英文深色模式弹窗',caption:'内置对称的中英双语字典与 320px+ 紧凑布局适配。',narrow:true}
+      {src:'/media/route-lens/rail-system-dark.webp',width:1280,height:900,alt:'Route Lens 深色模式右侧窄栏',title:'01 / 深色模式右侧窄栏',caption:'通过 Shadow DOM 注入在页面右侧，不污染宿主样式，实时呈现请求与响应模型对照。'},
+      {src:'/media/route-lens/rail-default-light.webp',width:1280,height:900,alt:'Route Lens 浅色模式右侧窄栏',title:'02 / 浅色模式与多字段视图',caption:'清晰区分“字段一致”“显式路由转换”与“字段缺失/冲突”状态。'},
+      {src:'/media/route-lens/popup-zh-light.webp',width:360,height:740,alt:'Route Lens 中文浅色配置弹窗',title:'03 / 中文外观与字段控制弹窗',caption:'支持调节窄栏宽度、高度、上下位置、可见字段及一键恢复默认外观。',narrow:true},
+      {src:'/media/route-lens/popup-en-dark.webp',width:360,height:740,alt:'Route Lens 英文深色配置弹窗',title:'04 / 英文深色模式弹窗',caption:'内置对称的中英双语字典与 320px+ 紧凑布局适配。',narrow:true}
     ],
     verifiedAt:'2026-11-24（18 项单元测试与 check.mjs 静态审计通过）',
     developmentVersion:'v1.3.1',
@@ -485,10 +485,10 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     galleryHeading:'把复杂的窗口坐标计算，收进直观的原生面板。',
     galleryNotice:'以下为 FrameLit 的指令管理、偏好设置、浅色模式与多状态交互界面设计图稿。',
     gallery:[
-      {src:'/media/framelit/commands-dark.png',width:1600,height:1236,alt:'FrameLit 深色模式窗口指令与网格画布',title:'01 / 指令面板与自定义网格画布',caption:'左侧管理预设分屏与快捷键，右侧在 6×3 至 48×24 网格上拖拽定义自定义区域。'},
-      {src:'/media/framelit/prefs-dark.png',width:1600,height:1236,alt:'FrameLit 深色模式偏好设置与排除应用列表',title:'02 / 偏好设置与排除规则',caption:'配置边缘拖拽吸附阈值、多显示器行为、忽略应用名单及诊断日志开关。'},
-      {src:'/media/framelit/commands-light.png',width:1600,height:1236,alt:'FrameLit 浅色模式指令面板',title:'03 / 浅色模式高对比度视图',caption:'使用语义化 Token 构建深浅双套外观，保证网格线与快捷键徽章清晰易读。'},
-      {src:'/media/framelit/states-dark.png',width:1600,height:854,alt:'FrameLit 权限引导、快捷键冲突与空状态',title:'04 / 辅助功能授权与冲突提示',caption:'覆盖首次 Accessibility 授权引导、快捷键占用检测与异常恢复状态。'}
+      {src:'/media/framelit/commands-dark.webp',width:1600,height:1236,alt:'FrameLit 深色模式窗口指令与网格画布',title:'01 / 指令面板与自定义网格画布',caption:'左侧管理预设分屏与快捷键，右侧在 6×3 至 48×24 网格上拖拽定义自定义区域。'},
+      {src:'/media/framelit/prefs-dark.webp',width:1600,height:1236,alt:'FrameLit 深色模式偏好设置与排除应用列表',title:'02 / 偏好设置与排除规则',caption:'配置边缘拖拽吸附阈值、多显示器行为、忽略应用名单及诊断日志开关。'},
+      {src:'/media/framelit/commands-light.webp',width:1600,height:1236,alt:'FrameLit 浅色模式指令面板',title:'03 / 浅色模式高对比度视图',caption:'使用语义化 Token 构建深浅双套外观，保证网格线与快捷键徽章清晰易读。'},
+      {src:'/media/framelit/states-dark.webp',width:1600,height:854,alt:'FrameLit 权限引导、快捷键冲突与空状态',title:'04 / 辅助功能授权与冲突提示',caption:'覆盖首次 Accessibility 授权引导、快捷键占用检测与异常恢复状态。'}
     ],
     verifiedAt:'2026-11-24（Swift 源码构建、77 项原创图稿打包与诊断日志单测核验）',
     developmentVersion:'v1.3 · Swift 原生实现 + 77 项重绘视觉资产',

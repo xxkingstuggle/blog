@@ -60,4 +60,4 @@ import PullQuote from '../../components/article/PullQuote.astro';
 - **全局光场只响应滚动与键盘焦点**：页面底层固定铺设两层全宽视口层 `[data-ambient-layer]`。当读者滚动页面或用 `Tab` 键切换焦点时，`ambient-stage.ts` 找到当前视口中心最接近的作品卡片，提取它的主次色，写入未激活的那一层光场，再通过 CSS `opacity` 完成交叉淡变（Crossfade）。
 - **光场延伸到磨砂侧栏背后**：桌面端左侧导航栏（`.studio-side-rail`）保持真实的 `rgba(...)` 半透明与 `backdrop-filter`，而底层 `[data-ambient-stage]` 的左边缘与视口 `0px` 对齐。于是当右侧滑过不同配色的作品时，左侧导航栏的磨砂玻璃也会自然透出同一色系的微光。
 
-对于没有配图的纯文字页面，光场会自动停留在预设的静谧底光（`data-ambient-Scene="rest"`），避免从首页跳进文字页时出现生硬的黑白断层。如果你想单独观察这套视频取色与环境光折射的行为，可以直接打开 [光的练习 · /lab/motion/](/lab/motion/) 手动播放或暂停那段 4 秒短片。
+对于没有配图的纯文字页面，光场会自动停留在预设的静谧底光（`data-ambient-scene="rest"`），避免从首页跳进文字页时出现生硬的黑白断层。如果你想单独观察这套视频取色与环境光折射的行为，可以直接打开 [光的练习 · /lab/motion/](/lab/motion/) 手动播放或暂停那段 4 秒短片。

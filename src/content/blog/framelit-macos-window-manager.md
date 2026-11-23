@@ -20,7 +20,7 @@ cover: ../../assets/projects/framelit-cover.png
 本文深入拆解 FrameLit 在窗口几何计算、自定义网格映射、异步诊断日志以及知识产权合规边界上的四个工程细节。
 
 <figure class="case-study-figure">
-  <img src="/media/framelit/commands-dark.png" alt="FrameLit 深色模式下的窗口布局指令与自定义网格画布" width="1600" height="1236" loading="lazy" decoding="async" />
+  <img src="/media/framelit/commands-dark.webp" alt="FrameLit 深色模式下的窗口布局指令与自定义网格画布" width="1600" height="1236" loading="lazy" decoding="async" />
   <figcaption>图 1 · FrameLit 深色模式主界面：左侧管理分屏指令与全局快捷键，右侧在 Custom Layout Canvas 上拖拽定义任意网格比例。</figcaption>
 </figure>
 
@@ -53,7 +53,7 @@ Step 3: AXUIElementSetAttributeValue(window, kAXPositionAttribute, clampedOrigin
 - 无论用户后续是在 13 寸 MacBook 内屏还是 34 寸带鱼屏上按下该自定义指令的快捷键，归一化矩形都会实时乘上当前活动显示器的 `visibleFrame`，实现跨屏幕的一键比例复用。
 
 <figure class="case-study-figure">
-  <img src="/media/framelit/prefs-dark.png" alt="FrameLit 偏好设置与排除应用规则面板" width="1600" height="1236" loading="lazy" decoding="async" />
+  <img src="/media/framelit/prefs-dark.webp" alt="FrameLit 偏好设置与排除应用规则面板" width="1600" height="1236" loading="lazy" decoding="async" />
   <figcaption>图 2 · FrameLit 偏好设置面板：管理边缘拖拽触发区、多屏投送策略、排除应用列表与异步诊断日志。</figcaption>
 </figure>
 

@@ -19,6 +19,7 @@ function cleanBodyForRss(body: string) {
 	return body
 		.replace(/^\s*import\s+[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, '')
 		.replace(/<[A-Z][A-Za-z0-9]*\b[\s\S]*?\/>/g, '')
+		.replace(/<\/?[A-Z][A-Za-z0-9]*\b[^>]*>/g, '')
 		.replace(/\n{3,}/g, '\n\n')
 		.trim();
 }

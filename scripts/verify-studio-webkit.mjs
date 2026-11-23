@@ -394,8 +394,11 @@ async function run(){
   await desktop.screenshot({path:'artifacts/studio-chromatic-overview.png',fullPage:false});
   // Media quality: sample real local pixels, not one global background token.
   const mediaCards = desktop.locator('.gallery-card--image');
-  assert.ok(await mediaCards.count() >= 2,'two original product images must remain present');
-  await mediaCards.last().scrollIntoViewIfNeeded();
+  const mediaCardCount = await mediaCards.count();
+  assert.ok(mediaCardCount >= 2,'two original product images must remain present');
+  for (let i = 0; i < mediaCardCount; i++) {
+    await mediaCards.nth(i).scrollIntoViewIfNeeded();
+  }
   const sampledMedia = await mediaCards.evaluateAll(cards => cards.map(card => {
     const stage=card.querySelector('.gallery-card-visual');
     const img=card.querySelector('img');

@@ -20,7 +20,7 @@ cover: ../../assets/projects/route-lens-cover.png
 如果每次都要打开 Chrome DevTools 的 Network 面板，在几十条请求里翻找 `conversation` 的 SSE（Server-Sent Events）事件流并人工肉眼比对 JSON 字段，效率实在太低。为此，我开发并开源了 [**Route Lens (v1.3.1)**](/software/route-lens/)——一款在页面右侧窄栏实时拦截并对照 ChatGPT 请求与响应路由字段的 Chrome Manifest V3 扩展。
 
 <figure class="case-study-figure">
-  <img src="/media/route-lens/rail-system-dark.png" alt="Route Lens v1.3.1 深色模式右侧窄栏界面" width="1280" height="900" loading="lazy" decoding="async" />
+  <img src="/media/route-lens/rail-system-dark.webp" alt="Route Lens v1.3.1 深色模式右侧窄栏界面" width="1280" height="900" loading="lazy" decoding="async" />
   <figcaption>图 1 · Route Lens v1.3.1 深色模式右侧窄栏：通过 Shadow DOM 隔离注入，实时对照请求模型与响应流报告的模型路由字段。</figcaption>
 </figure>
 
@@ -37,7 +37,7 @@ cover: ../../assets/projects/route-lens-cover.png
 3. **会话切换零串台**：当用户在前端切换不同聊天会话或新建对话时，清空旧会话 ID 并重置轮次计数，防止上一场对话的残留路由元数据污染新会话。
 
 <figure class="case-study-figure">
-  <img src="/media/route-lens/rail-default-light.png" alt="Route Lens v1.3.1 浅色模式右侧窄栏界面" width="1280" height="900" loading="lazy" decoding="async" />
+  <img src="/media/route-lens/rail-default-light.webp" alt="Route Lens v1.3.1 浅色模式右侧窄栏界面" width="1280" height="900" loading="lazy" decoding="async" />
   <figcaption>图 2 · 浅色模式下的右侧观测栏：清晰展示请求模型、服务端报告字段一致性及 PoW 时间戳。</figcaption>
 </figure>
 

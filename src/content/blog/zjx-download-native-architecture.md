@@ -20,7 +20,7 @@ cover: ../../assets/projects/zjx-download-cover.png
 在桌面下载器领域，写出一个“能发起 HTTP 请求保存文件”的 Demo 只需要几百行代码；但要让它在**跨会话崩溃恢复、未返回 `Content-Length` 的动态流、浏览器带鉴权交接、以及 IPv4/IPv6 本地端口监听**上都稳定可靠，则需要解决一系列扎实的状态机与系统级问题。本文复盘 `zjx-download` 演进到 `v2.0.4` 的四个核心工程设计。
 
 <figure class="case-study-figure">
-  <img src="/media/zjx-download/main-window.png" alt="zjx-download v2.0.4 macOS 原生主窗口" width="1600" height="1197" loading="lazy" decoding="async" />
+  <img src="/media/zjx-download/main-window.webp" alt="zjx-download v2.0.4 macOS 原生主窗口" width="1600" height="1197" loading="lazy" decoding="async" />
   <figcaption>图 1 · zjx-download v2.0.4 macOS 原生主窗口：集中管理并发分片队列、分类过滤与完成校验。</figcaption>
 </figure>
 
@@ -36,7 +36,7 @@ cover: ../../assets/projects/zjx-download-cover.png
 2. **未完成 `HEAD` 探测或无 `Content-Length` 的单流保护**：某些动态附件接口不响应 `HEAD` 或不返回总字节数，引擎会以单连接（Unprobed Single Connection）流式写入临时文件。过去在恢复中断任务时，`recoverInterruptedTasks` 仅恢复了已提交分片表的任务，却把未完成分片探测的单流临时文件当成垃圾清理掉了。`v2.0.4` 专门为单流临时文件增加了实际落盘字节对账，并在取消任务时才彻底清理检查点（由 `testRecoverInterruptedTasksReconcilesCommittedSegmentsAndUnpersistedSingleConnection` 与 `testCancelRemovesCrossSessionSegmentedCheckpoint` 守护）。
 
 <figure class="case-study-figure">
-  <img src="/media/zjx-download/task-complete.png" alt="zjx-download 任务完成与文件校验界面" width="1600" height="889" loading="lazy" decoding="async" />
+  <img src="/media/zjx-download/task-complete.webp" alt="zjx-download 任务完成与文件校验界面" width="1600" height="889" loading="lazy" decoding="async" />
   <figcaption>图 2 · 下载完成后的原生面板：支持摘要校验、直接打开文件或在 Finder 中定位。</figcaption>
 </figure>
 
