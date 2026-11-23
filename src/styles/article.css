@@ -150,7 +150,7 @@
 .comment-item p { margin: 7px 0 0; font-family: var(--font-sans); font-size: 14px; line-height: 1.75; white-space: pre-wrap; }
 .comment-meta { display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-mono); }
 .comment-meta strong { color: var(--text); font-weight: 650; }
-.comments-list-message { min-height: 78px; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 7px; padding: 18px; border: 1px solid var(--line-subtle); border-radius: 8px; background: var(--surface); }
+.comments-list-message { min-height: 88px; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 7px; padding: 18px; border: 1px solid var(--line-subtle); border-radius: 8px; background: var(--surface); }
 .comments-list-message .comments-empty { margin: 0; text-align: center; }
 .comments-retry { border: 0; background: none; color: var(--accent-contrast); font-size: 11px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .comments-form { display: grid; gap: 13px; padding: 20px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }

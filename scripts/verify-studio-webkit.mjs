@@ -435,7 +435,7 @@ async function run(){
     'media stage must no longer have a coloured third-layer well behind the image');
   await mediaCards.last().screenshot({path:'artifacts/studio-glass-card.png'});
   await desktop.evaluate(()=>window.scrollTo(0,0));
-  await desktop.locator('.gallery-card').first().click();
+  await desktop.locator('.gallery-card[href="/software/usblinkmic/"]').first().click();
   await desktop.waitForURL('**/software/usblinkmic/');
   assert.ok(await desktop.locator('h1').first().isVisible());
   await desktop.waitForFunction(() =>
@@ -605,6 +605,39 @@ async function run(){
   assert.notEqual(darkSurface,'rgb(255, 255, 255)','system dark mode must not show a white canvas');
   await mobile.screenshot({path:'artifacts/studio-home-mobile-dark.png',fullPage:false});
   await mobile.emulateMedia({colorScheme:'light'});
+
+  // Verify mobile /posts/ search input >= 16px (prevents iPhone Safari auto-zoom)
+  // and verify all newly added/updated articles for zero horizontal overflow, mobile TOC, code copy, and dual nav.
+  const runtimeErrors = [];
+  const onPageError = (err) => runtimeErrors.push(String(err));
+  mobile.on('pageerror', onPageError);
+  desktop.on('pageerror', onPageError);
+
+  await mobile.goto(origin+'/posts/',{waitUntil:'networkidle'});
+  await ensureWithinViewport(mobile,'mobile /posts/ index');
+  const postSearchSize = await mobile.locator('#post-search').evaluate(el=>parseFloat(getComputedStyle(el).fontSize));
+  assert.ok(postSearchSize >= 16, 'iPhone /posts/ search input must be >= 16px to prevent focus auto-zoom, got ' + postSearchSize);
+
+  for (const slug of [
+    'single-domain-private-digital-space',
+    'optical-glass-and-ambient-light',
+    'webkit-assertions-over-visual-guessing',
+    'hello-world'
+  ]) {
+    await mobile.goto(`${origin}/posts/${slug}/`, { waitUntil: 'networkidle' });
+    await ensureWithinViewport(mobile, `mobile /posts/${slug}/`);
+    assert.equal(await mobile.locator('.article-mobile-toc').evaluate(el => getComputedStyle(el).display), 'block',
+      `mobile foldable TOC must be visible on /posts/${slug}/`);
+  }
+
+  await desktop.goto(origin+'/posts/single-domain-private-digital-space/',{waitUntil:'networkidle'});
+  await ensureWithinViewport(desktop,'desktop /posts/single-domain-private-digital-space/');
+  assert.ok(await desktop.locator('.code-copy-btn').count() >= 1, 'code blocks must have progressive copy buttons');
+  assert.ok(await desktop.locator('.next-article-card').count() >= 1, 'article must render prev/next navigation');
+  assert.equal(runtimeErrors.length, 0, 'unexpected pageerror during article verification: ' + runtimeErrors.join('; '));
+  mobile.off('pageerror', onPageError);
+  desktop.off('pageerror', onPageError);
+
   const narrowPage = await browser.newPage({viewport:{width:320,height:730},isMobile:true,hasTouch:true});
   await narrowPage.goto(origin+'/',{waitUntil:'networkidle'});
   await ensureWithinViewport(narrowPage,'320px Safari homepage');

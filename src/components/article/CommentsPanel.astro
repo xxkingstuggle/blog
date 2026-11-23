@@ -15,8 +15,10 @@ const { post } = Astro.props;
 		<span class="comments-note">欢迎补充你的工程实践或想法</span>
 	</div>
 
-	<div class="comments-list" data-comments-list aria-live="polite" aria-busy="true">
-		<p class="comments-empty">正在加载留言…</p>
+	<div class="comments-list" data-comments-list aria-live="polite" aria-busy="false">
+		<div class="comments-list-message">
+			<p class="comments-empty">正在加载公开留言…</p>
+		</div>
 	</div>
 
 	<form class="comments-form" method="post" data-comments-form>
