@@ -11,9 +11,31 @@ const { product } = Astro.props;
     <div class="software-hero-top" data-reveal><div class="software-hero-copy"><div class="software-identity-row"><Image src={product.icon} alt="" width={72} height={72} format="webp" densities={[1, 2]} decoding="async"/><div><span class="status-pill" data-tone={product.statusTone}>{product.statusBadge}</span><p class="small-label">{product.platformsLabel}</p></div></div><h1>{product.name}<br/>{product.headline}</h1><p class="software-hero-summary">{product.summary}</p><div class="brand-hero-actions"><a class="btn-primary" href={product.downloads.length ? '#downloads' : `/posts/${product.articleSlug}/`}>{product.downloads.length ? '下载与安装' : '阅读工程案例'} <span aria-hidden="true">↘</span></a>{product.repoVisibility==='public' && <a class="btn-secondary" href={product.repoUrl} target="_blank" rel="noopener noreferrer">公开源码 ↗</a>}</div></div>
     <aside class="acquisition-panel" aria-label="项目状态"><span class="small-label">截至 {product.verifiedAt}</span><h2>目前做到哪一步</h2><p>{product.availabilitySummary}</p><div class="acquisition-notice">{product.availabilityNotice}</div><p class="small-label">{product.contribution}</p></aside></div>
   </div></header>
-  <section class="shell software-section" aria-labelledby="interface-heading"><div class="section-header-bar" data-reveal><div><span class="small-label">界面与来源</span><h2 id="interface-heading">{product.slug==='usblinkmic' ? '连接状态，看得见。' : '从一张卡片开始。'}</h2></div></div><figure><div data-glass-media class:list={['product-gallery',{single:!product.secondaryScreenshot}]} style={'view-transition-name: work-' + product.slug + '; --product-ratio: ' + (product.screenshot.width / product.screenshot.height).toFixed(5)}><Image src={product.screenshot} alt={product.screenshotAlt} widths={[640,960,1600]} sizes="(max-width: 760px) 90vw, 1000px" format="webp" loading="eager" fetchpriority="high" decoding="async"/>{product.secondaryScreenshot && <Image class="gallery-phone" src={product.secondaryScreenshot} alt="USBLinkMic Android 开发版真实界面，连接信息已遮盖" width={400} format="webp" decoding="async"/>}</div><figcaption class="software-visual-caption">{product.screenshotCaption}</figcaption></figure>
+  <section class="shell software-section" aria-labelledby="interface-heading"><div class="section-header-bar" data-reveal><div><span class="small-label">界面与来源</span><h2 id="interface-heading">{product.interfaceHeading ?? (product.slug==='usblinkmic' ? '连接状态，看得见。' : '从一张卡片开始。')}</h2></div></div><figure><div data-glass-media class:list={['product-gallery',{single:!product.secondaryScreenshot}]} style={'view-transition-name: work-' + product.slug + '; --product-ratio: ' + (product.screenshot.width / product.screenshot.height).toFixed(5)}><Image src={product.screenshot} alt={product.screenshotAlt} widths={[640,960,1600]} sizes="(max-width: 760px) 90vw, 1000px" format="webp" loading="eager" fetchpriority="high" decoding="async"/>{product.secondaryScreenshot && <Image class="gallery-phone" src={product.secondaryScreenshot} alt="USBLinkMic Android 开发版真实界面，连接信息已遮盖" width={400} format="webp" decoding="async"/>}</div><figcaption class="software-visual-caption">{product.screenshotCaption}</figcaption></figure>
     <dl class="version-table"><div><dt>最新公开版</dt><dd>{product.latestVersion}</dd></div><div><dt>当前开发状态</dt><dd>{product.developmentVersion}</dd></div><div><dt>本轮安装核对</dt><dd>{product.installedVersion}</dd></div></dl>
   </section>
+
+  {product.gallery && product.gallery.length > 0 && (
+    <section class="shell software-section" aria-labelledby={`${product.slug}-gallery-heading`}>
+      <div class="section-header-bar" data-reveal>
+        <div>
+          <span class="small-label">{product.galleryKicker ?? '真实界面与架构 / SCREENSHOTS'}</span>
+          <h2 id={`${product.slug}-gallery-heading`}>{product.galleryHeading ?? '界面与关键状态细节。'}</h2>
+        </div>
+      </div>
+      {product.galleryNotice && <p class="usblinkmic-capture-notice">{product.galleryNotice}</p>}
+      <div class="usblinkmic-real-gallery">
+        {product.gallery.map((item) => (
+          <figure class:list={['usblinkmic-real-shot', item.narrow && 'usblinkmic-real-shot--menu']}>
+            <a href={item.src} target="_blank" rel="noopener noreferrer" aria-label={`查看 ${item.title} 大图`}>
+              <img src={item.src} width={item.width} height={item.height} loading="lazy" decoding="async" alt={item.alt} />
+            </a>
+            <figcaption><strong>{item.title}</strong> {item.caption}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  )}
 
   {product.slug==='habitbloom' && (
     <section class="shell software-section habitbloom-technical" aria-labelledby="habitbloom-architecture">
@@ -61,6 +83,12 @@ const { product } = Astro.props;
             <img src="/media/usblinkmic/menu.svg" width="676" height="462" loading="lazy" decoding="async" alt="USBLinkMic 菜单栏快捷控制，可启动麦克风、查看 USB 共享状态并打开主窗口" />
           </a>
           <figcaption><strong>03 / 菜单栏快捷入口</strong> 不打开主窗口也能查看连接状态并操作常用功能。</figcaption>
+        </figure>
+        <figure class="usblinkmic-real-shot">
+          <a href="/media/usblinkmic/workspace-devices-dark.png" target="_blank" rel="noopener noreferrer" aria-label="查看深色模式设备工作区截图大图">
+            <img src="/media/usblinkmic/workspace-devices-dark.png" width="1600" height="1029" loading="lazy" decoding="async" alt="USBLinkMic v4.0.17 深色模式设备管理工作区与充电协商状态" />
+          </a>
+          <figcaption><strong>04 / 深色工作区与 USB 充电状态</strong> v4.0.17 新增深色模式设备总览、充电协商与局域网自动重连状态面板。</figcaption>
         </figure>
       </div>
     </section>

@@ -12,25 +12,33 @@ import { SOFTWARE_PRODUCTS } from '../lib/software';
 			<span>ABOUT XIN / 关于我</span>
 		</div>
 		<h1>你好，我是 Xin</h1>
-		<p>我从日常遇到的具体问题出发，借助 AI 参与软件开发，再把各部分集成起来，用构建、测试和实际运行证据检查结果。</p>
+		<p>计算机科学与技术本科，拥有覆盖 100+ 校区的 B2B2C AI 教育平台产品与研发协作经验，长期构建多模型 API 网关、Agent Skills 工作流及 macOS / iOS / Android / Chrome MV3 原生工具。</p>
 	</header>
 
 	<section class="shell about-layout">
 		<div class="article-prose about-prose">
-			<h2>我负责什么</h2>
+			<h2>产品与工程双栈背景</h2>
 			<p>
-				我先判断要解决的问题、写清范围和约束，再把任务拆成可以检查的部分。AI 工具会参与代码实现、资料整理或审查；我负责看改动、处理系统间的集成，并根据项目条件运行构建、测试或设备验证。工具报告“完成”只是线索，能支持到哪一步，就按实际证据写到哪一步。
+				我既在服务 100+ 合作校区、2000+ 学生的 B2B2C AI 教育平台（泡泡 AI 自习室）中负责过需求拆解、Figma 低保真原型、300+ 一线问题 P0/P1/P2 分诊与外包研发验收（<a href="/posts/paopao-ai-edtech-product-practice/">阅读 B2B2C 产品实战复盘</a>），也长期使用 Codex、Claude Code 独立构建并发布跨平台软件、多模型 API 网关插件与 Agent Skills。
 			</p>
 			<p>
-				<a href="/software/usblinkmic/">USBLinkMic</a> 展示的是 Android 与 Mac 之间的音频、网络和系统权限如何接到同一个使用流程里。BlackHole、Gnirehtet 等第三方组件各自保留来源与许可；我不把它们说成自己从零实现。完整的机型与长期稳定性仍有未验证项。
+				这种双栈视角让我在面对复杂问题时，既能先把角色权限、数据字段、异常状态和验收条件拆解清楚，又能直接动手编写 Swift、Kotlin、TypeScript、Go 或 Python 代码，打通接口集成、自动化测试与 GitHub Release 交付闭环。
+			</p>
+
+			<h2>代表软件与工程体系</h2>
+			<p>
+				在跨端与桌面原生工程方向，我开发并开源了 <a href="/software/usblinkmic/">USBLinkMic (v4.0.17)</a>（打通 Android 拾音、局域网自动重连与 USB 双向供网）、<a href="/software/zjx-download/">zjx-download (v2.0.4)</a>（macOS 多线程分片断点续传下载器与 Chrome MV3 Native Messaging 交接）、<a href="/software/habitbloom/">HabitBloom (v1.0.0)</a>（SwiftUI + SwiftData + WidgetKit + Cloudflare 远程快照）、<a href="/software/dim-wallpaper/">DimWallpaper (v1.0.0)</a>（基于 CGWindowLevel 的桌面图层壁纸压暗工具）以及 <a href="/software/framelit/">FrameLit</a>（6×3 至 48×24 坐标网格窗口管理器）。
 			</p>
 			<p>
-				<a href="/posts/habitbloom-habit-tracker/">HabitBloom</a> 则体现另一类取舍：主 App 使用本地数据，Widget 可通过 HTTP 远端快照读取和回并部分状态。它不是实时同步服务，也没有完整的离线冲突处理；项目目前没有公开安装包，源码为私有。
+				在浏览器扩展与前端协议方向，我发布了 <a href="/software/route-lens/">Route Lens (v1.3.1)</a>（在 ChatGPT 右侧 Shadow DOM 窄栏实时拦截并比对请求与 SSE 响应流中的真实模型路由字段，18 项单测守护）和 <a href="/software/tintpane/">Tintpane (v2.4.0)</a>（Chromium PWA 动态主题色注入、域名树继承与双向别名同步引擎）。
+			</p>
+			<p>
+				在 AI Agent 工作流与多模型网关方向，我基于 Go/CGO 扩展了 CLIProxyAPI 的 <a href="/posts/cpa-go-abi-provider-plugins/">WorkBuddy 与 QoderWork Provider 插件</a>，搭建了带隔离验证与自动回滚的多模型网关运维回路（<a href="/posts/multi-model-gateway-agent-ops/">网关架构复盘</a>）；同时开源了 <a href="/software/thought-navigator/">思路导航 V3 (v3.0.1)</a>（25 个思考模型按需路由插件）、<a href="/posts/local-governance-agent-workspace/">Local Governance Skill (v1.0.0)</a> 与 <a href="/posts/chatgpt-supervisor-state-machine/">ChatGPT Supervisor 状态机 (v0.1.0)</a>。
 			</p>
 
 			<h2>我怎样与 AI 协作</h2>
 			<p>
-				我会先定义任务边界和验收依据，再让 AI 工具协助实现或独立检查。之后我核对实际差异和项目输出；遇到平台 API、权限或设备行为时，仍以编译器、测试和真实运行结果为准。<a href="/posts/lightweight-multi-agent-coding-loop/">这篇多 Agent 工程记录</a>保留了当时的协作方式与限制，它是一份有日期的实践记录，不代表今天每个工具入口都没变化。
+				我会先定义任务边界和验收依据，再让 AI 工具协助实现或独立检查。之后我核对实际差异和项目输出；遇到平台 API、权限或设备行为时，仍以编译器、测试和真实运行结果为准。<a href="/posts/lightweight-multi-agent-coding-loop/">这篇多 Agent 工程记录</a>与<a href="/posts/local-governance-agent-workspace/">本机工作区治理规范</a>记录了用不变式、三层状态账本和自动化门禁驱动交付的工程方法。
 			</p>
 			<p>
 				公开案例会尽量标明哪些判断和集成由我负责、哪些部分有 AI 或第三方组件参与，以及证据覆盖了什么环境。源码或安装包不能公开时，也会直接说明，不给访客指向私有仓库。

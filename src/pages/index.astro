@@ -5,15 +5,14 @@ import { getListedPosts, formatDate, getReadingTime, KIND_LABELS } from '../lib/
 import { SOFTWARE_PRODUCTS, WORKBENCH_PROJECTS } from '../lib/software';
 import { siteConfig } from '../config';
 const listedPosts = await getListedPosts();
-const pinnedPost = listedPosts.find((post) => post.data.featured);
-const posts = listedPosts.filter((post) => post.id !== pinnedPost?.id).slice(0, pinnedPost ? 6 : 7);
+const posts = listedPosts.slice(0, 10);
 const usb = SOFTWARE_PRODUCTS[0];
-const habit = SOFTWARE_PRODUCTS[1];
-const workbench = WORKBENCH_PROJECTS.slice(0, 3);
-const total = posts.length + (pinnedPost ? 1 : 0) + 3 + workbench.length;
+const extraProducts = SOFTWARE_PRODUCTS.slice(1);
+const workbench = WORKBENCH_PROJECTS.slice(0, 4);
+const total = SOFTWARE_PRODUCTS.length + 1 + posts.length + workbench.length;
 // Keep a real product screenshot only once on the homepage. Articles that
 // reuse the same image receive a typographic cover instead of a duplicate.
-const usedImages = new Set<string>([usb.screenshot.src, habit.screenshot.src]);
+const usedImages = new Set<string>(SOFTWARE_PRODUCTS.map((p) => p.screenshot.src));
 function previewForPost(post: (typeof posts)[number]) {
   const cover = post.data.cover;
   if (!cover || usedImages.has(cover.src)) return undefined;
@@ -28,7 +27,7 @@ function previewForPost(post: (typeof posts)[number]) {
       <span class="gallery-status-light">独立创作中</span>
     </div>
     <h1>Xin 的作品与手记</h1>
-    <p class="gallery-hero-description">浏览我做的软件、开发过程中遇到的问题，以及个人思考和实验记录。每个项目都保留真实状态、设计取舍与详细内容。</p>
+    <p class="gallery-hero-description">围绕 AI Agent 工作流、多模型 API 网关、macOS / iOS / Android 原生跨端工具与 B2B2C 产品实践。每个项目均保留架构取舍、真实截图、测试证据与开源发布记录。</p>
     <div class="gallery-hero-bottom">
       <div class="gallery-hero-links">
         <a href="#explore">开始探索 <span aria-hidden="true">↘</span></a>
@@ -52,19 +51,9 @@ function previewForPost(post: (typeof posts)[number]) {
     </div>
     <p class="gallery-index-count" id="gallery-live-count" role="status" aria-live="polite">正在展示 {total} 项内容</p>
     <div class="gallery-grid" id="home-gallery">
-      {pinnedPost && (
-        <div class="gallery-item" data-gallery-kind="writing" data-reveal>
-          <GalleryCard href={'/posts/' + pinnedPost.id + '/'} title={pinnedPost.data.title}
-            description={pinnedPost.data.description} category={KIND_LABELS[pinnedPost.data.kind]}
-            meta={formatDate(pinnedPost.data.pubDate) + ' · ' + getReadingTime(pinnedPost.body)}
-            tone={pinnedPost.data.kind === 'thought' ? 'thinking' : pinnedPost.data.kind}
-            image={previewForPost(pinnedPost)} video={pinnedPost.data.video} videoPoster={pinnedPost.data.videoPoster}
-            index={0} transitionKey={'article-' + pinnedPost.id} />
-        </div>
-      )}
       <div class="gallery-item" data-gallery-kind="work" data-reveal>
         <GalleryCard href="/software/usblinkmic/" title="USBLinkMic"
-          description="把 Android 手机的麦克风连接到 Mac。真实产品，公开版本与技术限制都写清楚。"
+          description={usb.tagline + '。' + usb.availabilitySummary}
           category="软件 / macOS + Android" meta={usb.statusBadge}
           image={usb.screenshot} tone="tool" index={0} transitionKey="work-usblinkmic" />
       </div>
@@ -84,26 +73,28 @@ function previewForPost(post: (typeof posts)[number]) {
             image={previewForPost(post)} video={post.data.video} videoPoster={post.data.videoPoster} index={index + 2} transitionKey={'article-' + post.id} />
         </div>
       ))}
-      <div class="gallery-item" data-gallery-kind="work" data-reveal>
-        <GalleryCard href="/software/habitbloom/" title="HabitBloom"
-          description="从一张愿意每天打开的习惯卡片开始，探索 Widget 和本地交互的真实边界。"
-          category={'软件 / ' + habit.platformsLabel} meta={habit.statusBadge}
-          image={habit.screenshot} tone="tool" index={4} transitionKey="work-habitbloom" />
-      </div>
+      {extraProducts.map((product, index) => (
+        <div class="gallery-item" data-gallery-kind="work" data-reveal>
+          <GalleryCard href={`/software/${product.slug}/`} title={product.name}
+            description={product.tagline + '。' + product.availabilitySummary}
+            category={'软件 / ' + product.platformsLabel} meta={product.statusBadge}
+            image={product.screenshot} tone="tool" index={index + 4} transitionKey={'work-' + product.slug} />
+        </div>
+      ))}
       {posts.slice(2).map((post, index) => (
         <div class="gallery-item" data-gallery-kind="writing" data-reveal>
           <GalleryCard href={'/posts/' + post.id + '/'} title={post.data.title}
             description={post.data.description} category={KIND_LABELS[post.data.kind]}
             meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
             image={previewForPost(post)} video={post.data.video} videoPoster={post.data.videoPoster} tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
-            index={index + 5} transitionKey={'article-' + post.id} />
+            index={index + 4 + extraProducts.length} transitionKey={'article-' + post.id} />
         </div>
       ))}
       {workbench.map((project, index) => (
         <div class="gallery-item" data-gallery-kind="work" data-reveal>
           <GalleryCard href={project.href} title={project.name} description={project.summary}
             category="工作台 / 项目实践" meta={project.status} tone="tool"
-            index={index + 5 + posts.length} />
+            index={index + 4 + extraProducts.length + posts.length} />
         </div>
       ))}
     </div>

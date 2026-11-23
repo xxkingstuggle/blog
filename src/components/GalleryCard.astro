@@ -59,7 +59,7 @@ const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : met
           width={image.width}
           height={image.height}
           class="gallery-card-image"
-          loading={index < 3 ? 'eager' : 'lazy'}
+          loading={index < 32 ? 'eager' : 'lazy'}
           fetchpriority={index === 0 ? 'high' : undefined}
           decoding="async"
         />
@@ -71,7 +71,7 @@ const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : met
           sizes="(max-width: 720px) calc(100vw - 46px), (max-width: 1300px) 40vw, 30vw"
           format="webp"
           class="gallery-card-image"
-          loading={index < 3 ? 'eager' : 'lazy'}
+          loading={index < 32 ? 'eager' : 'lazy'}
           fetchpriority={index === 0 ? 'high' : undefined}
           decoding="async"
         />
