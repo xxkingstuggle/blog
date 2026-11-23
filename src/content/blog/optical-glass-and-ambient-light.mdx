@@ -1,0 +1,63 @@
+---
+title: "把光放回网页里：24 KiB 视频预算、小画布取色与不追鼠标的环境光"
+pubDate: 2026-11-16
+description: "不引入 WebGL 与重型动画库，用 36×36 离屏画布与 <=0.7Hz 的 24×14 视频采样驱动双层视口光场，把半透明侧栏、作品卡片与 24 KiB 动态媒介放进同一套性能预算。"
+kicker: "VISUAL ENGINEERING · CHROMATIC ATMOSPHERE"
+draft: false
+listed: true
+kind: project
+presentation: feature
+tags:
+  - 前端工程
+  - 视觉设计
+  - 性能优化
+  - WebKit
+  - CSS
+---
+
+import PullQuote from '../../components/article/PullQuote.astro';
+
+很多网站做「磨砂玻璃」的时候，只是给导航栏加一行 `backdrop-filter: blur(20px)`，底下垫的却是一整块死白或死黑的背景。玻璃后方没有光，磨砂看起来就只是一块发灰的塑料片。
+
+我在调整本站的视觉层（`Chromatic Atmosphere v4`）时，想做成另一件事：当页面上是深色终端截图、暖色架构图，或者一段流动的蓝紫色短片时，作品本身的颜色应该像真实光源一样，散射到卡片周围和左侧的半透明导航栏背后。
+
+但这份「光学感」如果靠全屏 WebGL 着色器、几兆大小的自动播放视频，或者跟着鼠标满屏乱飞的聚光灯来实现，页面很快就会变得沉重又刺眼。最终落地的方案，是一套严格受预算约束的本地小画布取色与双层 CSS 光场。
+
+## 第一条约束：4 秒动态媒介不能超过 24 KiB
+
+首页作品网格和 [光的练习（/lab/motion/）](/lab/motion/) 里有一段 4 秒循环播放的无声动态演示 `/media/motion-study.mp4`。它存在的目的，是验证动态画面能否成为网页周围玻璃结构的实时光源。
+
+为了让这段视频不拖累首屏，构建门禁 `scripts/verify-media-budget.mjs` 直接用字节数卡死了三条硬指标：
+
+- 视频本体 `motion-study.mp4` 必须控制在 **`24 KiB` 以内**，矢量封面 `motion-study-poster.svg` 控制在 **`12 KiB` 以内**；
+- 首页 `<video>` 标签在 HTML 构建产物里**不允许直接写 `src`**，只能写 `data-src="/media/motion-study.mp4"` 且 `preload="none"`；
+- 全站生成的 JS 总量不得超过预算阈值，且严禁引入第三方视频 iframe。
+
+在运行时，`src/scripts/gallery-video.ts` 通过 `IntersectionObserver` 监听卡片：只有当视频卡片进入视口可见比例达到 `45%` 以上，且当前设备未开启 `prefers-reduced-motion: reduce`、未处于省流模式（`Save-Data` / `2g`）或低内存环境时，脚本才会把 `data-src` 赋给 `src` 并启动播放。一旦滑出视口或切换后台标签页，立即暂停。
+
+## 36×36 离屏画布与 `<= 0.7Hz` 视频采样
+
+画面有了，颜色怎么传给周围的玻璃和背景？如果每张图片都手动在代码里配一套 RGB 变量，后续写新文章很快就会偷懒；如果在滚动或播放时逐帧读取原图像素，主线程又会被 `getImageData` 拖垮。
+
+仓库里的做法是把取色拆成两条极轻量的本地路径：
+
+1. **静态图片复用单个 `36×36` 离屏 `<canvas>`（`src/scripts/glass-palette.ts`）**：图片在浏览器完成 `image.decode()` 后，被缩绘到唯一的 `36×36` 画布上。脚本剔除接近纯白（`light > 234`）、纯黑（`light < 34`）或低饱和度（`chroma < 18`）的界面底色，把真正有色彩倾向的像素按色相分进 12 个色相桶（每桶 30°），选出权重最高的主色，以及色相距离至少 `60°` 的次色（若画面只有单一色相，则自动生成柔和的同系亮色）。即使是一张近似黑白的暗色终端截图，也会走中性色兜底算法，不会因为找不到高饱和像素而报错或退化成死灰。
+2. **动态视频使用 `24×14` 画布且限频 `1400ms`（`<= 0.7Hz`）**：在 `src/scripts/gallery-video.ts` 中，正在播放的视频每隔至少 `1.4 秒` 才采样一次 `24×14` 像素，写出 `--glass-primary-rgb` 与 `--glass-secondary-rgb` 后派发 `glass-palette-ready` 事件。
+
+全部像素计算都在浏览器本地内存里完成，单次读取不超过 1300 个像素点，没有任何外部取色请求。
+
+<PullQuote author="Chromatic Atmosphere v4 设计取舍">
+指针反馈只属于你正在触碰的那一张卡片；而整座页面的环境光，只跟随阅读时的滚动位置与键盘焦点。
+</PullQuote>
+
+## 为什么整页环境光不追着鼠标跑
+
+很多炫技型网页喜欢做一个跟着鼠标满屏移动的大光斑。实际看久了就会发现：当你在读文字或者移动鼠标找链接时，整个网页背景跟着晃动，只会让人眼疲劳。
+
+因此在 `src/scripts/ambient-stage.ts` 与 `src/scripts/cloth-pressure.ts` 里，我把「局部触感」和「全局环境光」彻底拆开了：
+
+- **指针只驱动单卡局部的浅层反光**：鼠标在某张卡片内移动时，只更新该卡片自身的局部 CSS 变量（如 `--pressure-x`、`--pressure-y` 与轻微的反向倾角），离开卡片后立即回弹归零，绝不在卡片外部留下跟着鼠标跑的投影。
+- **全局光场只响应滚动与键盘焦点**：页面底层固定铺设两层全宽视口层 `[data-ambient-layer]`。当读者滚动页面或用 `Tab` 键切换焦点时，`ambient-stage.ts` 找到当前视口中心最接近的作品卡片，提取它的主次色，写入未激活的那一层光场，再通过 CSS `opacity` 完成交叉淡变（Crossfade）。
+- **光场延伸到磨砂侧栏背后**：桌面端左侧导航栏（`.studio-side-rail`）保持真实的 `rgba(...)` 半透明与 `backdrop-filter`，而底层 `[data-ambient-stage]` 的左边缘与视口 `0px` 对齐。于是当右侧滑过不同配色的作品时，左侧导航栏的磨砂玻璃也会自然透出同一色系的微光。
+
+对于没有配图的纯文字页面，光场会自动停留在预设的静谧底光（`data-ambient-Scene="rest"`），避免从首页跳进文字页时出现生硬的黑白断层。如果你想单独观察这套视频取色与环境光折射的行为，可以直接打开 [光的练习 · /lab/motion/](/lab/motion/) 手动播放或暂停那段 4 秒短片。

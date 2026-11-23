@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="myzjx.com 单域名双空间架构与权限边界示意：Vercel 托管公开静态页与无数据静态壳，Cloudflare Worker 拦截 /admin 与 /api 执行鉴权、CSRF 校验与 D1 CAS 读写" viewBox="0 0 1200 675" width="1200" height="675">
+  <rect width="1200" height="675" rx="28" fill="#F7F2E8"/>
+  <path d="M960 0h240v170Q1050 175 960 0Z" fill="#D5DEC8"/>
+  <path d="M0 555c95 0 165 52 225 120H0Z" fill="#24485A"/>
+
+  <text x="68" y="78" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="34" fill="#1D3D4F" font-weight="700">myzjx.com · 单域名双空间与权限隔离边界</text>
+  <text x="68" y="114" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="19" fill="#5D6860" font-weight="450">结构示意：静态壳公开可抓、绝不内嵌私人数据；所有写操作经 Worker 鉴权与 CAS 版本校验后落入 D1</text>
+
+  <!-- Top Entry Bar -->
+  <rect x="68" y="146" width="1064" height="72" rx="16" fill="#20445D"/>
+  <text x="100" y="190" font-family="SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="22" fill="#FFFFFF" font-weight="700">https://myzjx.com</text>
+  <text x="370" y="190" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="19" fill="#D4E4EE" font-weight="500">统一同源入口（Vercel 边缘接入 + vercel.json 路径重写转发）</text>
+
+  <!-- Left Column: Public & Static Shell (Vercel) -->
+  <rect x="68" y="246" width="488" height="274" rx="20" fill="#FFFFFF" stroke="#D8D0C1" stroke-width="2"/>
+  <rect x="92" y="270" width="176" height="32" rx="8" fill="#E8EFE2"/>
+  <text x="106" y="292" font-family="SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15" fill="#2A5235" font-weight="700">PUBLIC / STATIC</text>
+  <text x="92" y="334" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="24" fill="#1D3D4F" font-weight="700">01 · Astro 静态构建层（Vercel）</text>
+  <text x="92" y="370" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="18" fill="#3F4C54">• 公开路由：/ 、/software/* 、/posts/* 、/lab/motion/</text>
+  <text x="92" y="404" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="18" fill="#3F4C54">• 后台静态壳：/admin-shell/*（仅 HTML/CSS/JS 空壳）</text>
+  <rect x="92" y="428" width="440" height="68" rx="12" fill="#FBF4E9" stroke="#E5C89B" stroke-width="1.5"/>
+  <text x="110" y="456" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#7D4E1D" font-weight="650">安全红线：/admin-shell/* 静态产物默认视为公开可抓</text>
+  <text x="110" y="480" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="15" fill="#8C5D2B">严禁在 Astro 前端构建期硬编码任何草稿、密钥或私人便笺数据</text>
+
+  <!-- Right Column: Worker Auth Gate & D1 / GitHub -->
+  <rect x="584" y="246" width="548" height="274" rx="20" fill="#254B62"/>
+  <rect x="610" y="270" width="224" height="32" rx="8" fill="#F0BD65"/>
+  <text x="624" y="292" font-family="SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15" fill="#183647" font-weight="700">AUTHENTICATED / WORKER</text>
+  <text x="610" y="334" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="24" fill="#FFFFFF" font-weight="700">02 · Cloudflare Worker 鉴权与状态层</text>
+  <text x="610" y="368" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="17.5" fill="#E3EEF5">• 拦截 /auth/* 、/admin/* 、/api/admin/* ，校验通过才回源静态壳</text>
+  <text x="610" y="398" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="17.5" fill="#E3EEF5">• 门禁：GitHub OAuth 白名单 + HttpOnly Cookie + Origin + CSRF</text>
+
+  <!-- Two Data Boxes inside Worker Column -->
+  <rect x="610" y="420" width="240" height="78" rx="12" fill="#1A384A" stroke="#4D7891" stroke-width="1.5"/>
+  <text x="626" y="447" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16.5" fill="#F0BD65" font-weight="700">D1 版本化文档 (≤128 KiB)</text>
+  <text x="626" y="471" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="14.5" fill="#C9DCE8">expectedRevision CAS 防覆盖</text>
+  <text x="626" y="490" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="14.5" fill="#C9DCE8">409 冲突拦截 + 不可变历史表</text>
+
+  <rect x="866" y="420" width="240" height="78" rx="12" fill="#1A384A" stroke="#4D7891" stroke-width="1.5"/>
+  <text x="882" y="447" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16.5" fill="#A9D6B5" font-weight="700">GitHub 仓库联动</text>
+  <text x="882" y="471" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="14.5" fill="#C9DCE8">公开站文章发布 (blog)</text>
+  <text x="882" y="490" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="14.5" fill="#C9DCE8">私有迭代系统 (MD 真相源)</text>
+
+  <!-- Bottom Boundary Summary Bar -->
+  <rect x="68" y="544" width="1064" height="90" rx="18" fill="#EDE3D2"/>
+  <text x="98" y="580" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="20" fill="#1D3D4F" font-weight="700">明确不做的事：不运行未经审查的同源上传 HTML · 不塞入大体积二进制附件 · 不把 D1 历史等同于异地冷备</text>
+  <text x="98" y="612" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="17" fill="#5D564E">新私人应用通过 GitHub 分支审查发布；离线草稿在浏览器本地暂存，待网络恢复后携带版本号与云端核对</text>
+</svg>
