@@ -33,7 +33,6 @@ export async function GET() {
 		{ path: '/archive/', lastmod: latestPostDate },
 		{ path: '/tags/', lastmod: latestPostDate },
 		{ path: '/links/', lastmod: latestPostDate },
-		{ path: '/lab/motion/', lastmod: latestPostDate },
 		...SOFTWARE_PRODUCTS.map((product) => ({
 			path: `/software/${product.slug}/`,
 			lastmod: extractIsoDate(product.verifiedAt || product.releaseDate, latestPostDate),

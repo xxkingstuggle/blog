@@ -5,35 +5,26 @@ import { getListedPosts, formatDate, getReadingTime, KIND_LABELS } from '../lib/
 import { SOFTWARE_PRODUCTS, WORKBENCH_PROJECTS } from '../lib/software';
 import { siteConfig } from '../config';
 const listedPosts = await getListedPosts();
-const posts = listedPosts.slice(0, 10);
+const posts = listedPosts.slice(0, 12);
 const usb = SOFTWARE_PRODUCTS[0];
-const extraProducts = SOFTWARE_PRODUCTS.slice(1);
 const workbench = WORKBENCH_PROJECTS.slice(0, 4);
-const total = SOFTWARE_PRODUCTS.length + 1 + posts.length + workbench.length;
-// Keep a real product screenshot only once on the homepage. Articles that
-// reuse the same image receive a typographic cover instead of a duplicate.
-const usedImages = new Set<string>(SOFTWARE_PRODUCTS.map((p) => p.screenshot.src));
-function previewForPost(post: (typeof posts)[number]) {
-  const cover = post.data.cover;
-  if (!cover || usedImages.has(cover.src)) return undefined;
-  usedImages.add(cover.src);
-  return cover;
-}
+const total = SOFTWARE_PRODUCTS.length + posts.length + workbench.length;
 ---
-<BaseLayout title="Xin 的作品与手记" description={siteConfig.description} image={usb.screenshot}>
+<BaseLayout title="张家鑫（Xin）的作品集与工程手记" description={siteConfig.description} image={usb.screenshot}>
   <header class="shell gallery-hero" data-reveal>
     <div class="gallery-hero-topline">
-      <span>MYZJX / A PERSONAL DESIGN & ENGINEERING STUDIO</span>
-      <span class="gallery-status-light">独立创作中</span>
+      <span>MYZJX.COM · 张家鑫（XIN）</span>
+      <span class="gallery-status-light">AI 应用工程 · 产品与全栈开发</span>
     </div>
-    <h1>Xin 的作品与手记</h1>
-    <p class="gallery-hero-description">围绕 AI Agent 工作流、多模型 API 网关、macOS / iOS / Android 原生跨端工具与 B2B2C 产品实践。每个项目均保留架构取舍、真实截图、测试证据与开源发布记录。</p>
+    <h1>把真实问题，做成能用的软件。</h1>
+    <p class="gallery-hero-description">专注 AI Agent 工具链、多模型网关治理与 macOS / iOS / Android 原生应用开发。这里收录已开源发布的 {SOFTWARE_PRODUCTS.length} 款代表软件、真实运行截图与 {listedPosts.length} 篇技术及产品复盘。</p>
     <div class="gallery-hero-bottom">
       <div class="gallery-hero-links">
-        <a href="#explore">开始探索 <span aria-hidden="true">↘</span></a>
-        <a href="/about/">关于我 <span aria-hidden="true">↗</span></a>
+        <a href="/software/">软件作品 ({SOFTWARE_PRODUCTS.length}) <span aria-hidden="true">↘</span></a>
+        <a href="/posts/">技术与产品复盘 ({listedPosts.length}) <span aria-hidden="true">↘</span></a>
+        <a href="/about/">关于与简历 <span aria-hidden="true">↗</span></a>
       </div>
-      <span class="gallery-status-light">{total} 项公开记录 / 持续更新</span>
+      <span class="gallery-status-light">{SOFTWARE_PRODUCTS.length} 款开源软件 · {listedPosts.length} 篇实战文章</span>
     </div>
     <div class="gallery-index-rule"></div>
   </header>
@@ -41,76 +32,54 @@ function previewForPost(post: (typeof posts)[number]) {
   <section class="shell gallery-section" id="explore" aria-labelledby="explore-title">
     <div class="gallery-section-heading">
       <div>
-        <h2 id="explore-title">作品与手记</h2>
+        <h2 id="explore-title">代表软件与实战文章</h2>
       </div>
       <div class="gallery-view-tabs" role="group" aria-label="筛选公开内容">
         <button type="button" data-gallery-filter="all" aria-pressed="true">全部</button>
-        <button type="button" data-gallery-filter="work" aria-pressed="false">软件与工具</button>
-        <button type="button" data-gallery-filter="writing" aria-pressed="false">文章与手记</button>
+        <button type="button" data-gallery-filter="work" aria-pressed="false">软件作品</button>
+        <button type="button" data-gallery-filter="writing" aria-pressed="false">技术与产品文章</button>
       </div>
     </div>
     <p class="gallery-index-count" id="gallery-live-count" role="status" aria-live="polite">正在展示 {total} 项内容</p>
     <div class="gallery-grid" id="home-gallery">
-      <div class="gallery-item" data-gallery-kind="work" data-reveal>
-        <GalleryCard href="/software/usblinkmic/" title="USBLinkMic"
-          description={usb.tagline + '。' + usb.availabilitySummary}
-          category="软件 / macOS + Android" meta={usb.statusBadge}
-          image={usb.screenshot} tone="tool" index={0} transitionKey="work-usblinkmic" />
-      </div>
-      <div class="gallery-item" data-gallery-kind="work" data-reveal>
-        <GalleryCard href="/lab/motion/" title="光的练习 / Motion Study"
-          description="一段原创的 4 秒循环视频：观察画面颜色如何穿过不同的玻璃层，并影响周围空间。"
-          category="实验室 / 动态媒介" meta="4 秒 · 无声音 · 本地视频"
-          video="/media/motion-study.mp4" videoPoster="/media/motion-study-poster.svg"
-          tone="tool" index={1} transitionKey="studio-motion-test" />
-      </div>
-      {posts.slice(0, 2).map((post, index) => (
-        <div class="gallery-item" data-gallery-kind="writing" data-reveal>
-          <GalleryCard href={'/posts/' + post.id + '/'} title={post.data.title}
-            description={post.data.description} category={KIND_LABELS[post.data.kind]}
-            meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
-            tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
-            image={previewForPost(post)} video={post.data.video} videoPoster={post.data.videoPoster} index={index + 2} transitionKey={'article-' + post.id} />
-        </div>
-      ))}
-      {extraProducts.map((product, index) => (
+      {SOFTWARE_PRODUCTS.map((product, index) => (
         <div class="gallery-item" data-gallery-kind="work" data-reveal>
           <GalleryCard href={`/software/${product.slug}/`} title={product.name}
             description={product.tagline + '。' + product.availabilitySummary}
             category={'软件 / ' + product.platformsLabel} meta={product.statusBadge}
-            image={product.screenshot} tone="tool" index={index + 4} transitionKey={'work-' + product.slug} />
+            image={product.screenshot} tone="tool" index={index} transitionKey={'work-' + product.slug} />
         </div>
       ))}
-      {posts.slice(2).map((post, index) => (
+      {posts.map((post, index) => (
         <div class="gallery-item" data-gallery-kind="writing" data-reveal>
           <GalleryCard href={'/posts/' + post.id + '/'} title={post.data.title}
             description={post.data.description} category={KIND_LABELS[post.data.kind]}
             meta={formatDate(post.data.pubDate) + ' · ' + getReadingTime(post.body)}
-            image={previewForPost(post)} video={post.data.video} videoPoster={post.data.videoPoster} tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
-            index={index + 4 + extraProducts.length} transitionKey={'article-' + post.id} />
+            image={post.data.cover} video={post.data.video} videoPoster={post.data.videoPoster} tone={post.data.kind === 'thought' ? 'thinking' : post.data.kind}
+            index={index + SOFTWARE_PRODUCTS.length} transitionKey={'article-' + post.id} />
         </div>
       ))}
       {workbench.map((project, index) => (
         <div class="gallery-item" data-gallery-kind="work" data-reveal>
           <GalleryCard href={project.href} title={project.name} description={project.summary}
             category="工作台 / 项目实践" meta={project.status} tone="tool"
-            index={index + 4 + extraProducts.length + posts.length} />
+            index={index + SOFTWARE_PRODUCTS.length + posts.length} />
         </div>
       ))}
     </div>
     <div class="gallery-more-links">
-      <a href="/software/">全部软件作品 <span aria-hidden="true">↗</span></a>
-      <a href="/posts/">全部文章与手记 <span aria-hidden="true">↗</span></a>
+      <a href="/software/">查看全部 {SOFTWARE_PRODUCTS.length} 款软件作品 <span aria-hidden="true">↗</span></a>
+      <a href="/posts/">阅读全部 {listedPosts.length} 篇实战文章 <span aria-hidden="true">↗</span></a>
     </div>
   </section>
 
   <section class="shell gallery-outro" aria-labelledby="outro-title">
-    <span class="gallery-outro-index">A NOTE FROM THE MAKER / XIN</span>
+    <span class="gallery-outro-index">OPEN SOURCE &amp; CONTACT</span>
     <div>
-      <h2 id="outro-title">好用，比看起来厉害更重要。</h2>
-      <p>设计、开发、反复核对。这些作品未必完美，但每一个都尽量交代清楚：它解决什么问题，已经做到哪一步，还有哪些限制。</p>
+      <h2 id="outro-title">源码、安装包与复盘记录全部公开可查。</h2>
+      <p>所有项目均在 GitHub 提供 Release 构建产物、SHA-256 校验或完整源码工程。欢迎进一步交流 AI 应用工程与产品实践。</p>
     </div>
-    <a href="/about/#contact">交流一个想法 <span aria-hidden="true">↗</span></a>
+    <a href="/about/#contact">联系方式与简历 <span aria-hidden="true">↗</span></a>
   </section>
 </BaseLayout>
 

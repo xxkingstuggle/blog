@@ -1,8 +1,8 @@
 ---
-title: 基于 Go/C ABI 扩展多模型网关：WorkBuddy 与 QoderWork Provider 插件开发
+title: 用 Go c-shared 动态库给 CLIProxyAPI 写渠道插件（WorkBuddy / QoderWork）
 pubDate: 2026-11-22
 updatedDate: 2026-11-23
-description: 深入解析 cpa-plugin 开源仓库：如何基于 Go c-shared 与 C ABI 为 CLIProxyAPI 编写 WorkBuddy (CodeBuddy CN) 与 QoderWork 动态插件，处理 OAuth/PAT 鉴权、动态模型发现与跨平台构建。
+description: 为避免每次上游网关升级都产生代码冲突，我用 Go c-shared 与 C ABI 把 WorkBuddy 和 QoderWork 两个私有渠道抽成了独立加载的动态库插件。
 kicker: GO · CGO · API GATEWAY PLUGIN
 kind: project
 presentation: article
@@ -14,52 +14,36 @@ tags:
   - CLIProxyAPI
 ---
 
-在维护本地多模型 API 网关时，一个核心架构矛盾是：**上游网关（如 CLIProxyAPI）需要保持通用与轻量，而不同厂商的私有 AI 助手渠道（如腾讯 WorkBuddy / CodeBuddy CN、阿里 QoderWork CN）却有着各自独特的鉴权握手、会话轮询与流式响应结构。**
+我在本地用 `CLIProxyAPI` 做多模型网关时，想把腾讯的 **WorkBuddy (CodeBuddy CN)** 和阿里的 **QoderWork** 也接进来，统一暴露成标准 OpenAI / Anthropic 接口给本地工具调。
 
-如果把这些私有渠道的适配代码直接硬编码进网关主仓库，每次上游网关升级都会引发大面积 Git 合并冲突。为此，我开发并开源了 [**cpa-plugin**](https://github.com/xxkingstuggle/cpa-plugin)，利用 **Go `c-shared` 动态库与 C ABI 契约**，将 **WorkBuddy** 与 **QoderWork** 封装为可独立编译、热插拔加载的网关 Provider 插件。
+最初的办法是直接 fork 上游网关，在主仓库里硬改。但这种做法维护起来很痛苦：这两个渠道有自己私有的 OAuth 登录流、心跳续期和 SSE 响应格式，代码量不小；每次上游 `CLIProxyAPI` 发新版本，我合并代码都要解一堆冲突。
 
-## 一、为什么选择 Go/C ABI 动态库架构
+后来我干脆把这两个渠道剥离出来，建了独立的 [**cpa-plugin**](https://github.com/xxkingstuggle/cpa-plugin) 仓库，编译成 `.so` / `.dylib` 动态库挂载到网关上。
 
-Go 语言标准库的 `plugin` 包对主程序与插件的 Go 编译器版本、依赖树版本甚至构建路径都有极其苛刻的一致性要求，在实际跨环境分发中极易触发 `plugin was built with a different version of package` 报错。
+## 为什么不用 Go 原生 `plugin`，而走 C ABI？
 
-相比之下，通过 `go build -buildmode=c-shared` 导出标准 **C ABI 函数签名**（以 UTF-8 JSON 字符串或字节缓冲区作为跨边界数据交换格式），具备三个显著优势：
+Go 标准库自带了一个 `plugin` 包，但实际用过就知道它的限制极死：主程序和插件必须用完全相同的 Go 小版本编译，连 `go.mod` 里的公共依赖版本甚至 `GOPATH` 路径有一点不一致，加载时就会直接报 `plugin was built with a different version of package`。
 
-1. **二进制级解耦**：只要遵守 C ABI 导出的初始化、鉴权、模型枚举与请求转发函数契约，插件与宿主网关可以独立升级依赖，互不锁死。
-2. **跨平台构建一致性**：配合 GitHub Actions 与容器化交叉编译工具链，可以一次性产出 `darwin-arm64`、`darwin-amd64`、`linux-amd64`、`linux-arm64` 等多平台动态库。
-3. **内存边界清晰**：跨 CGO 边界的指针生命周期由显式导出的释放函数管理，避免 Go GC 与宿主内存管理发生悬垂指针冲突。
+为了不跟上游网关的编译环境绑死，我改用了 `go build -buildmode=c-shared`，通过 **C ABI** 暴露一套固定的 C 函数导出表：
 
-## 二、WorkBuddy 与 QoderWork 插件的三大核心机制
+- 宿主和插件之间只传 UTF-8 JSON 字符串指针和长度，不传任何 Go 内部结构体；
+- 插件内部分配的返回字符串，由插件显式导出的 `FreeString` 函数负责释放，避免跨 CGO 边界的内存泄漏；
+- 只要这套 C 函数签名不变，上游网关怎么升 Go 版本、怎么改内部依赖，我编译好的插件动态库都能直接加载。
 
-在 [`cpa-plugin`](https://github.com/xxkingstuggle/cpa-plugin) 仓库中，`workbuddy/` 与 `qoderwork/` 两个插件模块分别解决了第三方渠道接入中最棘手的三类工程问题：
+## 插件里具体解决了哪三件事
 
-### 1. OAuth 设备流 / 授权码与 PAT 双模鉴权生命周期
+在 `workbuddy/` 和 `qoderwork/` 两个模块里，主要处理了三块脏活：
 
-不同渠道的凭据形态差异很大：
+**1. 登录态续期与并发锁**
+这两个渠道都用 OAuth 登录（同时也支持在服务器环境直接传 PAT Token）。Access Token 过期很快，如果本地 Codex 并发开了几个子任务同时调接口，很容易拿着同一个即将过期的 Token 去刷新，导致后面的请求全部报 401。
+所以在插件的 Token 管理层加了互斥锁：发现 Token 快过期时，只放一个协程去调刷新接口并写盘，其他并发请求等刷新完成后直接拿新 Token。
 
-- **OAuth 交互登录与静默续期**：插件实现了完整的本地登录引导、Token 落盘缓存、过期时间预判与 Refresh Token 自动续期。当检测到 Access Token 即将过期时，在并发锁保护下先完成单次刷新，防止多个并发推理请求同时拿旧 Token 触发雪崩失效。
-- **PAT（Personal Access Token）直连支持**：针对无头服务器或容器环境，支持直接通过环境变量或配置块注入 PAT 凭据，跳过浏览器交互环节。
+**2. 动态拉取可用模型列表**
+这类助手渠道里能用哪些模型，经常随账号等级或服务端灰度变化。写死静态列表的话，上游新上了模型用不了，下线了旧模型又一直报错。插件在启动和定期刷新时，会直接调上游的枚举接口拉取当前账号真实可用的模型元数据，再映射成统一的模型 ID 暴露给网关的 `/v1/models`。
 
-### 2. 动态模型枚举（Dynamic Model Discovery）与 ID 映射
+**3. 流式工具调用（SSE）格式转换**
+Codex CLI 和 Claude Code 对流式返回里的 `tool_calls` 块顺序检查很严。上游渠道返回的私有流式片段里，经常把思考过程（Reasoning）、普通文本和工具调用参数混在自定义字段里。插件内部做了一个带状态的流式解析器，一边读上游分块，一边按标准 OpenAI / Anthropic SSE 规范补齐事件头和索引号，再实时刷回给网关。
 
-许多国产编程助手渠道的可用模型列表会随账号等级、活动配额或服务端灰度策略动态变化。如果只在网关里写死静态模型名，很容易出现“新模型用不上、下线模型一直报错”的情况。
+## 跨平台编译
 
-我在插件中实现了**动态模型探测与标准化映射层**：
-
-- 在网关启动或刷新周期内，向渠道上游拉取当前账号真实可用的模型元数据清单。
-- 将渠道内部模型标识符统一映射为标准化的客户端模型 ID，并附上上下文窗口大小、是否支持 Tool Calling 及流式输出等能力标签，直接暴露给 `/v1/models` 端点。
-
-### 3. OpenAI / Anthropic 标准协议与私有流式协议的双向转译
-
-Codex 与 Claude Code 对流式响应（SSE）的状态机非常敏感——哪怕漏掉一个 `content_block_stop` 或 `tool_calls` 索引未对齐，客户端就会卡死或丢弃工具调用。
-
-插件在内部维护了一个**有状态的流式转译器（Stream Translator）**：
-
-- **入站方向**：将标准 OpenAI `messages` / `tools` 或 Anthropic `system` / `messages` 转换为目标渠道所需的会话上下文、工作区元数据与请求签名。
-- **出站方向**：逐块解析上游返回的增量文本、思维链（Reasoning / Thinking）片段与工具调用指令，严格按标准 SSE 事件序列重组并实时 Flush 回宿主网关。
-
-## 三、开源工程化与多平台构建验证
-
-为了让插件不仅能在我本机的 macOS Apple Silicon 环境下运行，也能在 Linux 容器与不同架构服务器上复用，我在 `cpa-plugin` 中配置了完整的自动化构建工作流（`.github/workflows/build.yml`）与集成文档：
-
-- 每个插件独立维护 `go.mod` 与构建入口，确保单插件故障不会污染整个仓库。
-- 严格执行凭据隔离，所有本地测试生成的 Token 文件与运行时缓存均被 `.gitignore` 拦截，公开仓库只保留纯净的协议转译与 ABI 桥接源码。
+我平时在 Mac (`darwin-arm64`) 上开发，而本地网关跑在 OrbStack 的 Linux 容器里。为了让两边都能直接加载，仓库里配好了交叉编译工作流（`.github/workflows/build.yml`），每个插件独立维护 `go.mod`，每次构建同时产出 macOS 和 Linux 的动态库，本地测试生成的 Token 文件也通过 `.gitignore` 严格隔离。

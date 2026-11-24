@@ -2,7 +2,7 @@
 title: Codex 当主管，AGY 和 Claude Code 干活，我本地这套多 Agent 流水线
 pubDate: 2026-09-13
 updatedDate: 2026-09-15
-description: 基于 tmux 会话隔离、状态机文件契约与多执行器路由的本地多 Agent 协作编码流水线设计实践。
+description: 用 tmux 会话和本地文件把 Codex、AGY 和 Claude Code 串起来分工写代码的早期实践。
 tags:
   - 智能体
   - 编程实践
@@ -14,7 +14,7 @@ kind: project
 presentation: article
 ---
 
-> 本文记录了本地多 Agent 协作编码流水线的早期调度底座设计（基于 tmux 会话隔离、状态机文件契约与多执行器路由），后续已演进为结合 [ChatGPT Supervisor](/blog/chatgpt-supervisor-prototype/) 与 [Magpie 本地 AI 网关](/blog/magpie-local-ai-gateway-governance/) 的完整研发闭环。
+> 这篇写于 2026 年 9 月，记录我最早用 tmux 和本地状态文件把多个 CLI 编码工具串起来分工的尝试。后来这套做法拆分演进成了 [chatgpt-supervisor-prototype 状态机](/posts/chatgpt-supervisor-state-machine/) 与 [本地多模型网关](/posts/multi-model-gateway-agent-ops/)。
 
 ## 为什么搞这个
 
@@ -120,15 +120,14 @@ CLI 这一层能用了以后，我又加了一环。
 
 这套流程当时在隔离的演示项目里跑过三轮，十项离线测试全部通过。第一轮回复因为格式不符合要求，被本地拒收并保存了原文。
 
-## 架构边界与后续演进
+## 跑下来摸清的几条边界
 
-第一代基于本地文件的轻量编排明确了五条系统边界，也为后续的工具链迭代指明了方向：
+这套基于本地文件的第一版流程跑顺之后，我也摸清了它的几条实际使用边界：
 
-1. **长耗时任务拆分**：单轮任务控制在可快速验证的颗粒度内，避免超过两小时的无人值守盲跑。
-2. **宿主生命周期解耦**：即使上层桌面端窗口关闭，后台 tmux 会话与 `.agent-work` 状态文件仍能通过 `recover` 命令无损续接。
-3. **工作区并发隔离**：同一 Git 工作树在同一时刻只允许单一执行器持有写锁，后续进一步结合 Git Worktree 实现了多分支并行推进。
-4. **确定性门禁兜底**：提示词约束之外，必须配合自动化测试、构建与 Git diff 审计来拦截越界修改。
-5. **副作用隔离**：外部接口调用与仓库外文件操作需显式声明，确保每次代码回滚都能恢复到干净的 baseline。
+1. **单轮任务不能拆得太大**：每一轮最好控制在十几分钟内能跑完验证的粒度，不要让 Agent 脱离检查连跑一两个小时。
+2. **桌面窗口关了也能从 tmux 接回来**：因为执行进程跑在独立的 tmux 会话里，就算外层的 Codex Desktop 窗口意外关了，后台任务还在跑，重开之后用 `recover` 读 `.agent-work` 就能接着看结果。
+3. **同一个 Git 目录一次只放一个执行者写**：同一份工作树不能让两个 Agent 同时改，后来遇到需要并行推进的任务，我一律先拆 Git Worktree。
+4. **提示词管不住的地方靠测试和 diff 拦**：光在提示词里写“不要乱改别的文件”不够，每次交活前必须看 `git diff` 并实跑 build 和 test。
 
 ## 最后
 

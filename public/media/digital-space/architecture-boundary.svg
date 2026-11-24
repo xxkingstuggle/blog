@@ -16,7 +16,7 @@
   <rect x="92" y="270" width="176" height="32" rx="8" fill="#E8EFE2"/>
   <text x="106" y="292" font-family="SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15" fill="#2A5235" font-weight="700">PUBLIC / STATIC</text>
   <text x="92" y="334" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="24" fill="#1D3D4F" font-weight="700">01 · Astro 静态构建层（Vercel）</text>
-  <text x="92" y="370" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="18" fill="#3F4C54">• 公开路由：/ 、/software/* 、/posts/* 、/lab/motion/</text>
+  <text x="92" y="370" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="18" fill="#3F4C54">• 公开路由：/ 、/software/* 、/posts/* 、/about/</text>
   <text x="92" y="404" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="18" fill="#3F4C54">• 后台静态壳：/admin-shell/*（仅 HTML/CSS/JS 空壳）</text>
   <rect x="92" y="428" width="440" height="68" rx="12" fill="#FBF4E9" stroke="#E5C89B" stroke-width="1.5"/>
   <text x="110" y="456" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="16" fill="#7D4E1D" font-weight="650">安全红线：/admin-shell/* 静态产物默认视为公开可抓</text>

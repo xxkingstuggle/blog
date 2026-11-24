@@ -246,26 +246,6 @@ async function run(){
   await colorAudit.screenshot({path:'artifacts/studio-about-button-dark.png'});
   await colorAudit.close();
 
-  const motionCard=desktop.locator('.gallery-card--motion');
-  assert.equal(await motionCard.count(),1,'one original motion demo belongs in homepage gallery');
-  const motionEmbed=motionCard.locator('video[data-motion-video]');
-  const playPreload = await motionEmbed.getAttribute('preload');
-  assert.ok(playPreload==='none' || playPreload==='metadata',
-    'video starts unloaded; near-viewport playback may upgrade to metadata');
-  assert.equal(await motionEmbed.getAttribute('data-src'),'/media/motion-study.mp4');
-  const motionBudget=await Promise.all([
-    desktop.request.get(origin+'/media/motion-study.mp4'),
-    desktop.request.get(origin+'/media/motion-study-poster.svg')
-  ]);
-  assert.ok(motionBudget.every(response=>response.ok()),'local poster and demo video must be served');
-  assert.ok((await motionBudget[0].body()).length<24*1024,
-    'small silent demo must stay under 24 KiB');
-  await motionCard.scrollIntoViewIfNeeded();
-  await desktop.waitForTimeout(350);
-  await motionCard.screenshot({path:'artifacts/studio-motion-card.png'});
-
-
-
   // Media geometry is now TWO concentric radii: shell + stage clip.
   // The image has NO extra radius/inset and fills the stage exactly.
   const mediaGeometry=await desktop.locator('.gallery-card--image').evaluateAll(cards =>
@@ -305,12 +285,6 @@ async function run(){
       media.leftDelta<1 && media.topDelta<1 && media.fit==='cover',
       'media must fill its responsive frame edge-to-edge without letterboxing');
   }
-  const videoRatio = await motionCard.locator('.gallery-card-visual').evaluate(el=>{
-    const r=el.getBoundingClientRect();
-    return r.width/r.height;
-  });
-  assert.ok(Math.abs(videoRatio-16/9)<.025,'16:9 video must display in a 16:9 frame');
-  await motionCard.screenshot({path:'artifacts/studio-two-layer-video.png'});
   await desktop.locator('.gallery-card--image').first().screenshot({path:'artifacts/studio-two-layer-image.png'});
 
   const editorialCards = desktop.locator('.gallery-card--editorial');
@@ -466,19 +440,6 @@ async function run(){
     : productGlass.imgRadius>=9,
     'single screenshots must fill source-sized frames; multi-device comparisons retain separate previews');
 
-  await desktop.goto(origin+'/lab/motion/',{waitUntil:'networkidle'});
-  const labVideo=desktop.locator('.studio-motion-well video[data-video-light]');
-  assert.equal(await labVideo.count(),1,'demo page must use native video player');
-  assert.ok(await labVideo.getAttribute('controls')!==null,'demo player should have controls');
-  await desktop.waitForFunction(() => document.querySelector('.studio-motion-well')?.getBoundingClientRect().width>0);
-  await desktop.screenshot({path:'artifacts/studio-motion-lab-desktop.png',fullPage:false});
-  // WebKit's headless gstreamer may have limited decoders. Verify the
-  // browser receives a real 4-second H.264 MP4 rather than a fake CSS animation.
-  const labBuffer=await desktop.request.get(origin+'/media/motion-study.mp4');
-  assert.ok(labBuffer.ok());
-  const length=(await labBuffer.body()).length;
-  assert.ok(length>1000 && length<24*1024,'real test video emitted in production build');
-
   await desktop.goto(origin+'/posts/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/posts/*/');
@@ -535,8 +496,8 @@ async function run(){
   assert.equal(await mobile.locator('.gallery-grid').first().getAttribute('data-masonry'), null,
     'single-column mobile layout must retain natural document order');
   await ensureWithinViewport(mobile,'mobile homepage');
-  assert.equal(await mobile.locator('.gallery-card--motion video').getAttribute('src'),null,
-    'reduced-motion mobile must not eagerly fetch or autoplay test video');
+  assert.equal(await mobile.locator('.gallery-card--motion video').count(),0,
+    'homepage must not render placeholder motion study video cards');
   await mobile.locator('.studio-dock-menu > summary').click();
   await mobile.locator('.studio-dock-panel-appearance .theme-menu-trigger').click();
   const mobilePopup=mobile.locator('body > .theme-menu-popover[data-theme-floating]');
@@ -623,7 +584,6 @@ async function run(){
 
   for (const slug of [
     'single-domain-private-digital-space',
-    'optical-glass-and-ambient-light',
     'webkit-assertions-over-visual-guessing',
     'paopao-ai-edtech-product-practice'
   ]) {

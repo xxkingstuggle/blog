@@ -1,8 +1,8 @@
 ---
-title: DimWallpaper：不改系统壁纸文件，用 CGWindowLevel 桌面图层实现深色模式壁纸压暗
+title: DimWallpaper：用 200 行 Swift 在 macOS 壁纸与桌面图标之间垫一层压暗遮罩
 pubDate: 2026-11-11
 updatedDate: 2026-11-23
-description: 解析开源菜单栏工具 DimWallpaper v1.0.0：如何利用 CGWindowLevelForKey(.desktopWindow) + 1 在 macOS 壁纸与桌面图标之间嵌入全穿透遮罩，实现深色模式联动与多屏热插拔同步。
+description: 夜间切深色模式时亮色壁纸太刺眼，我用 CGWindowLevelForKey(.desktopWindow) + 1 写了一个 68KB 的 macOS 菜单栏小工具，只压暗壁纸，不遮挡桌面图标。
 kicker: MACOS APPKIT · COREGRAPHICS WINDOW LEVEL
 kind: project
 presentation: article
@@ -15,52 +15,44 @@ tags:
 cover: ../../assets/projects/dim-wallpaper-cover.png
 ---
 
-在 macOS 上使用高亮度风景或插画壁纸时，白天在浅色模式下观感很好；可一旦到了夜晚切入系统**深色模式（Dark Mode）**，当所有窗口退到后台或切换到副屏时，高对比度的亮色壁纸依然会非常刺眼。
+我平时喜欢用亮色的风景或插画做 Mac 壁纸。白天看着很舒服，但到了晚上系统自动切到深色模式后，只要切桌面或者看副屏，亮色壁纸就会非常晃眼。
 
-市面上的常见做法是“准备两张图片合成动态 HEIC 壁纸”或“直接修改原壁纸图片的像素亮度后重设为系统壁纸”。但这两种方案都有明显痛点：前者对用户自己收藏的任意单张壁纸或第三方动态壁纸无效，后者则会破坏原图文件且无法实时无级调节浓度。
+现成的解决办法主要有两种：要么自己做包含日夜两张图的 HEIC 动态壁纸，要么让软件把原图调暗另存一张再设为系统壁纸。这两种我都觉得别扭——前者遇到喜欢的单张图或第三方动态壁纸就没辙，后者会改系统壁纸设置，想调一下明暗还得重新生成图片。
 
-为此，我用纯 Swift + AppKit 编写并开源了 [**DimWallpaper (v1.0.0)**](/software/dim-wallpaper/)——一个编译后仅 **68 KB**、零第三方依赖、完全不触碰原始壁纸文件的 macOS 菜单栏壁纸压暗工具。
+其实只要在桌面上盖一层半透明黑底就能解决。我用 Swift 和 AppKit 写了 [**DimWallpaper (v1.0.0)**](/software/dim-wallpaper/)，编译出来只有一个 **68 KB** 的二进制文件，常驻在菜单栏里。
 
-## 一、核心原理：卡在 `.desktopWindow` 与 `.desktopIconWindow` 之间的那一层
+## 把遮罩窗口卡在壁纸和桌面图标中间
 
-很多人以为“桌面”在 macOS WindowServer 里是一个不可拆分的整体。实际上，CoreGraphics 将桌面背景和桌面上的文件图标分别放在两个相邻但独立的窗口层级（`CGWindowLevel`）上：
+如果只是新建一个普通的全屏黑色半透明窗口，它会把桌面上的文件夹图标也一起蒙灰，看着像屏幕脏了一块。
 
-| 图层位置 | CoreGraphics Key | 说明 |
+去查 CoreGraphics 的窗口层级（`CGWindowLevel`）定义就能发现，macOS 的“桌面背景”和“桌面图标”并不是画在同一个层上的：
+
+| 图层位置 | CoreGraphics Key | 实际渲染内容 |
 |---|---|---|
-| 底层：系统壁纸层 | `CGWindowLevelForKey(.desktopWindow)` | 渲染静态壁纸、动态壁纸或第三方视频壁纸的宿主层 |
-| **中间：DimWallpaper 遮罩层** | **`CGWindowLevelForKey(.desktopWindow) + 1`** | **高于壁纸层 1 级，低于桌面图标层** |
-| 上层：Finder 桌面图标层 | `CGWindowLevelForKey(.desktopIconWindow)` | 渲染桌面文件夹、文件图标与文字标签 |
-| 顶层：常规应用窗口层 | `CGWindowLevelForKey(.normalWindow)` | 所有普通 App 窗口所在层级 |
+| 壁纸层 | `CGWindowLevelForKey(.desktopWindow)` | 系统壁纸或第三方视频壁纸 |
+| **DimWallpaper 遮罩层** | **`CGWindowLevelForKey(.desktopWindow) + 1`** | **只盖住壁纸，位于图标下方** |
+| 桌面图标层 | `CGWindowLevelForKey(.desktopIconWindow)` | Finder 桌面文件夹、文件图标与文字标签 |
+| 普通窗口层 | `CGWindowLevelForKey(.normalWindow)` | 正常打开的 App 窗口 |
 
-通过把无边框遮罩窗口（`NSWindow`）的 `level` 精确设为：
+把遮罩窗口的 `level` 设成壁纸层加 1：
 
 ```swift
 let levelRaw = Int(CGWindowLevelForKey(.desktopWindow)) + 1
 window.level = NSWindow.Level(rawValue: levelRaw)
 ```
 
-我们得到了一个极佳的视觉效果：**只有底部的壁纸被柔和地压暗了，而放在桌面上的文件夹图标、文字标签以及所有打开的应用窗口都保持原有的清晰度与对比度，丝毫不会被遮罩蒙灰。**
+这样出来的效果非常干净：**只有底下的壁纸变暗了，桌面上放的文件图标、白色文字标签和打开的应用窗口依然是原本的亮度，一点也不会发灰。**
 
-## 二、零交互穿透与全空间（Spaces）驻留
+## 鼠标穿透与虚拟桌面处理
 
-把一个全屏窗口铺在桌面上，最怕的是拦截鼠标点击、抢夺键盘焦点，或者在切换虚拟桌面（Spaces）和触发调度中心（Mission Control）时露馅。
+为了让这层遮罩铺在桌面上之后完全无感，我在 `Sources/main.swift` 的 `OverlayWindow` 里配了几个必要的 AppKit 属性：
 
-在 `Sources/main.swift` 的 `OverlayWindow` 实现中，我配置了四项关键的 AppKit 窗口属性：
+- **`ignoresMouseEvents = true`**：让系统在分发鼠标点击时直接跳过这个窗口。平时在桌面上拖框选文件、双击打开文件夹或者右键弹 Finder 菜单，跟没装这个工具一样。
+- **`canBecomeKey = false` 和 `canBecomeMain = false`**：绝不抢当前活动应用的键盘输入焦点。
+- **`collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]`**：所有虚拟桌面（Spaces）同步显示；触发调度中心（Mission Control）或四指显示桌面时固定在原地不动；不出现在 `Cmd + ~` 的窗口切换列表里。
 
-1. **`ignoresMouseEvents = true`**：让 WindowServer 在命中测试（Hit-Testing）阶段直接跳过该窗口。用户在桌面上左键拖拽框选图标、双击打开文件或右键呼出 Finder 菜单时，事件 100% 穿透到底层 Finder。
-2. **`canBecomeKey = false` & `canBecomeMain = false`**：重写窗口焦点属性，确保遮罩层在任何情况下都不会抢走当前活动应用的输入焦点。
-3. **`collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]`**：
-   - `.canJoinAllSpaces`：在所有虚拟桌面空间同步生效；
-   - `.stationary`：触发 Mission Control 或四指分开显示桌面时，遮罩固定在原地不动，不会被当成普通窗口飞走；
-   - `.ignoresCycle`：不参与 `Cmd + ~` 窗口循环切换；
-   - `.fullScreenAuxiliary`：允许与全屏应用空间共存。
+## 跟随深色模式与外接显示器插拔
 
-## 三、深色模式 KVO 联动与多显示器拓扑自愈
+在菜单栏里勾选默认的「跟随深色模式」后，`AppController` 会通过 KVO 监听 `NSApp.effectiveAppearance`。系统切到深色模式时，遮罩用 `0.18s` 的动画淡入到设定的透明度（比如 35% 或 50%）；白天切回浅色模式就自动隐藏窗口，不占渲染开销。
 
-为了让工具装好后即可“彻底忘掉它的存在”，`AppController` 监听了三类系统事件：
-
-- **系统外观切换（KVO on `NSApp.effectiveAppearance`）**：在默认的「跟随深色模式」下，一旦系统切入 `darkAqua`，遮罩窗口立即通过 `NSAnimationContext` 以 `0.18s` 平滑淡入到设定浓度（如 35% 或 50%）；切回浅色模式则平滑淡出并隐藏窗口，零 GPU 空转开销。
-- **多显示器热插拔（`NSApplication.didChangeScreenParametersNotification`）**：外接 4K 显示器插拔、分辨率切换或主副屏旋转时，自动遍历 `NSScreen.screens`，按 `CGDirectDisplayID` 复用或重建对应屏幕的遮罩帧。
-- **休眠唤醒同步（`NSWorkspace.didWakeNotification`）**：合盖休眠再唤醒后自动复核一次外观与屏幕几何尺寸，杜绝黑边错位。
-
-目前 [**DimWallpaper v1.0.0**](https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v1.0.0) 已在 GitHub 开源并提供打包好的 macOS 应用下载。
+另外，插拔外接显示器、改分辨率或者合盖休眠唤醒时，程序会监听 `didChangeScreenParametersNotification` 和 `didWakeNotification`，按每块屏幕的 `CGDirectDisplayID` 自动更新遮罩尺寸，不会留半截黑边。源码和打好的 `.app` 包都在 [DimWallpaper v1.0.0 Release](https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v1.0.0)。
