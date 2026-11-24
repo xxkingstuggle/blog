@@ -17,7 +17,20 @@ import framelitIcon from '../assets/projects/framelit-icon.png';
 import framelitShot from '../assets/projects/framelit-cover.png';
 
 export interface SoftwareDownloadItem { label:string; platform:string; version:string; size:string; format:string; url:string; primary?:boolean; note?:string; }
-export interface SoftwareGalleryItem { src:string; width:number; height:number; alt:string; title:string; caption:string; narrow?:boolean; }
+export interface SoftwareGallerySecondaryItem { src:string; width:number; height:number; alt:string; label?:string; }
+export interface SoftwareGalleryItem {
+  src:string;
+  width:number;
+  height:number;
+  alt:string;
+  kicker?:string;
+  title:string;
+  caption:string;
+  mechanism?:string;
+  narrow?:boolean;
+  cropMat?:'window'|'dialog';
+  secondary?:SoftwareGallerySecondaryItem;
+}
 export type SoftwareSlug =
   | 'usblinkmic'
   | 'zjx-download'
@@ -33,6 +46,7 @@ export interface SoftwareProduct {
   platforms:string[]; platformsLabel:string; statusBadge:string; statusTone:'release'|'source'; latestVersion:string; releaseDate:string;
   availabilitySummary:string; availabilityNotice:string; repoUrl:string; repoVisibility:'public'|'private'; releasesUrl?:string; checksumsUrl?:string;
   articleSlug:string; articleTitle:string; icon:ImageMetadata; screenshot:ImageMetadata; screenshotAlt:string; screenshotCaption:string; secondaryScreenshot?:ImageMetadata;
+  heroCropMat?:'window'|'dialog';
   interfaceHeading?:string; galleryKicker?:string; galleryHeading?:string; galleryNotice?:string; gallery?:SoftwareGalleryItem[];
   verifiedAt:string; developmentVersion:string; installedVersion:string; contribution:string; limitations:string[]; sources:Array<{label:string;url:string}>;
   downloads:SoftwareDownloadItem[]; highlights:Array<{title:string;body:string}>;
@@ -53,8 +67,52 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     repoUrl:'https://github.com/xxkingstuggle/usblinkmic',repoVisibility:'public',releasesUrl:`${release}/tag/v4.0.17`,checksumsUrl:`${release}/download/v4.0.17/SHA256SUMS.txt`,
     articleSlug:'usblinkmic-v4-evolution',articleTitle:'USBLinkMic 4.0 演进手记：USB 充电协商、ADB 断连自愈与局域网自动重连',
     icon:usblinkmicIcon,screenshot:usblinkmicShot,screenshotAlt:'USBLinkMic Mac 4.0.10 开发版的手机麦克风面板，设备标识已遮盖',
-    screenshotCaption:'USBLinkMic Mac 原生主界面与工作区（设备标识已遮盖）。现已同步发布 v4.0.17 正式构建包，包含设备管理、麦克风通道切换、USB 双向供网与菜单栏快捷入口。',
+    screenshotCaption:'USBLinkMic macOS 原生主界面（设备标识已脱敏），集中呈现目标设备、PCM 有效音频帧传输状态与实时电平。',
     interfaceHeading:'连接状态，看得见。',
+    galleryKicker:'CORE WORKSPACES · 四大原生工作区',
+    galleryHeading:'音频、网络、权限与诊断，各司其职。',
+    gallery:[
+      {
+        src:'/media/usblinkmic/workspace-microphone-dark.webp',
+        width:1600,
+        height:1028,
+        alt:'USBLinkMic v4 深色模式手机麦克风实时拾音与波形增益面板',
+        kicker:'01 · AUDIO STREAMING',
+        title:'手机拾音，实时波形与数字增益',
+        caption:'Android 端采集的 PCM 音频流经 USB ADB 或局域网直连进入 Mac，实时绘制音量波形与分贝峰值，支持本机静音监听切换与 1.25x 数字增益调节，并可直接桥接至 BlackHole 2ch 供会议或录音软件调用。',
+        mechanism:'PCM I16 44.1kHz · USB 有线 / 局域网自动重连 · BlackHole 2ch 虚拟声卡输出'
+      },
+      {
+        src:'/media/usblinkmic/workspace-macInternet-dark.webp',
+        width:1600,
+        height:1028,
+        alt:'USBLinkMic v4 深色模式双向有线网络共享面板',
+        kicker:'02 · BI-DIRECTIONAL USB NETWORK',
+        title:'一条数据线，双向有线网络互通',
+        caption:'同一面板内整合「Mac 网络共享给手机（反向代理 / VPN 隧道）」与「手机网络提供给 Mac（原生 USB NCM 虚拟网卡）」。界面把 USB 就绪、NCM 激活、DHCP 分配与出口连通拆解为可视化节点，不再黑盒试错。',
+        mechanism:'Android USB NCM 虚拟网卡 · 本地环回 VPNService 隧道 · 互斥路由保护'
+      },
+      {
+        src:'/media/usblinkmic/workspace-devices-dark.webp',
+        width:1600,
+        height:1028,
+        alt:'USBLinkMic v4 深色模式设备识别与手机端权限双向同步面板',
+        kicker:'03 · DEVICE & PERMISSION BUS',
+        title:'设备识别、权限同步与端口健康监控',
+        caption:'通过 USB 控制总线自动识别已连接的 Android 手机，在 Mac 端实时同步手机录音权限（RECORD_AUDIO）、前台常驻服务通知与 VPN 隧道授权状态，并持续监测 TCP 控制端口与音频流端口连通性。',
+        mechanism:'TCP 48,125 控制总线 · TCP 48,124 音频流通道 · 端到端权限状态自检'
+      },
+      {
+        src:'/media/usblinkmic/workspace-logs-dark.webp',
+        width:1600,
+        height:1028,
+        alt:'USBLinkMic v4 深色模式诊断日志与模块过滤控制台',
+        kicker:'04 · TELEMETRY & DIAGNOSTICS',
+        title:'按模块过滤的实时控制台与排障记录',
+        caption:'内置诊断日志工作区，支持按音频麦克风、网络共享、设备恢复分类检索或按错误码过滤。无论是 USB 线材闪断还是 ADB 握手异常，均可导出结构化记录即时定位。',
+        mechanism:'结构化事件流 · 模块级实时过滤 · 本地一键导出'
+      }
+    ],
     verifiedAt:'2026-11-24（v4.0.17 公开发版与 54 项资源哈希核验通过）',developmentVersion:'v4.0.17（Mac + Android 同步发版）',installedVersion:'Mac v4.0.17 · 打包签名与 SHA-256 校验通过',
     contribution:'我负责需求取舍、跨平台集成、维护与验收，Codex 等 AI 助手参与实现和审查。项目复用 Android platform-tools、Gnirehtet 的 Java relay，随包保留 OpenJDK 运行时与许可，并通过外部 BlackHole 虚拟声卡对接音频输入；这些第三方成果不属于个人从零实现。',
     limitations:['跨机型、息屏、插拔与长时间运行的完整 T01–T24 设备矩阵仍在持续扩充。','收到 PCM 帧不等于会议软件已收到可听声音；音频路由与系统输入需配合 BlackHole 2ch 确认。','未承诺普遍的低延迟数值、功耗收益或所有 Android ROM 的网络兼容性。','无线麦克风链路未加密，只适合可信局域网。'],
@@ -93,17 +151,24 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     checksumsUrl:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.4/SHA256SUMS.txt',
     articleSlug:'zjx-download-native-architecture',articleTitle:'zjx-download 架构复盘：用 Swift 重写 macOS 原生多线程下载器与 Chrome Native Messaging 交接',
     icon:zjxDownloadIcon,screenshot:zjxDownloadShot,
+    heroCropMat:'window',
     screenshotAlt:'zjx-download macOS 原生主窗口与分片进度面板',
     screenshotCaption:'zjx-download v2.0.4 macOS 原生主界面真实运行截图，支持按分类筛选、并发队列调度、分片级断点续传与 SHA-256 校验。',
     interfaceHeading:'分片进度与队列状态，一目了然。',
-    galleryKicker:'真实运行截图 / NATIVE MACOS & CHROME MV3',
+    galleryKicker:'NATIVE WORKFLOW · 原生交互细节',
     galleryHeading:'从浏览器捕获到原生分片落盘的完整闭环。',
-    galleryNotice:'以下为 zjx-download v2.0.4 在 macOS 上的真实运行截图（涵盖浅色与深色主题、主队列窗口及单任务分片详情）。',
     gallery:[
-      {src:'/media/zjx-download/main-window.webp',width:1600,height:1197,alt:'zjx-download 主窗口真实运行截图',title:'01 / 原生主队列与分类视图',caption:'集中管理进行中、已完成与排队任务，支持 cURL 导入、批量添加与速率限制。'},
-      {src:'/media/zjx-download/task-complete.webp',width:1600,height:889,alt:'zjx-download 下载完成弹窗与校验面板',title:'02 / 任务完成与文件校验',caption:'下载完成后可直接校验文件摘要、定位 Finder 路径或复核连接分片。'},
-      {src:'/media/zjx-download/app-home-dark.webp',width:1840,height:964,alt:'zjx-download 深色模式主界面',title:'03 / 深色模式工作台',caption:'原生 SwiftUI 适配 macOS 深色外观，保持高对比度状态指示。'},
-      {src:'/media/zjx-download/app-download-dark.webp',width:1840,height:964,alt:'zjx-download 深色模式分片下载进度',title:'04 / 多连接并发分片',caption:'每个分片独立持久化偏移量，暂停或异常退出后从已提交检查点恢复。'}
+      {
+        src:'/media/zjx-download/task-complete.webp',
+        width:1600,
+        height:888,
+        cropMat:'dialog',
+        alt:'zjx-download 下载完成弹窗与校验面板',
+        kicker:'01 · VERIFICATION & HANDOFF',
+        title:'完成即校验摘要，直达 Finder 或拖拽投递',
+        caption:'全部 HTTP Range 分片合并落盘后，自动弹出原生完成面板。支持一键计算 SHA-256 / MD5 摘要核对发行包完整性，也可直接将上方文件图标拖拽至其他 macOS 应用继续处理。',
+        mechanism:'分片原子合并 · 内置 SHA-256 / MD5 摘要核验 · 原生拖拽与 Finder 定位'
+      }
     ],
     verifiedAt:'2026-11-24（11 项核心 XCTest 全绿，v2.0.4 双架构签名通过）',
     developmentVersion:'v2.0.4 / build 20261117.2',
@@ -166,14 +231,37 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     screenshotAlt:'Route Lens 在深色模式下展示右侧窄栏的模型路由对照信息',
     screenshotCaption:'Route Lens v1.3.1 真实运行预览：右侧 Shadow DOM 窄栏实时显示请求模型、响应报告模型、路由状态与时间戳，支持深浅色与几何尺寸自定义。',
     interfaceHeading:'请求与响应字段，同屏透明对照。',
-    galleryKicker:'界面预览 / SHADOW DOM RAIL & POPUP',
+    galleryKicker:'INTERFACE & CONTROLS · 观测栏与双语控制',
     galleryHeading:'不打断对话流，在窄栏与弹窗中掌控全部路由细节。',
-    galleryNotice:'以下为 Route Lens v1.3.1 自动化 UI 预览与验证生成的真实界面截图，涵盖深浅色右侧窄栏与中英双语配置弹窗。',
     gallery:[
-      {src:'/media/route-lens/rail-system-dark.webp',width:1280,height:900,alt:'Route Lens 深色模式右侧窄栏',title:'01 / 深色模式右侧窄栏',caption:'通过 Shadow DOM 注入在页面右侧，不污染宿主样式，实时呈现请求与响应模型对照。'},
-      {src:'/media/route-lens/rail-default-light.webp',width:1280,height:900,alt:'Route Lens 浅色模式右侧窄栏',title:'02 / 浅色模式与多字段视图',caption:'清晰区分“字段一致”“显式路由转换”与“字段缺失/冲突”状态。'},
-      {src:'/media/route-lens/popup-zh-light.webp',width:360,height:740,alt:'Route Lens 中文浅色配置弹窗',title:'03 / 中文外观与字段控制弹窗',caption:'支持调节窄栏宽度、高度、上下位置、可见字段及一键恢复默认外观。',narrow:true},
-      {src:'/media/route-lens/popup-en-dark.webp',width:360,height:740,alt:'Route Lens 英文深色配置弹窗',title:'04 / 英文深色模式弹窗',caption:'内置对称的中英双语字典与 320px+ 紧凑布局适配。',narrow:true}
+      {
+        src:'/media/route-lens/rail-default-light.webp',
+        width:1280,
+        height:900,
+        alt:'Route Lens 浅色模式右侧窄栏与多字段视图',
+        kicker:'01 · DETERMINISTIC ROUTING VERDICT',
+        title:'四态路由一致性判定，拒绝盲猜模型',
+        caption:'将请求体中的 target model 与 SSE 响应流中的 model_slug、server_model 等字段逐一比对，严格区分「字段一致」「显式路由转换」「服务端字段冲突」与「未报告字段」，绝不虚构未下发的模型名称。',
+        mechanism:'Main World Fetch / SSE 钩子 · 四态一致性状态机 · Shadow DOM 样式隔离'
+      },
+      {
+        src:'/media/route-lens/popup-zh-light.webp',
+        width:360,
+        height:740,
+        alt:'Route Lens 中文浅色配置弹窗',
+        kicker:'02 · BILINGUAL GEOMETRY & THEME POPUP',
+        title:'中英双语与深浅色外观控制弹窗',
+        caption:'在 360px 扩展弹窗中无级调节页面侧栏的宽度、高度、垂直位置、字号与背景不透明度，支持按需勾选显示字段并一键恢复默认几何外观；内置对称的中英双语字典与深浅色主题。',
+        mechanism:'chrome.storage.local 实时同步 · 窄栏几何无级调节 · 中 / EN 双语即时切换',
+        narrow:true,
+        secondary:{
+          src:'/media/route-lens/popup-en-dark.webp',
+          width:360,
+          height:740,
+          alt:'Route Lens 英文深色配置弹窗',
+          label:'English · Dark Mode'
+        }
+      }
     ],
     verifiedAt:'2026-11-24（18 项单元测试与 check.mjs 静态审计通过）',
     developmentVersion:'v1.3.1',
@@ -294,13 +382,39 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     screenshotAlt:'思路导航 V3 的双路径 Skill 路由架构图',
     screenshotCaption:'思路导航 V3 核心设计：将“人先替 AI 选方法”反转为“人描述真实卡点，模型在 25 个 Skill 入口中按需发现、组合或跳过”。',
     interfaceHeading:'选方法的负担，交给路由层。',
-    galleryKicker:'架构图解 / SKILL ROUTING & PLUGIN PACKAGING',
+    galleryKicker:'ROUTING ARCHITECTURE · 路由机制图解',
     galleryHeading:'从方法过载到按需发现的三层演进。',
-    galleryNotice:'以下为思路导航 V3 的核心路由机制与插件目录结构图解。',
     gallery:[
-      {src:'/media/thought-navigator-v3/01-method-overload.svg',width:1280,height:720,alt:'思考方法过载示意图',title:'01 / 痛点：方法越多，启动越慢',caption:'手工挑选思考框架把“解决问题”变成了“先研究工具”，增加了认知摩擦。'},
-      {src:'/media/thought-navigator-v3/02-routing-decision.svg',width:1280,height:720,alt:'双路径路由决策示意图',title:'02 / 双路径编排与跳过边界',caption:'支持隐式按需发现与显式导航，遇到纯执行或事实缺失任务立即停止套框架。'},
-      {src:'/media/thought-navigator-v3/03-plugin-structure.svg',width:1280,height:720,alt:'Codex 插件目录结构图',title:'03 / 单文件 SKILL.md 与插件封装',caption:'去除冗余 references 嵌套，每个 Skill 独立内聚，降低 Token 消耗与维护成本。'}
+      {
+        src:'/media/thought-navigator-v3/01-method-overload.svg',
+        width:1280,
+        height:720,
+        alt:'思考方法过载示意图',
+        kicker:'01 · COGNITIVE FRICTION',
+        title:'消除“先替 AI 选框架”的启动阻力',
+        caption:'传统提示词库要求用户在提问前先从几十种思维模型中手工挑一个，把“解决具体问题”变成了“先研究工具分类”。思路导航将选方法的负担下沉到 Skill 路由层。',
+        mechanism:'25 个结构化思考模型 · 任务信号触发 · 零前置记忆负担'
+      },
+      {
+        src:'/media/thought-navigator-v3/02-routing-decision.svg',
+        width:1280,
+        height:720,
+        alt:'双路径路由决策示意图',
+        kicker:'02 · DUAL-PATH ROUTING & STOP RULES',
+        title:'双路径按需发现与防空转停止边界',
+        caption:'支持“模型按任务信号自主匹配专项 Skill”与“用户显式点名 @思路导航”两条路径。遇到写代码、查事实或缺乏外部证据的任务时直接执行，绝不强行套用思考框架。',
+        mechanism:'正负向触发边界 · 1 主方法 + 可选 1 辅助方法上限 · 防空转停止条件'
+      },
+      {
+        src:'/media/thought-navigator-v3/03-plugin-structure.svg',
+        width:1280,
+        height:720,
+        alt:'Codex 插件目录结构图',
+        kicker:'03 · PROGRESSIVE DISCLOSURE PACKAGING',
+        title:'单文件 SKILL.md 内聚封装与按需加载',
+        caption:'去除多层 references 嵌套，每个思考方法独立收敛为单个高密度 SKILL.md。宿主默认仅读取顶部简短元数据，只有命中当前任务时才按需加载对应正文。',
+        mechanism:'Codex Plugin 标准清单 · 渐进式上下文披露 · 25 个独立 Skill 入口'
+      }
     ],
     verifiedAt:'2026-11-24（v3.0.1 插件包与 25 个 Skill 结构校验通过）',
     developmentVersion:'v3.0.1',
@@ -480,14 +594,39 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     screenshotAlt:'FrameLit 深色模式下的窗口布局指令与自定义坐标网格编辑器界面',
     screenshotCaption:'FrameLit v1.3 窗口指令面板与 Custom Layout Canvas（6×3 至 48×24 坐标网格编辑器）深色模式界面。',
     interfaceHeading:'从预设分屏到自由网格，像素级对齐。',
-    galleryKicker:'界面设计 / COMMANDS & CUSTOM GRID CANVAS',
+    galleryKicker:'INTERFACE & GRID ENGINE · 原生网格工作台',
     galleryHeading:'把复杂的窗口坐标计算，收进直观的原生面板。',
-    galleryNotice:'以下为 FrameLit 的指令管理、偏好设置、浅色模式与多状态交互界面设计图稿。',
     gallery:[
-      {src:'/media/framelit/commands-dark.webp',width:1600,height:1236,alt:'FrameLit 深色模式窗口指令与网格画布',title:'01 / 指令面板与自定义网格画布',caption:'左侧管理预设分屏与快捷键，右侧在 6×3 至 48×24 网格上拖拽定义自定义区域。'},
-      {src:'/media/framelit/prefs-dark.webp',width:1600,height:1236,alt:'FrameLit 深色模式偏好设置与排除应用列表',title:'02 / 偏好设置与排除规则',caption:'配置边缘拖拽吸附阈值、多显示器行为、忽略应用名单及诊断日志开关。'},
-      {src:'/media/framelit/commands-light.webp',width:1600,height:1236,alt:'FrameLit 浅色模式指令面板',title:'03 / 浅色模式高对比度视图',caption:'使用语义化 Token 构建深浅双套外观，保证网格线与快捷键徽章清晰易读。'},
-      {src:'/media/framelit/states-dark.webp',width:1600,height:854,alt:'FrameLit 权限引导、快捷键冲突与空状态',title:'04 / 辅助功能授权与冲突提示',caption:'覆盖首次 Accessibility 授权引导、快捷键占用检测与异常恢复状态。'}
+      {
+        src:'/media/framelit/states-dark.webp',
+        width:1600,
+        height:853,
+        alt:'FrameLit 目标区域编辑器在默认、悬停、拖动吸附、缩放、48x24细网格与绘制六种状态下的视图',
+        kicker:'01 · SIX-STATE GRID CANVAS',
+        title:'6×3 至 48×24 网格的六态交互与刻度吸附',
+        caption:'Custom Layout Canvas 覆盖默认选中、边缘悬停高亮、主刻度拖动吸附、右下角最小格缩放、48×24 高密度网格及空白区拖拽新建六种交互状态，实时换算归一化窗口坐标。',
+        mechanism:'Normalized Grid Rect · 6 档刻度吸附反馈 · 实时百分比与网格坐标读数'
+      },
+      {
+        src:'/media/framelit/prefs-dark.webp',
+        width:1600,
+        height:1236,
+        alt:'FrameLit 深色模式偏好设置面板',
+        kicker:'02 · EDGES, GAPS & TRIGGER ZONES',
+        title:'边缘贴靠、窗口留白与触发热区精细控制',
+        caption:'在设置面板中集中配置屏幕边缘贴靠、拖开时自动恢复原始窗口尺寸、窗口间点距（pt）留白，以及屏幕边缘激活区域的缩放比例与触发宽度。',
+        mechanism:'NSScreen.visibleFrame 安全区扣除 · 边缘触发热区可调 · 拖拽还原记忆'
+      },
+      {
+        src:'/media/framelit/commands-light.webp',
+        width:1600,
+        height:1236,
+        alt:'FrameLit 浅色模式指令面板与网格画布',
+        kicker:'03 · SEMANTIC LIGHT & DARK TOKENS',
+        title:'语义化深浅双主题与 77 项重绘矢量图标',
+        caption:'基于统一的色彩与表面语义 Token 构建浅色与深色双套原生外观，配合自动化图稿管线生成的 77 项 1x/2x 布局指令图标，确保网格标尺与快捷键徽章在任意光照下清晰锐利。',
+        mechanism:'AppKit Semantic Appearance · prepare_artwork.swift 资产管线 · 1x/2x Template Glyphs'
+      }
     ],
     verifiedAt:'2026-11-24（Swift 源码构建、77 项原创图稿打包与诊断日志单测核验）',
     developmentVersion:'v1.3 · Swift 原生实现 + 77 项重绘视觉资产',

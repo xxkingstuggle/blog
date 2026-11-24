@@ -420,25 +420,41 @@ async function run(){
     null,{timeout:8000});
   const productGlass=await desktop.locator('.product-gallery').evaluate(el=>{
     const img=el.querySelector('img');
+    const frame=el.querySelector('.stage-window-frame') || img;
     const a=el.getBoundingClientRect(), b=img?.getBoundingClientRect();
+    const rail=document.querySelector('.studio-side-rail');
+    const main=document.querySelector('#main-content');
+    const hero=document.querySelector('.launch-hero-center');
+    const heroRect=hero?.getBoundingClientRect();
     return { single:el.classList.contains('single'),
       stageRadius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
-      imgRadius:img?parseFloat(getComputedStyle(img).borderTopLeftRadius):0,
+      imgRadius:frame?parseFloat(getComputedStyle(frame).borderTopLeftRadius):0,
       palette:el.style.getPropertyValue('--glass-primary-rgb'),
-      ratio:parseFloat(getComputedStyle(el).aspectRatio),
-      actual:a.width/a.height,
+      imgNaturalRatio:img&&img.naturalHeight?img.naturalWidth/img.naturalHeight:0,
+      imgActualRatio:b&&b.height?b.width/b.height:0,
       widthDelta:b?Math.abs(a.width-b.width):999,
-      heightDelta:b?Math.abs(a.height-b.height):999 };
+      heightDelta:b?Math.abs(a.height-b.height):999,
+      railDisplay:rail?getComputedStyle(rail).display:'none',
+      mainMarginLeft:main?parseFloat(getComputedStyle(main).marginLeft):0,
+      heroCenterDelta:heroRect?Math.abs((heroRect.left+heroRect.right)/2 - window.innerWidth/2):999,
+      legacyPanels:document.querySelectorAll('.acquisition-panel,.version-table').length,
+      overflowX:document.documentElement.scrollWidth - window.innerWidth };
   });
-  assert.ok(productGlass.stageRadius>=12 && productGlass.palette,
+  assert.ok(productGlass.stageRadius>=20 && productGlass.palette,
     'product image preview should preserve its outer round frame and sampled colour');
   console.log('Product geometry:',JSON.stringify(productGlass));
-  assert.ok(productGlass.single
-    ? productGlass.imgRadius<.2 &&
-      Math.abs(productGlass.ratio-productGlass.actual)<.03 &&
-      productGlass.widthDelta<1 && productGlass.heightDelta<1
-    : productGlass.imgRadius>=9,
-    'single screenshots must fill source-sized frames; multi-device comparisons retain separate previews');
+  assert.equal(productGlass.railDisplay,'none','product launch page must collapse the 280px blog side rail');
+  assert.equal(productGlass.mainMarginLeft,0,'product launch page main canvas must span full width');
+  assert.ok(productGlass.heroCenterDelta<=4,'product launch hero must be centered in viewport');
+  assert.equal(productGlass.legacyPanels,0,'legacy acceptance-checklist panels and duplicate version grid must be removed');
+  assert.ok(productGlass.overflowX<=1,'product launch page must not overflow horizontally');
+  assert.ok(
+    productGlass.imgRadius>=10 &&
+    productGlass.widthDelta>=48 &&
+    productGlass.heightDelta>=48 &&
+    Math.abs(productGlass.imgNaturalRatio - productGlass.imgActualRatio) < 0.03,
+    'product screenshots must sit inside a padded Stage Canvas with natural aspect ratio and rounded window frame'
+  );
 
   await desktop.goto(origin+'/posts/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().click();

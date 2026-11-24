@@ -3,25 +3,30 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import GalleryCard from '../../components/GalleryCard.astro';
 import { SOFTWARE_PRODUCTS, WORKBENCH_PROJECTS } from '../../lib/software';
 ---
-<BaseLayout title="软件与作品" description="Xin 的软件作品与工程实践：真实界面、开发记录、公开安装包与验证边界。">
+<BaseLayout title="软件与作品" description="张家鑫（Xin）独立开发的原生软件、浏览器扩展、Codex 插件与工程架构实践。">
   <header class="shell gallery-hero">
-    <div class="gallery-hero-topline"><span>MYZJX / WORK & EXPERIMENTS</span><span class="gallery-status-light">独立开发的项目</span></div>
+    <div class="gallery-hero-topline"><span>MYZJX / PRODUCTS &amp; ENGINEERING</span><span class="gallery-status-light">独立软件与开源工程</span></div>
     <h1>软件与项目作品集</h1>
-    <p class="gallery-hero-description">已公开的软件、尚在完善的原型，以及值得记下来的开发实践。每张卡片都通向自己的项目详情，标明真实的发布与验证状态。</p>
-    <div class="gallery-hero-bottom"><div class="gallery-hero-links"><a href="#software-gallery">浏览全部作品 ↘</a><a href="/posts/">查看工程手记 ↗</a></div><span class="gallery-status-light">{SOFTWARE_PRODUCTS.length+WORKBENCH_PROJECTS.length} 个项目与实践</span></div>
+    <p class="gallery-hero-description">从跨设备音频与多线程下载器，到 Chrome MV3 路由观测扩展与 Codex 思考模型插件。每款软件均提供独立产品主页、原生界面预览、公开源码或安装包及配套架构手记。</p>
+    <div class="gallery-hero-bottom"><div class="gallery-hero-links"><a href="#software-gallery">独立软件与插件 ({SOFTWARE_PRODUCTS.length}) ↘</a><a href="#workbench-gallery">工程架构实践 ({WORKBENCH_PROJECTS.length}) ↘</a><a href="/posts/">全部工程手记 ↗</a></div><span class="gallery-status-light">{SOFTWARE_PRODUCTS.length} 款独立软件 · {WORKBENCH_PROJECTS.length} 项架构实践</span></div>
     <div class="gallery-index-rule"></div>
   </header>
   <section class="shell gallery-section" id="software-gallery">
-    <div class="gallery-section-heading"><h2>作品与实验</h2><small>产品、工作台与工程方法</small></div>
+    <div class="gallery-section-heading"><h2>独立软件与插件</h2><small>macOS / iOS / Android 原生应用、浏览器扩展与 Agent 插件</small></div>
     <div class="gallery-grid">
       {SOFTWARE_PRODUCTS.map((product,index)=>(
         <div class="gallery-item" data-reveal>
           <GalleryCard href={'/software/'+product.slug+'/'} title={product.name}
-            description={product.summary} category={product.platformsLabel}
+            description={product.tagline + '。' + product.headline} category={product.platformsLabel}
             meta={product.statusBadge} image={product.screenshot} tone="tool" index={index}
             transitionKey={'work-'+product.slug} />
         </div>
       ))}
+    </div>
+  </section>
+  <section class="shell gallery-section" id="workbench-gallery">
+    <div class="gallery-section-heading"><h2>工作台与工程架构实践</h2><small>多模型网关 ABI 插件、Agent 治理协议与系统级自动化工具</small></div>
+    <div class="gallery-grid">
       {WORKBENCH_PROJECTS.map((project,index)=>(
         <div class="gallery-item" data-reveal>
           <GalleryCard href={project.href} title={project.name} description={project.summary}

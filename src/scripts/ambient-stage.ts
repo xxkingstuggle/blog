@@ -20,7 +20,7 @@ function bootAmbientStage(): void {
 
   const cards = [...document.querySelectorAll<HTMLElement>('.gallery-card')];
   const covers = [...document.querySelectorAll<HTMLElement>(
-    '.gallery-detail-cover--image, .product-gallery[data-glass-media], .studio-motion-well[data-glass-media]'
+    '.gallery-detail-cover--image, .product-gallery[data-glass-media], .launch-stage-canvas[data-glass-media], .studio-motion-well[data-glass-media]'
   )];
   const sources = [...cards, ...covers];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -185,7 +185,7 @@ function bootAmbientStage(): void {
     const node = event.target;
     if (!(node instanceof HTMLElement)) return;
     const card = node.closest<HTMLElement>('.gallery-card') ??
-      (node.matches('.gallery-detail-cover--image,.product-gallery,.studio-motion-well') ? node : null);
+      (node.matches('.gallery-detail-cover--image,.product-gallery,.launch-stage-canvas,.studio-motion-well') ? node : null);
     if (card && selected === card) render(card,true,field!.dataset.ambientIntent==='hover'?'hover':'scroll');
   });
 

@@ -12,6 +12,7 @@ interface Props {
 	image?: string | ImageMetadata;
 	ogType?: string;
 	noindex?: boolean;
+	layoutVariant?: 'default' | 'launch';
 }
 
 const {
@@ -20,6 +21,7 @@ const {
 	image,
 	ogType = 'website',
 	noindex = false,
+	layoutVariant = 'default',
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, siteConfig.url).toString();
@@ -58,7 +60,7 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 		<meta name="twitter:description" content={description} />
 		{socialImage && <meta name="twitter:image" content={socialImage} />}
 	</head>
-	<body class="front-body">
+	<body class:list={['front-body', layoutVariant === 'launch' && 'front-body--launch']}>
 		<a class="skip-link" href="#main-content">跳到主要内容</a>
 		<SiteHeader />
 		<div class="studio-ambient-stage" data-ambient-stage aria-hidden="true">
