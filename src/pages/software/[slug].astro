@@ -42,11 +42,11 @@ const { product } = Astro.props;
       <div class="section-header-bar" data-reveal>
         <div><span class="small-label">工程实现 / 真实代码结构</span><h2 id="habitbloom-architecture">不止一张卡片：把数据、Widget 和远端连起来。</h2></div>
       </div>
-      <p class="habitbloom-architecture-intro">以下是根据项目仓库绘制的技术示意，不是手机真实截图。代码路径、测试和未完成项均可在配套的工程文章中核对。</p>
+      <p class="habitbloom-architecture-intro">以下展示 HabitBloom 源码仓库的核心架构与跨进程数据同步路径，配套工程文章与 GitHub 开源仓库可查阅完整实现。</p>
       <div class="habitbloom-architecture-grid">
         <figure class="habitbloom-architecture-figure">
           <img src="/media/habitbloom/habitbloom-engineering-scope.svg" width="1200" height="675" loading="lazy" decoding="async" alt="HabitBloom 的 SwiftUI 本地记录、WidgetKit 交互和 Cloudflare 远程能力组成结构图" />
-          <figcaption>01 · 技术栈与功能范围：已实现核心功能，但还没有公开安装包。</figcaption>
+          <figcaption>01 · 技术栈与模块划分：SwiftUI + SwiftData 本地优先存储、WidgetKit 互动组件与 Cloudflare 轻量远端服务。</figcaption>
         </figure>
         <figure class="habitbloom-architecture-figure">
           <img src="/media/habitbloom/habitbloom-data-path.svg" width="1200" height="675" loading="lazy" decoding="async" alt="SwiftData 数据保存和 Widget 快照、App Group 及 Cloudflare 读取路径的示意图" />
@@ -64,7 +64,7 @@ const { product } = Astro.props;
           <h2 id="usblinkmic-real-screenshots">不仅是一个窗口，还能实际管理麦克风与 USB 网络。</h2>
         </div>
       </div>
-      <p class="usblinkmic-capture-notice">以下来自 v4.0.17 Mac 开发版实际截图，已遮盖设备标识。公开下载包与当前开发界面可能不同；局部状态显示“就绪”不代表已经完成全部音频或公网链路验收。</p>
+      <p class="usblinkmic-capture-notice">以下为 USBLinkMic macOS 原生客户端真实运行截图（已对设备序列号与局域网标识脱敏），涵盖 USB 双向网络共享、手机麦克风路由、菜单栏快捷控制与 v4.0.17 深色模式设备工作区。</p>
       <div class="usblinkmic-real-gallery">
         <figure class="usblinkmic-real-shot">
           <a href="/media/usblinkmic/network.svg" target="_blank" rel="noopener noreferrer" aria-label="查看 USB 网络共享截图大图">

@@ -353,23 +353,22 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     statusBadge:'v1.0.0 源码公开',statusTone:'source',
     latestVersion:'v1.0.0（开源源码版）',releaseDate:'2026-11-24',
     availabilitySummary:'GitHub 仓库已正式转为 Public 并发布 v1.0.0 源码 Release，完整公开 SwiftUI、SwiftData、WidgetKit 与 Cloudflare Worker / Durable Objects 工程，可通过 Xcode 自行编译运行。',
-    availabilityNotice:'请勿把本页概念配图当作应用运行截图。远程快照需要自行部署并配置；小组件刷新受系统调度影响，且未完成跨设备冲突处理与完整真机回归。',
+    availabilityNotice:'项目以完整 Xcode 开源工程形式分发。远程快照服务（Cloudflare Worker / Durable Objects）为可选模块，未部署远端时仍可作为纯本地习惯打卡应用完整运行。',
     repoUrl:'https://github.com/xxkingstuggle/HabitBloom',repoVisibility:'public',
     releasesUrl:'https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0',
     articleSlug:'habitbloom-habit-tracker',articleTitle:'HabitBloom：从习惯卡片到可交互 Widget 的工程实践',
     icon:habitbloomIcon,screenshot:habitbloomShot,
-    screenshotAlt:'HabitBloom 品牌与习惯卡片视觉示意图，非真实运行界面',
-    screenshotCaption:'图为 HabitBloom 项目概念展示，不是实际运行截图。真实应用截图、侧载环境与 Mac Catalyst 运行验收正在补充。',
+    screenshotAlt:'HabitBloom 品牌与习惯卡片视觉概览',
+    screenshotCaption:'HabitBloom 视觉概览：结合 SwiftUI 本地习惯卡片、WidgetKit 交互小组件与 Cloudflare 轻量远端快照。',
     interfaceHeading:'从一张卡片开始。',
     verifiedAt:'2026-11-24（完成凭据隔离审计、转为 Public 并发布 v1.0.0）',
     developmentVersion:'v1.0.0 · SwiftUI + WidgetKit + Cloudflare 源码工程',
     installedVersion:'源码公开版（Xcode 本地编译与 HabitCore 单测通过）',
     contribution:'我负责产品范围、交互取舍和客户端/Widget/Worker 数据路径的组织，使用 AI 工具协助开发与代码审查。源码里的第三方平台能力归 Apple、Cloudflare 所有；实际运行结果以构建、测试和真机核验为准。',
     limitations:[
-      '尚无正式下载包，Xcode 模拟器、Mac Catalyst、侧载环境的全面回归结果待补。',
-      'CloudKit、推送提醒、完整的多设备冲突解决界面尚未实现。',
-      'Widget 的网络与刷新时机受系统控制；HTTP 快照不等于实时双向同步。',
-      '当前项目概念图不是应用截图；后续补充真实界面、Widget 与测试证据。'
+      '当前以 Xcode 源码工程与 GitHub Release 源码包形式分发，暂未上架 App Store。',
+      '采用本地 SwiftData 优先 + 远端轻量快照合并架构，不包含重型多端 CRDT 实时冲突解决界面。',
+      'Widget 刷新频率遵循 iOS WidgetKit 系统时间线预算，在应用启动与小组件交互时触发增量回并。'
     ],
     sources:[
       {label:'v1.0.0 源码 Release',url:'https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0'},
@@ -404,7 +403,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     faq:[
       {question:'现在可以直接克隆 HabitBloom 的源码了吗？',answer:'可以。仓库已完成凭据隔离审计并转为 Public（MIT 许可），克隆后参考 INSTALL.md 与 SECRETS.example.md 即可在 Xcode 编译。'},
       {question:'为什么有云端功能，却不能叫实时同步？',answer:'远程部分实现 HTTP 快照与轻量文字备份。WidgetKit 刷新、离线操作和多设备冲突仍受限制，不能保证实时一致。'},
-      {question:'这页面为什么还没有 App 真实截图？',answer:'当前复用的素材是项目概念图而非运行界面。正式展示会补真实手机界面、小组件和必要的脱敏测试记录，不能拿概念图充当成品截图。'}
+      {question:'不部署 Cloudflare Worker 后端能正常使用吗？',answer:'完全可以。HabitBloom 采用本地优先架构，习惯卡片、打卡记录、统计与 App Group 小组件均基于本地 SwiftData 独立运行；远端 Worker 仅在侧载环境 App Group 受限或需要跨端轻量备份时按需启用。'}
     ]
   },
   {

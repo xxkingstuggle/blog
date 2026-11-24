@@ -625,7 +625,7 @@ async function run(){
     'single-domain-private-digital-space',
     'optical-glass-and-ambient-light',
     'webkit-assertions-over-visual-guessing',
-    'hello-world'
+    'paopao-ai-edtech-product-practice'
   ]) {
     await mobile.goto(`${origin}/posts/${slug}/`, { waitUntil: 'networkidle' });
     await ensureWithinViewport(mobile, `mobile /posts/${slug}/`);

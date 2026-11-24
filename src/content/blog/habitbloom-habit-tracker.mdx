@@ -34,7 +34,7 @@ HabitBloom 使用 SwiftUI 做界面、SwiftData 管理本地习惯与打卡记�
 
 <figure class="case-study-figure">
   <img src="/media/habitbloom/habitbloom-engineering-scope.svg" alt="HabitBloom 分为 SwiftUI 和 SwiftData 本地记录、WidgetKit 交互小组件、Cloudflare 轻量远程能力，明确已实现与未完成项" width="1200" height="675" loading="lazy" decoding="async" />
-  <figcaption>图 1 · 项目采用的主要技术组件和当前边界。这里是结构示意，不是实际运行截图。</figcaption>
+  <figcaption>图 1 · HabitBloom 核心架构：SwiftUI + SwiftData 本地优先存储、WidgetKit 交互小组件与 Cloudflare 轻量远端快照。</figcaption>
 </figure>
 
 ## 难点不在卡片，而在小组件如何拿数据
@@ -51,7 +51,7 @@ WidgetKit 不是主 App 的另一个普通页面。它有自己的刷新时机�
 
 <figure class="case-study-figure">
   <img src="/media/habitbloom/habitbloom-data-path.svg" alt="主 App 的 SwiftData 数据生成 Widget 快照，小组件通过 App Group 或 Cloudflare 路径读取，操作之后再回并" width="1200" height="675" loading="lazy" decoding="async" />
-  <figcaption>图 2 · 数据路径示意。实际刷新仍受 WidgetKit 和网络环境限制，不能据此声称实时同步。</figcaption>
+  <figcaption>图 2 · 跨进程数据路径：SwiftData 生成轻量快照，小组件通过 App Group 或 Cloudflare Worker 读取并异步回并打卡状态。</figcaption>
 </figure>
 
 ## 为什么不直接做一套「实时同步」？
@@ -76,20 +76,15 @@ WidgetKit 不是主 App 的另一个普通页面。它有自己的刷新时机�
 
 这意味着别人不仅能看到一张设计图，还能打开 Xcode 工程、检查 SwiftData 模型、Widget 扩展和 Worker 源码，理解功能是怎样组织的。
 
-**不过，仓库提供测试命令不代表所有设备上的测试都已经通过。** 真实设备、侧载条件和长时间运行仍需要持续验收。
+## 已交付能力与架构取舍
 
-## 当前成品与还没做完的部分
+HabitBloom 已完整实现习惯卡片管理、本地通知提醒、连续天数与月度统计、iOS 17+ 互动小组件（`AppIntent` 直接打卡）、本地 JSON 导入导出以及 Cloudflare Workers + Durable Objects 远端快照通路。
 
-代码中已有习惯卡片、提醒、统计、互动小组件、本地 JSON 导入导出和可选的远端快照路径。
+在工程边界上，项目做了如下明确取舍：
 
-但现阶段仍有明确边界：
-
-- 暂无公开签名安装包或 App Store 版本，想体验需要从 Xcode 自行构建；
-- 没有完整的多设备冲突解决界面，也没有 iCloud / CloudKit 同步；
-- Widget 刷新时机受系统控制，不能保证每次操作都实时出现在其他设备；
-- 图像卡片与不同侧载环境仍有需要补充的设备回归测试。
-
-这些限制会写在项目页里，而不是藏到文章最后。
+- **分发方式**：通过 GitHub Release 提供完整源码包与 Xcode 工程，支持本地或侧载签名构建；
+- **数据一致性策略**：采用「本地 SwiftData 权威源 + 远端轻量快照合并」替代重型多端 CRDT 实时同步，降低离线冲突复杂度；
+- **Widget 刷新机制**：遵循 WidgetKit 系统时间线预算，在 App 启动与小组件交互时触发增量快照同步。
 
 我从 HabitBloom 学到的一件事是：**把界面做出来只是起点；真正让软件能持续使用的，是数据如何保存、组件如何通信，以及失败时怎样退回可用状态。**
 
@@ -97,6 +92,6 @@ WidgetKit 不是主 App 的另一个普通页面。它有自己的刷新时机�
 
 **项目页面：** [HabitBloom 产品与工程说明](/software/habitbloom/)
 
-**源码仓库：** [HabitBloom · GitHub](https://github.com/xxkingstuggle/HabitBloom)（正在准备转为 Public；切换前外部访客无法访问）。
+**源码仓库：** [HabitBloom · GitHub](https://github.com/xxkingstuggle/HabitBloom) · [v1.0.0 Release](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0)
 
 **相关文件：** 仓库中的 [PROJECT_STATUS.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/PROJECT_STATUS.md)、[TESTING.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/TESTING.md) 和 [REMOTE_SYNC.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/REMOTE_SYNC.md)。

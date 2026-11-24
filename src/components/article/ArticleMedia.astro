@@ -11,43 +11,36 @@ interface Props {
 
 const { src, alt, caption, width = 'content' } = Astro.props;
 const isImageMetadata = typeof src === 'object' && 'src' in src;
-const mediaSrc = isImageMetadata ? (src as ImageMetadata).src : String(src);
 const sizes =
 	width === 'full'
 		? '100vw'
 		: width === 'wide'
 			? '(max-width: 1080px) 94vw, 960px'
 			: '(max-width: 780px) 92vw, 720px';
-// Avoid rendering a duplicate figure when GalleryHero already displays the same cover image in the header.
-const isDuplicateHeroCover =
-	(Astro.url.pathname.includes('/posts/usblinkmic-android-mac-bridge') && mediaSrc.includes('usblinkmic-mac')) ||
-	(Astro.url.pathname.includes('/posts/allow-discomfort') && mediaSrc.includes('liquid-glass-cover'));
 ---
 
-{!isDuplicateHeroCover && (
-	<div class="article-media" data-width={width}>
-		<figure class="article-media-figure">
-			{isImageMetadata ? (
-				<Image
-					src={src as ImageMetadata}
-					alt={alt}
-					class="article-media-image"
-					format="webp"
-					widths={[640, 960, 1440]}
-					sizes={sizes}
-					loading="lazy"
-					decoding="async"
-				/>
-			) : (
-				<img
-					src={src as string}
-					alt={alt}
-					class="article-media-image"
-					loading="lazy"
-					decoding="async"
-				/>
-			)}
-			{caption && <figcaption class="article-media-caption">{caption}</figcaption>}
-		</figure>
-	</div>
-)}
+<div class="article-media" data-width={width}>
+	<figure class="article-media-figure">
+		{isImageMetadata ? (
+			<Image
+				src={src as ImageMetadata}
+				alt={alt}
+				class="article-media-image"
+				format="webp"
+				widths={[640, 960, 1440]}
+				sizes={sizes}
+				loading="lazy"
+				decoding="async"
+			/>
+		) : (
+			<img
+				src={src as string}
+				alt={alt}
+				class="article-media-image"
+				loading="lazy"
+				decoding="async"
+			/>
+		)}
+		{caption && <figcaption class="article-media-caption">{caption}</figcaption>}
+	</figure>
+</div>

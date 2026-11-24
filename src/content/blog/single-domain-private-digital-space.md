@@ -29,7 +29,7 @@ tags:
 
 <figure class="case-study-figure">
   <img src="/media/digital-space/architecture-boundary.svg" alt="myzjx.com 单域名下的 Vercel 静态公开层、Worker 鉴权网关与 D1 版本化文档存储边界" width="1200" height="675" loading="lazy" decoding="async" />
-  <figcaption>图 1 · 单域名双空间的路由转发与权限边界结构示意，非生产流量监控截图。</figcaption>
+  <figcaption>图 1 · 单域名双空间的路由转发与权限边界：Vercel 纯静态公开层、Cloudflare Worker 鉴权网关与 D1 版本化文档存储。</figcaption>
 </figure>
 
 这样做有两个直接好处：

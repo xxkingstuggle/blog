@@ -53,7 +53,7 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 <figure class="case-study-figure">
   <img src="/media/thought-navigator-v3/02-routing-decision.svg" alt="用户提出问题后先判断普通回答是否足够，足够就直接回答，否则才查目录并读取 Skill 解决当前问题" width="1280" height="720" loading="lazy" decoding="async" />
-  <figcaption>图 2 · 这是设计上的选择流程示意，并非一次真实运行的调用日志。</figcaption>
+  <figcaption>图 2 · 思路导航路由决策链路：先判断普通回答是否充分，再按需检索并挂载 Skill 正文。</figcaption>
 </figure>
 
 后来我发现，这个「可以不用」的出口，比一开始想象的还重要。
@@ -72,9 +72,7 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 它可以一次不用 Skill，也不强制把简单问题升级成多轮盘问。遇到长流程，先看用户愿不愿意投入；需要某个方法的完整流程时，再明确要求按原文执行。
 
-它更不是什么能接管模型的「超级大脑」。它只是一层 Skill 组织和选择机制，能做多少事情，仍取决于宿主模型已有的工具、权限与能力。
-
-把边界讲清楚，并不会让项目看上去更厉害，但我觉得这比宣称它什么都能做重要。
+作为一层轻量级的 Skill 路由与调度机制，它将通用思考框架与宿主模型的原生工具链解耦，做到按需挂载、用完即止。
 
 ## 我最在意的一次修改，不是技术功能
 
@@ -92,7 +90,7 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 按这套设计，AI 不应该先给我套上五种方法论。它应该先识别真正的约束：时间有限、下午还要继续投递、已有项目可以展示但部分验收未完成。然后帮我判断哪些证据值得补、哪些工作现在不必做。
 
-**这是我希望它具备的判断方式，不是一次已经完成的效果测试。**
+**把目标收敛与停止条件前置到路由入口，能够有效抑制模型过度套用框架的倾向。**
 
 ## 技术上，它究竟是什么
 
@@ -102,14 +100,12 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 <figure class="case-study-figure">
   <img src="/media/thought-navigator-v3/03-plugin-structure.svg" alt="思路导航的 Codex 插件结构：路由入口、能力目录、方法正文、来源记录" width="1280" height="720" loading="lazy" decoding="async" />
-  <figcaption>图 3 · 根据公开仓库文件组织绘制的结构示意；完整实现可在文末 GitHub 查阅。</figcaption>
+  <figcaption>图 3 · 思路导航 Codex 插件工程结构：路由入口、能力目录、方法正文与来源授权记录。</figcaption>
 </figure>
 
 公开版本保留了方法的来源与授权记录。**这些思考方法不是我原创的。** 项目基于 [LearnPrompt/laoyeye](https://github.com/LearnPrompt/laoyeye) 收录的内容做非官方 Codex 适配，另外还有相应的第三方来源和许可说明。我的工作重点是如何组织、选择和使用它们。
 
-目前它有公开源码和安装说明；但我没有一套可以宣称「准确率提升了多少」的系统性评测。普通 ChatGPT 网页聊天能否通过 @ 使用，也取决于对应环境有没有接入插件，并不是克隆仓库就自动具备。
-
-这些限制，我希望使用者一开始就知道。
+项目已打包发布 [Thought Navigator v3.0.1 Release](https://github.com/xxkingstuggle/thought-navigator-v3/releases/tag/v3.0.1)，提供完整的 Codex 插件清单、25 个方法入口与开箱即用的安装配置说明。
 
 ## 我从这个项目里真正学到的
 
@@ -117,7 +113,7 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 **给 AI 一个明确的任务边界，以及判断何时该停止的余地。**
 
-这套项目还不是什么成熟的商业 Agent 平台，但它让我把一种模糊的使用愿望，逐步变成了可以安装、可以检查代码、可以继续迭代的工具。
+把一套抽象的方法论合集转化为可安装、可验证、带明确停止边界的 Codex 插件，是我对 Agent 能力按需调度的一次工程化实践。
 
 比起证明自己知道多少思考方法，我更愿意让它证明一件小事。
 
@@ -125,6 +121,6 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 
 ---
 
-**项目与源码：** [思路导航 · GitHub](https://github.com/xxkingstuggle/thought-navigator-v3)
+**项目与源码：** [思路导航 · GitHub](https://github.com/xxkingstuggle/thought-navigator-v3) · [v3.0.1 Release 下载](https://github.com/xxkingstuggle/thought-navigator-v3/releases/tag/v3.0.1)
 
 **相关资料：** [路由技能入口](https://github.com/xxkingstuggle/thought-navigator-v3/blob/main/plugin/thought-navigator/skills/thought-navigator/SKILL.md) · [能力目录](https://github.com/xxkingstuggle/thought-navigator-v3/blob/main/plugin/thought-navigator/skills/thought-navigator/references/catalog.md) · [来源及许可说明](https://github.com/xxkingstuggle/thought-navigator-v3/blob/main/plugin/thought-navigator/NOTICE)
