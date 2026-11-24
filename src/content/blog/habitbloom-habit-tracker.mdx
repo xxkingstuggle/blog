@@ -1,8 +1,8 @@
 ---
-title: "HabitBloom：一张习惯卡片，为什么最后做到了 Widget 和云端？"
+title: 只想在手机桌面点一下打卡，为什么最后我把快照做到了云端？
 pubDate: 2026-09-15
-updatedDate: 2026-11-23
-description: "用 SwiftUI、SwiftData 和 WidgetKit 做打卡应用时，我如何处理本地数据、小组件回写与侧载环境下的远程快照。"
+updatedDate: 2026-11-24
+description: 我原本只想用 SwiftUI 和 SwiftData 做一张干净的习惯打卡卡片，结果一旦放进 iPhone 桌面小组件并跑在侧载环境里，跨进程拿数据和打卡回写全成了硬骨头。
 tags:
   - SwiftUI
   - SwiftData
@@ -16,82 +16,74 @@ presentation: article
 cover: ../../assets/projects/habitbloom-cover.png
 ---
 
-我想要的习惯打卡应用很简单：每天打开，看到今天要做什么，点一下就记录完成。
+我最初想做的习惯打卡应用，需求简单到不能再简单。
 
-听起来没什么技术难度。但当我想把它放进 iPhone 桌面小组件，并且在 Mac 上也能使用时，问题就出现了。
+每天早上拿起手机，一眼看到今天要干哪两件事，手指头点一下，啪，打卡完成。
 
-**主 App 能读到的数据，小组件不一定能读到。小组件里点了打卡，主 App 也不一定立刻知道。**
+刚开始动手的时候，我觉得这活儿一个周末就能收工。用 SwiftUI 画几张好看的卡片，底下接上 SwiftData 存一下本地习惯和打卡记录，不就完事了吗？
 
-仓库现已完成凭据隔离审计并在 GitHub 转为 Public（[**HabitBloom v1.0.0 源码 Release**](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0)，MIT 许可）。这篇文章讲清楚：它做到了哪里，为什么选择这些技术，以及我如何和 AI 一起把功能逐步接起来。
+结果等我兴冲冲把卡片放进 iPhone 桌面小组件（Widget），又想在自己的 Mac 上也能随时看一眼的时候，现实直接给我泼了一盆冷水。
 
-## 从一张卡片开始，而不是从账号系统开始
+主 App 里刚刚点完打卡，退回手机桌面一看，小组件上的数字纹丝不动。
 
-HabitBloom 使用 SwiftUI 做界面、SwiftData 管理本地习惯与打卡记录。每张习惯卡片可以配置名称、图标、颜色、执行周期和提醒，也能切换不同样式。
+反过来，我在桌面小组件上点了一下完成，再点进主 App，主列表里居然还显示今天没打卡。
 
-我优先做的是一天内真实会发生的操作：创建习惯、打卡、修改、查看连续天数和月度统计。系统通知负责提醒，日历可以补记或取消历史打卡。
+更别提用非付费或者侧载重签名装到真机上的时候，有时候小组件干脆连一张习惯卡片都读不出来，直接给你摆出一块空白。
 
-相比先搭用户账号和完整云数据库，本地优先更符合它的使用场景：**简单记录不应该依赖服务器正常运行。**
+为了把这件「点一下就打卡」的小事真正做通，我一路从本地 SwiftData 折腾到了跨进程快照，最后甚至用 Cloudflare Workers 和 Durable Objects 给它搭了一条远端快照通道。目前整个仓库已经完成凭据隔离审计，在 GitHub 上发出了开源的 [**HabitBloom v1.0.0 源码 Release**](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0)（MIT 许可），工程细节也都整理在了 [HabitBloom 作品页](/software/habitbloom/) 里。
+
+回过头来看，我挺庆幸自己一开始是从一张本地卡片做起，而没有一上来就去搭什么庞大的用户注册、登录和云端大数据库。
+
+你想想看，一个每天记录喝水、背单词或者早睡的小工具，要是哪天因为网络不好或者服务器挂了，连打个卡都转圈圈报错，谁还愿意天天打开它？
+
+所以在 HabitBloom 里，我把一天之内真实会发生的高频动作全放在了本地优先的第一层。用 SwiftUI 和 SwiftData 管好习惯卡片的名称、图标、颜色、执行周期和不同视觉样式，系统本地通知负责按时提醒，点进日历视图可以随时补记或者取消历史打卡，连续天数（Streak）和月度完成率统计也全在本地毫秒级算完。
+
+哪怕你永远不配任何服务器，它也是一个完完整整、随时能用的本地习惯记录工具。
 
 <figure class="case-study-figure">
-  <img src="/media/habitbloom/habitbloom-engineering-scope.svg" alt="HabitBloom 分为 SwiftUI 和 SwiftData 本地记录、WidgetKit 交互小组件、Cloudflare 轻量远程能力，明确已实现与未完成项" width="1200" height="675" loading="lazy" decoding="async" />
-  <figcaption>图 1 · HabitBloom 核心架构：SwiftUI + SwiftData 本地优先存储、WidgetKit 交互小组件与 Cloudflare 轻量远端快照。</figcaption>
+  <img src="/media/habitbloom/habitbloom-engineering-scope.svg" alt="HabitBloom 分为 SwiftUI 和 SwiftData 本地记录、WidgetKit 交互小组件、Cloudflare 轻量远程能力" width="1200" height="675" loading="lazy" decoding="async" />
+  <figcaption>图 1 · HabitBloom 核心架构，由 SwiftUI 加 SwiftData 本地优先存储、WidgetKit 交互小组件与 Cloudflare 轻量远端快照组成。</figcaption>
 </figure>
 
-## 难点不在卡片，而在小组件如何拿数据
+那既然本地优先这么爽，为什么一接上桌面小组件就到处碰壁呢？
 
-WidgetKit 不是主 App 的另一个普通页面。它有自己的刷新时机和执行约束，不能直接把主 App 的 SwiftData 当成共享数据库使用。
+因为很多人刚写 iOS 小组件时容易误以为，Widget 只是主 App 伸到桌面上的一块小屏幕。
 
-所以我把要展示的习惯状态整理成更小的 **Widget 快照**。在 App Group 可用的安装环境中，小组件能读取本地共享数据；在某些侧载、重签名环境下，App Group 可能失效，项目另外准备了 Cloudflare Worker 的远端 HTTP 快照路径。
+其实根本不是那么回事。在系统眼里，WidgetKit 是一个完全独立运行的扩展进程，它有自己极其苛刻的内存限制和刷新时间线预算，你不能像在主 App 里那样，随便把整个 SwiftData 数据库当成普通内存对象拿来直接读写。
 
-这不是同时让两个地方独立维护整份数据库，而是尽量让：
+而且在实际安装环境里还有个更隐蔽的痛点。正常情况下，主 App 和小组件是靠 Apple 的 App Group 共享容器在本地传数据的。但如果你是在某些侧载或者本地重签名环境下装到手机上的，App Group 权限经常会失效，小组件伸手去本地共享目录里摸，摸出来的全是空的。
 
-- **SwiftData 保存主数据**：习惯、打卡记录和本地操作；
-- **快照提供展示状态**：小组件只获取它真正要显示的内容；
-- **Widget 打卡再回并**：小组件产生的操作通过本地队列或远端路径，等待主 App 启动后合并回本地数据。
+怎么破这个局？
+
+我没有让小组件去直接啃整库数据，而是设计了一层极轻量的「Widget 状态快照」。
+
+主 App 里的 SwiftData 依然是唯一的数据权威源，负责保管所有习惯定义和历史打卡流水。每当状态变化时，主 App 会把小组件真正需要显示的那一点点当天的状态，浓缩成一份很小的快照。
+
+如果当前环境的 App Group 可用，小组件就直接从本地共享容器读这份快照；如果遇到了侧载环境导致 App Group 走不通，系统就自动切到我用 Cloudflare Worker 搭好的远端 HTTP 快照路径去拉取。
+
+反过来，当你在 iOS 17 以上的互动小组件里直接点了一下打卡按钮（触发 `AppIntent`），小组件也不会去强行改写主数据库，而是把这次打卡动作记进本地待合并队列或者远端快照通路里。等下次主 App 启动或者回到前台时，再把这些增量打卡动作稳稳当当地合并回本地 SwiftData，并顺手刷新 WidgetKit 的时间线。
 
 <figure class="case-study-figure">
   <img src="/media/habitbloom/habitbloom-data-path.svg" alt="主 App 的 SwiftData 数据生成 Widget 快照，小组件通过 App Group 或 Cloudflare 路径读取，操作之后再回并" width="1200" height="675" loading="lazy" decoding="async" />
-  <figcaption>图 2 · 跨进程数据路径：SwiftData 生成轻量快照，小组件通过 App Group 或 Cloudflare Worker 读取并异步回并打卡状态。</figcaption>
+  <figcaption>图 2 · 跨进程数据路径，SwiftData 生成轻量快照，小组件通过 App Group 或 Cloudflare Worker 读取并异步回并打卡状态。</figcaption>
 </figure>
 
-## 为什么不直接做一套「实时同步」？
+写到这里，你可能会问，既然 Cloudflare Workers 和 Durable Objects 都搭起来了，为什么不干脆再往前一步，做一套全功能的云端多端实时同步呢？
 
-因为这会改变整个项目的复杂度。
+坦率的讲，这是我深思熟虑之后主动踩下的一脚刹车。
 
-如果承诺多端实时同步，就要考虑设备同时修改、离线恢复、冲突解决、身份验证与长期维护。HabitBloom 目前最需要的是可靠的个人打卡与小组件展示，而不是完整的协作服务。
+一旦你向用户承诺「多端全量实时同步」，整个项目的性质就全变了。你得处理两台设备同时离线修改同一张卡片的 CRDT 冲突消解，得做完整的身份鉴权体系，还得操心海量自定义背景图塞进云端后的带宽和存储账单。
 
-因此远程能力只覆盖两个较小的需求：**小组件状态快照与轻量文字备份**。
+但对于我自己的日常打卡来说，最刚需的根本不是什么跨国协作级别的实时同步，而是桌面小组件能稳定拿到状态，外加换手机时有一份靠谱的轻量备份。
 
-它的后端使用 Cloudflare Workers 和 Durable Objects。远端文字备份保存习惯配置、打卡日期等轻量数据，不把全部自定义图片直接塞进备份；小组件图片走单独的引用和上传路径。
+所以我把远端能力死死框定在两件小事上，一是小组件状态快照，二是只存习惯配置与打卡日期的轻量文字备份。至于笨重的自定义图片，绝不一股脑塞进文字备份包里，小组件需要用到的图片走单独的引用和按需上传路径；平时本地想迁移数据，直接用内置的 JSON 导入导出就能搞定。
 
-没有配置服务器时，应用仍然可以作为本地习惯记录工具使用。
+这其实也是我和 AI 协作写代码时一直坚持的习惯。
 
-## AI 在开发中负责什么？
+我不会让 AI 顺着惯性无休止地堆砌华而不实的大功能，而是先从我自己每天真会用到的痛点出发，把边界划清楚，再让 AI 参与界面组件、数据流集成和测试验证。
 
-这个项目也体现了我使用 AI 编程的方式。
+为了保证这套逻辑经得起折腾，我把连续天数和统计计算这些跟 UI 无关的纯逻辑全部抽成了独立的核心模块，在工程里配齐了 Smoke 冒烟测试和 Stress 压力测试两套入口，同时保留了 iOS 模拟器和 Mac Catalyst 的完整构建配置。
 
-我先从实际使用问题确定功能范围，再借助 AI 工具参与界面、数据逻辑、组件集成和代码检查。关键不是 AI 生成了多少代码，而是功能最终能否对应到清楚的文件、数据流与验证方式。
+如果你对这套「本地 SwiftData 权威源加远端轻量快照」的实现感兴趣，可以直接去 [HabitBloom 作品页](/software/habitbloom/) 或 [GitHub 仓库](https://github.com/xxkingstuggle/HabitBloom) 下载 [v1.0.0 Release](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0) 源码包。仓库里的 [PROJECT_STATUS.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/PROJECT_STATUS.md)、[TESTING.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/TESTING.md) 和 [REMOTE_SYNC.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/REMOTE_SYNC.md) 把每一条数据链路和验证步骤都写得明明白白。
 
-项目把统计计算等与界面无关的部分抽成了核心模块，提供 Smoke 和 Stress 两类测试入口；还保留了 iOS 模拟器与 Mac Catalyst 的构建方法。
-
-这意味着别人不仅能看到一张设计图，还能打开 Xcode 工程、检查 SwiftData 模型、Widget 扩展和 Worker 源码，理解功能是怎样组织的。
-
-## 已交付能力与架构取舍
-
-HabitBloom 已完整实现习惯卡片管理、本地通知提醒、连续天数与月度统计、iOS 17+ 互动小组件（`AppIntent` 直接打卡）、本地 JSON 导入导出以及 Cloudflare Workers + Durable Objects 远端快照通路。
-
-在工程边界上，项目做了如下明确取舍：
-
-- **分发方式**：通过 GitHub Release 提供完整源码包与 Xcode 工程，支持本地或侧载签名构建；
-- **数据一致性策略**：采用「本地 SwiftData 权威源 + 远端轻量快照合并」替代重型多端 CRDT 实时同步，降低离线冲突复杂度；
-- **Widget 刷新机制**：遵循 WidgetKit 系统时间线预算，在 App 启动与小组件交互时触发增量快照同步。
-
-我从 HabitBloom 学到的一件事是：**把界面做出来只是起点；真正让软件能持续使用的，是数据如何保存、组件如何通信，以及失败时怎样退回可用状态。**
-
----
-
-**项目页面：** [HabitBloom 产品与工程说明](/software/habitbloom/)
-
-**源码仓库：** [HabitBloom · GitHub](https://github.com/xxkingstuggle/HabitBloom) · [v1.0.0 Release](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0)
-
-**相关文件：** 仓库中的 [PROJECT_STATUS.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/PROJECT_STATUS.md)、[TESTING.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/TESTING.md) 和 [REMOTE_SYNC.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/REMOTE_SYNC.md)。
+折腾完 HabitBloom 我最大的感触就是，把一张漂亮的卡片画出来，最多只算走完了十分之一的路。真正决定一个软件你会不会天天打开的，永远是它怎么存数据、怎么在组件之间传话，以及当外部环境不理想的时候，它能不能体面地退回一个照样好使的状态。

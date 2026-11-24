@@ -86,7 +86,7 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 聊完了赶紧去干活，不制造新的焦虑，也不凭空生出一堆新任务，这才是工具该有的分寸。
 
 <figure class="case-study-figure">
-  <img src="/media/thought-navigator-v3/03-plugin-structure.svg" alt="思路导航的 Codex 插件结构：路由入口、能力目录、方法正文、来源记录" width="1280" height="720" loading="lazy" decoding="async" />
+  <img src="/media/thought-navigator-v3/03-plugin-structure.svg" alt="思路导航的 Codex 插件结构，包含路由入口、能力目录、方法正文与来源记录" width="1280" height="720" loading="lazy" decoding="async" />
   <figcaption>图 3 · 思路导航 Codex 插件工程结构，包含路由入口、能力目录、方法正文与来源授权记录。</figcaption>
 </figure>
 
