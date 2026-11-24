@@ -605,8 +605,16 @@ async function run(){
   ]) {
     await mobile.goto(`${origin}/posts/${slug}/`, { waitUntil: 'networkidle' });
     await ensureWithinViewport(mobile, `mobile /posts/${slug}/`);
-    assert.equal(await mobile.locator('.article-mobile-toc').evaluate(el => getComputedStyle(el).display), 'block',
-      `mobile foldable TOC must be visible on /posts/${slug}/`);
+    const headingCount = await mobile.locator('.article-prose :is(h2, h3)').count();
+    if (headingCount > 0) {
+      assert.equal(await mobile.locator('.article-mobile-toc').evaluate(el => getComputedStyle(el).display), 'block',
+        `mobile foldable TOC must be visible on /posts/${slug}/ when headings exist`);
+    } else {
+      assert.equal(await mobile.locator('.article-mobile-toc').count(), 0,
+        `mobile foldable TOC must not render empty shell on /posts/${slug}/ when headings are absent`);
+      assert.equal(await mobile.locator('.article-rail').count(), 0,
+        `desktop TOC rail must not render empty shell on /posts/${slug}/ when headings are absent`);
+    }
   }
 
   await desktop.goto(origin+'/posts/single-domain-private-digital-space/',{waitUntil:'networkidle'});

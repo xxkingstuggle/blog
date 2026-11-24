@@ -103,6 +103,17 @@
 	padding-bottom: 96px;
 }
 
+.article-layout.article-layout--no-rail {
+	grid-template-columns: minmax(0, 1fr);
+	width: min(calc(100% - var(--page-gutter) * 2), var(--content-width));
+	gap: 0;
+}
+
+.article-header-section--no-rail .article-header-inner,
+.feature-header-section--no-rail .feature-header-inner {
+	max-width: var(--content-width);
+}
+
 .article-content-wrapper {
 	min-width: 0;
 }

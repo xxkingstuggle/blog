@@ -26,13 +26,14 @@ const description = post.data.description;
 const kindLabel = KIND_LABELS[post.data.kind] || '思考';
 const kicker = post.data.kicker || kindLabel;
 const linkedSoftware = getSoftwareByArticleSlug(post.id);
+const hasToc = headings.some((h) => h.depth === 2 || h.depth === 3);
 ---
 
 <!-- Fixed Reading Progress Indicator -->
 <div class="reading-progress-bar" id="reading-progress" aria-hidden="true"></div>
 
 <!-- Standard Article Header Section -->
-<header class="article-header-section">
+<header class:list={['article-header-section', { 'article-header-section--no-rail': !hasToc }]}>
 	<div class="shell article-header-inner">
 		<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;">
 			<a class="article-back-link" href="/posts/" style="margin-bottom: 0;">
@@ -96,7 +97,7 @@ const linkedSoftware = getSoftwareByArticleSlug(post.id);
 </header>
 
 <!-- Article Body & TOC Rail -->
-<div class="shell article-layout">
+<div class:list={['shell', 'article-layout', { 'article-layout--no-rail': !hasToc }]}>
 	<article class="article-content-wrapper">
 		<MobileToc headings={headings} />
 		<div class="article-prose">
@@ -106,7 +107,7 @@ const linkedSoftware = getSoftwareByArticleSlug(post.id);
 		{(prevPost || nextPost) && <NextArticle prevPost={prevPost} post={nextPost} />}
 	</article>
 
-	<ArticleRail headings={headings} />
+	{hasToc && <ArticleRail headings={headings} />}
 </div>
 
 <script>

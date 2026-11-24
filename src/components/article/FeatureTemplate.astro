@@ -24,13 +24,14 @@ const { post, headings, prevPost, nextPost } = Astro.props;
 const description = post.data.description;
 const kindLabel = KIND_LABELS[post.data.kind] || '重点发布';
 const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
+const hasToc = headings.some((h) => h.depth === 2 || h.depth === 3);
 ---
 
 <!-- Fixed Reading Progress Indicator -->
 <div class="reading-progress-bar" id="reading-progress" aria-hidden="true"></div>
 
 <!-- Feature Release Immersive Header -->
-<header class="feature-header-section">
+<header class:list={['feature-header-section', { 'feature-header-section--no-rail': !hasToc }]}>
 	<div class="shell feature-header-inner">
 		<div class="feature-nav-row">
 			<a class="article-back-link" href="/posts/">
@@ -68,7 +69,7 @@ const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
 </header>
 
 <!-- Feature Body Layout with TOC Rail -->
-<div class="shell article-layout feature-layout">
+<div class:list={['shell', 'article-layout', 'feature-layout', { 'article-layout--no-rail': !hasToc }]}>
 	<article class="article-content-wrapper feature-content-wrapper">
 		<MobileToc headings={headings} />
 		<div class="article-prose feature-prose">
@@ -78,7 +79,7 @@ const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
 		{(prevPost || nextPost) && <NextArticle prevPost={prevPost} post={nextPost} />}
 	</article>
 
-	{headings.length > 0 && <ArticleRail headings={headings} />}
+	{hasToc && <ArticleRail headings={headings} />}
 </div>
 
 <style>

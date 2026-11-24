@@ -133,8 +133,10 @@ figure { margin: 0; }
 .software-feature-card, .software-scenario-card, .software-step-card { padding: var(--space-8); border-radius: var(--radius-lg); box-shadow: none; }
 .download-item { padding: var(--space-6); border-radius: var(--radius-md); }
 .article-layout { width: min(calc(100% - var(--page-gutter) * 2), 1024px); grid-template-columns: minmax(0,720px) 240px; gap: var(--space-16); padding-block: var(--space-12); }
+.article-layout.article-layout--no-rail { width: min(calc(100% - var(--page-gutter) * 2), var(--content-width)); grid-template-columns: minmax(0, 1fr); gap: 0; }
 .article-header-section, .feature-header-section { padding-block: var(--space-16) var(--space-12); }
 .article-header-inner, .feature-header-inner { max-width: 1024px; }
+.article-header-section--no-rail .article-header-inner, .feature-header-section--no-rail .feature-header-inner { max-width: var(--content-width); }
 .article-header-inner > h1, .article-header-inner > p, .feature-header-inner > h1, .feature-header-inner > p { max-width: var(--content-width); }
 .article-prose { font-size: 18px; line-height: 1.85; }
 .article-prose h2 { font-size: 30px; }

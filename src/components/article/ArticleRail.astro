@@ -13,20 +13,22 @@ const { headings } = Astro.props;
 const filteredHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
-<aside class="article-rail" aria-label="章节导航">
-	<div class="rail-title">SECTIONS / 目录</div>
-	<nav>
-		<ul class="rail-list">
-			{filteredHeadings.map((heading) => (
-				<li style={heading.depth === 3 ? 'padding-left: 12px;' : ''}>
-					<a class="rail-link" href={`#${heading.slug}`} data-heading={heading.slug}>
-						{heading.text}
-					</a>
-				</li>
-			))}
-		</ul>
-	</nav>
-</aside>
+{filteredHeadings.length > 0 && (
+	<aside class="article-rail" aria-label="章节导航">
+		<div class="rail-title">SECTIONS / 目录</div>
+		<nav>
+			<ul class="rail-list">
+				{filteredHeadings.map((heading) => (
+					<li style={heading.depth === 3 ? 'padding-left: 12px;' : ''}>
+						<a class="rail-link" href={`#${heading.slug}`} data-heading={heading.slug}>
+							{heading.text}
+						</a>
+					</li>
+				))}
+			</ul>
+		</nav>
+	</aside>
+)}
 
 <script>
 	// Highlight active section on scroll
