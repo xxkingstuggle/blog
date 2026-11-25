@@ -34,7 +34,8 @@ const total = SOFTWARE_PRODUCTS.length + posts.length + workbench.length;
       <div>
         <h2 id="explore-title">代表软件与实战文章</h2>
       </div>
-      <div class="gallery-view-tabs" role="group" aria-label="筛选公开内容">
+      <div class="gallery-view-tabs" data-liquid-nav role="group" aria-label="筛选公开内容">
+        <span class="liquid-nav-pill" aria-hidden="true"></span>
         <button type="button" data-gallery-filter="all" aria-pressed="true">全部</button>
         <button type="button" data-gallery-filter="work" aria-pressed="false">软件作品</button>
         <button type="button" data-gallery-filter="writing" aria-pressed="false">技术与产品文章</button>

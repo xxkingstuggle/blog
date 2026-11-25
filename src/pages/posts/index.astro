@@ -26,7 +26,8 @@ const filters = ['all', 'project', 'thought', 'update'] as const;
 
 	<section class="shell posts-section" aria-label="文章索引">
 		<div class="index-tools">
-			<div class="index-filters" role="group" aria-label="按分类筛选文章">
+			<div class="index-filters" data-liquid-nav role="group" aria-label="按分类筛选文章">
+				<span class="liquid-nav-pill" aria-hidden="true"></span>
 				{filters.map((filter) => (
 					<button
 						type="button"

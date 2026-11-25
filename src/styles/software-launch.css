@@ -1,0 +1,761 @@
+/* ==========================================================================
+   Flagship Software Product Launch Page (/software/[slug]/)
+   Inspired by Alcove, CleanShot X & Raycast Product Showcases
+   ========================================================================== */
+
+.launch-page {
+	padding-bottom: 72px;
+}
+
+/* 1. Floating Liquid-Glass Product Sub-Topbar */
+.launch-subnav-wrap {
+	position: sticky;
+	top: 14px;
+	z-index: 95;
+	padding-top: 14px;
+	margin-bottom: 12px;
+}
+
+.launch-subnav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	min-height: 54px;
+	padding: 8px 14px;
+	border-radius: 16px;
+	background: var(--surface-glass-strong);
+	backdrop-filter: blur(22px) saturate(180%);
+	-webkit-backdrop-filter: blur(22px) saturate(180%);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-card);
+}
+
+.launch-subnav-identity {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.launch-subnav-back {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	background: var(--surface-subtle);
+	color: var(--text-secondary);
+	font-size: 13px;
+	flex-shrink: 0;
+}
+
+.launch-subnav-back:hover {
+	color: var(--text);
+	background: var(--surface);
+}
+
+.launch-subnav-icon {
+	width: 26px;
+	height: 26px;
+	border-radius: 7px;
+	object-fit: cover;
+	flex-shrink: 0;
+}
+
+.launch-subnav-name {
+	font-size: 14px;
+	font-weight: 720;
+	color: var(--text);
+	white-space: nowrap;
+}
+
+.launch-subnav-version {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 650;
+	padding: 2px 8px;
+	border-radius: var(--radius-pill);
+	background: var(--accent-soft);
+	color: var(--accent-contrast);
+	white-space: nowrap;
+}
+
+.launch-subnav-links {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	border-radius: 11px;
+}
+
+.launch-subnav-links a {
+	padding: 6px 12px;
+	border-radius: 8px;
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--text-secondary);
+	white-space: nowrap;
+}
+
+.launch-subnav-links a:hover {
+	color: var(--text);
+}
+
+.launch-subnav-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-shrink: 0;
+}
+
+.launch-subnav-cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 34px;
+	padding: 6px 14px;
+	border-radius: 10px;
+	background: var(--text);
+	color: var(--bg);
+	font-size: 12.5px;
+	font-weight: 660;
+	white-space: nowrap;
+}
+
+.launch-subnav-cta:hover {
+	background: var(--accent-contrast);
+	color: #ffffff;
+}
+
+/* 2. Flagship Hero */
+.launch-hero {
+	padding: clamp(32px, 5vw, 60px) 0 36px;
+	text-align: center;
+}
+
+.launch-hero-center {
+	max-width: 820px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.launch-icon-pedestal {
+	position: relative;
+	width: 88px;
+	height: 88px;
+	border-radius: 24px;
+	padding: 8px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-card);
+	display: grid;
+	place-items: center;
+	margin-bottom: 20px;
+	transition: transform 320ms var(--ease-spring);
+}
+
+.launch-icon-pedestal:hover {
+	transform: translateY(-3px) scale(1.04) rotate(-2deg);
+}
+
+.launch-app-icon {
+	width: 72px;
+	height: 72px;
+	border-radius: 18px;
+	object-fit: cover;
+}
+
+.launch-badge-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin-bottom: 18px;
+}
+
+.launch-title {
+	font-size: clamp(2.4rem, 5vw, 4.1rem);
+	font-weight: 800;
+	line-height: 1.1;
+	letter-spacing: -0.045em;
+	margin: 0 0 16px;
+	color: var(--text);
+}
+
+.launch-title-name {
+	display: block;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--accent-contrast);
+	margin-bottom: 10px;
+}
+
+.launch-summary {
+	font-size: clamp(15px, 1.3vw, 17.5px);
+	line-height: 1.75;
+	color: var(--text-secondary);
+	max-width: 64ch;
+	margin: 0 0 28px;
+}
+
+.launch-cta-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	margin-bottom: 32px;
+}
+
+.launch-cta-meta {
+	font-family: var(--font-mono);
+	font-size: 11.5px;
+	opacity: 0.82;
+	padding-left: 6px;
+	border-left: 1px solid currentColor;
+}
+
+/* 4-Column Spec & Trust Strip */
+.launch-trust-strip {
+	width: 100%;
+	max-width: 1040px;
+	margin: 0 auto 36px;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 12px;
+	text-align: left;
+}
+
+.launch-trust-cell {
+	padding: 14px 16px;
+	border-radius: 14px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-subtle);
+}
+
+.launch-trust-cell dt {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	margin-bottom: 5px;
+}
+
+.launch-trust-cell dd {
+	margin: 0;
+	font-size: 13.5px;
+	font-weight: 660;
+	color: var(--text);
+	line-height: 1.4;
+}
+
+/* 3. Interactive Multi-View Optical Stage */
+.launch-stage-wrapper {
+	max-width: 1180px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+.launch-stage-controls {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-bottom: 14px;
+}
+
+.launch-view-tabs {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 4px;
+	border-radius: 14px;
+	background: color-mix(in srgb, var(--surface-subtle) 85%, transparent);
+	border: 1px solid var(--line);
+}
+
+.launch-view-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	min-height: 36px;
+	padding: 6px 14px;
+	border-radius: 10px;
+	border: 0;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: 12.5px;
+	font-weight: 620;
+	cursor: pointer;
+	transition: color 180ms ease;
+}
+
+.launch-view-tab:hover {
+	color: var(--text);
+}
+
+.launch-view-tab[aria-selected='true'] {
+	color: var(--text);
+	font-weight: 700;
+}
+
+.launch-view-tab-num {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	color: var(--accent-contrast);
+}
+
+.launch-stage-frame {
+	position: relative;
+	border-radius: 24px;
+	padding: clamp(16px, 2.8vw, 36px);
+	background: var(--stage-surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-stage);
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.launch-stage-frame::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: var(--stage-glow);
+	pointer-events: none;
+	z-index: 0;
+}
+
+.launch-stage-pane {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 18px;
+}
+
+.launch-stage-pane[hidden] {
+	display: none !important;
+}
+
+.launch-stage-media {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 20px;
+}
+
+.launch-stage-media img {
+	width: 100%;
+	max-height: 720px;
+	height: auto;
+	object-fit: contain;
+	border-radius: 12px;
+	filter: none;
+}
+
+.launch-stage-media--narrow img {
+	width: auto;
+	max-width: min(100%, 420px);
+	max-height: 620px;
+}
+
+.launch-stage-caption-bar {
+	width: 100%;
+	padding: 16px 20px;
+	border-radius: 16px;
+	background: var(--surface-glass-strong);
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	border: 1px solid var(--line);
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px 24px;
+}
+
+.launch-stage-caption-copy {
+	max-width: 72ch;
+}
+
+.launch-stage-caption-kicker {
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	color: var(--accent-contrast);
+	display: block;
+	margin-bottom: 4px;
+}
+
+.launch-stage-caption-copy strong {
+	display: block;
+	font-size: 15.5px;
+	font-weight: 720;
+	color: var(--text);
+	margin-bottom: 4px;
+}
+
+.launch-stage-caption-copy p {
+	margin: 0;
+	font-size: 13.5px;
+	line-height: 1.65;
+	color: var(--text-secondary);
+}
+
+.launch-stage-mechanism {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	padding: 6px 11px;
+	border-radius: 9px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	color: var(--text-secondary);
+	align-self: center;
+}
+
+/* 4. Launch Sections: Bento Capabilities, Scenarios, Workflow, Specs & FAQ */
+.launch-section {
+	padding: clamp(48px, 6.5vw, 84px) 0;
+	border-top: 1px solid var(--line);
+}
+
+.launch-section-head {
+	max-width: 720px;
+	margin-bottom: 32px;
+}
+
+.launch-section-head h2 {
+	font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+	font-weight: 760;
+	line-height: 1.18;
+	margin: 0 0 12px;
+}
+
+.launch-section-head p {
+	margin: 0;
+	font-size: 15.5px;
+	line-height: 1.72;
+	color: var(--text-secondary);
+}
+
+.launch-bento-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20px;
+}
+
+.launch-bento-card {
+	padding: 26px;
+	border-radius: 20px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-subtle);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.launch-bento-num {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	color: var(--accent-contrast);
+}
+
+.launch-bento-card h3 {
+	font-size: 18.5px;
+	font-weight: 720;
+	margin: 0;
+	color: var(--text);
+}
+
+.launch-bento-card p {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.72;
+	color: var(--text-secondary);
+}
+
+/* 3-Column Scenarios & Workflow */
+.launch-tri-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 20px;
+}
+
+.launch-scenario-card,
+.launch-step-card {
+	padding: 24px;
+	border-radius: 20px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-subtle);
+	display: flex;
+	flex-direction: column;
+}
+
+.launch-scenario-card h3,
+.launch-step-card h3 {
+	font-size: 17px;
+	font-weight: 720;
+	margin: 0 0 12px;
+}
+
+.launch-scenario-list {
+	display: grid;
+	gap: 10px;
+	margin-top: auto;
+	padding-top: 12px;
+	border-top: 1px solid var(--line-subtle);
+	font-size: 13.5px;
+	line-height: 1.65;
+	color: var(--text-secondary);
+}
+
+.launch-scenario-list strong {
+	color: var(--text);
+	font-weight: 650;
+	margin-right: 6px;
+}
+
+.launch-step-num {
+	display: inline-flex;
+	align-self: flex-start;
+	font-family: var(--font-mono);
+	font-size: 11.5px;
+	font-weight: 700;
+	padding: 3px 10px;
+	border-radius: var(--radius-pill);
+	background: var(--accent-soft);
+	color: var(--accent-contrast);
+	margin-bottom: 14px;
+}
+
+.launch-step-card p {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.7;
+	color: var(--text-secondary);
+}
+
+.launch-step-detail {
+	margin-top: 12px !important;
+	padding-top: 10px;
+	border-top: 1px solid var(--line-subtle);
+	font-family: var(--font-mono);
+	font-size: 12px !important;
+	color: var(--text-muted) !important;
+}
+
+/* Download & Technical Specs Split */
+.launch-specs-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+	gap: 24px;
+	align-items: start;
+}
+
+.launch-download-panel,
+.launch-spec-panel {
+	padding: 28px;
+	border-radius: 22px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-card);
+}
+
+.launch-download-panel h3,
+.launch-spec-panel h3 {
+	font-size: 19px;
+	font-weight: 740;
+	margin: 0 0 8px;
+}
+
+.launch-download-list {
+	display: grid;
+	gap: 10px;
+	margin: 18px 0;
+}
+
+.launch-download-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	padding: 14px 16px;
+	border-radius: 14px;
+	background: var(--surface-subtle);
+	border: 1px solid var(--line);
+	color: var(--text);
+	transition: transform 180ms var(--ease-out), border-color 180ms ease;
+}
+
+.launch-download-item[data-primary='true'] {
+	background: var(--text);
+	color: var(--bg);
+	border-color: var(--text);
+}
+
+.launch-download-item:hover {
+	transform: translateY(-1.5px);
+	border-color: var(--line-strong);
+}
+
+.launch-download-item[data-primary='true']:hover {
+	background: var(--accent-contrast);
+	border-color: var(--accent-contrast);
+	color: #ffffff;
+}
+
+.launch-download-main strong {
+	display: block;
+	font-size: 14px;
+	font-weight: 680;
+}
+
+.launch-download-main span {
+	display: block;
+	font-size: 12px;
+	opacity: 0.82;
+	margin-top: 2px;
+}
+
+.launch-download-badge {
+	font-family: var(--font-mono);
+	font-size: 11.5px;
+	padding: 4px 9px;
+	border-radius: 8px;
+	background: rgb(128 128 128 / 0.18);
+	white-space: nowrap;
+}
+
+.launch-spec-dl {
+	display: grid;
+	gap: 12px;
+	margin: 18px 0 0;
+}
+
+.launch-spec-row {
+	display: grid;
+	grid-template-columns: 120px minmax(0, 1fr);
+	gap: 12px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--line-subtle);
+	font-size: 13.5px;
+}
+
+.launch-spec-row:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+.launch-spec-row dt {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.launch-spec-row dd {
+	margin: 0;
+	font-weight: 600;
+	color: var(--text);
+}
+
+/* Accordion FAQ & Engineering Boundaries */
+.launch-faq-grid {
+	display: grid;
+	gap: 12px;
+	max-width: 880px;
+}
+
+.launch-faq-item {
+	border-radius: 16px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-subtle);
+	overflow: hidden;
+}
+
+.launch-faq-item summary {
+	list-style: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 18px 22px;
+	font-size: 15.5px;
+	font-weight: 680;
+	color: var(--text);
+	cursor: pointer;
+}
+
+.launch-faq-item summary::-webkit-details-marker {
+	display: none;
+}
+
+.launch-faq-icon {
+	font-family: var(--font-mono);
+	font-size: 16px;
+	color: var(--text-muted);
+	transition: transform 200ms ease;
+}
+
+.launch-faq-item[open] .launch-faq-icon {
+	transform: rotate(45deg);
+	color: var(--accent-contrast);
+}
+
+.launch-faq-body {
+	padding: 0 22px 20px;
+	font-size: 14px;
+	line-height: 1.75;
+	color: var(--text-secondary);
+}
+
+.launch-faq-body p {
+	margin: 0;
+}
+
+@media (max-width: 1024px) {
+	.launch-trust-strip {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.launch-tri-grid,
+	.launch-specs-layout {
+		grid-template-columns: 1fr;
+	}
+	.launch-subnav-links {
+		display: none;
+	}
+}
+
+@media (max-width: 720px) {
+	.launch-bento-grid,
+	.launch-trust-strip {
+		grid-template-columns: 1fr;
+	}
+	.launch-subnav-wrap {
+		top: 8px;
+	}
+	.launch-spec-row {
+		grid-template-columns: 1fr;
+		gap: 4px;
+	}
+}

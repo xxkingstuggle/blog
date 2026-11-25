@@ -63,10 +63,6 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 	<body class:list={['front-body', layoutVariant === 'launch' && 'front-body--launch']}>
 		<a class="skip-link" href="#main-content">跳到主要内容</a>
 		<SiteHeader />
-		<div class="studio-ambient-stage" data-ambient-stage aria-hidden="true">
-      <div class="studio-ambient-layer" data-ambient-layer></div>
-      <div class="studio-ambient-layer" data-ambient-layer></div>
-    </div>
     <main id="main-content">
 			<slot />
 		</main>
@@ -74,11 +70,7 @@ const socialImage = rawImagePath ? new URL(rawImagePath, siteConfig.url).toStrin
 		<script>
 			import '../scripts/site-motion';
 			import '../scripts/mobile-dock';
-			import '../scripts/gallery-layout';
-			import '../scripts/glass-palette';
-			import '../scripts/ambient-stage';
-			import '../scripts/cloth-pressure';
-			import '../scripts/gallery-video';
+			import '../scripts/liquid-motion';
 		</script>
 	</body>
 </html>

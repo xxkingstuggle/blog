@@ -93,6 +93,94 @@
 	border-top: 1px solid var(--line-subtle);
 }
 
+/* Article & Feature Facts Strip + Detail Cover Stage */
+.godly-detail-facts {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 18px 24px;
+	margin: 28px 0 0;
+	padding: 20px 0;
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+}
+
+.godly-detail-facts > div {
+	min-width: 0;
+}
+
+.godly-detail-facts dt {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	margin-bottom: 6px;
+}
+
+.godly-detail-facts dd {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 620;
+	color: var(--text);
+}
+
+.godly-detail-facts .godly-detail-update {
+	font-size: 11.5px;
+	color: var(--text-muted);
+	font-weight: 500;
+	margin-top: 4px;
+}
+
+.godly-detail-facts .godly-detail-topics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 12px;
+	align-items: center;
+}
+
+.godly-detail-topics a {
+	color: var(--text-secondary);
+	border-bottom: 1px solid var(--line);
+	font-size: 12.5px;
+	padding-bottom: 1px;
+}
+
+.godly-detail-topics a:hover {
+	color: var(--accent-contrast);
+	border-color: var(--accent-contrast);
+}
+
+.gallery-detail-cover {
+	position: relative;
+	max-width: 1100px;
+	aspect-ratio: 16 / 10;
+	overflow: hidden;
+	margin: 32px auto 0;
+	border-radius: 20px;
+	background: var(--stage-surface);
+	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim), var(--shadow-stage);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: clamp(14px, 2.4vw, 30px);
+}
+
+.gallery-detail-image {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	border-radius: 10px;
+}
+
+@media (max-width: 720px) {
+	.godly-detail-facts {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16px 14px;
+	}
+}
+
 /* Layout with TOC Rail */
 .article-layout {
 	position: relative;

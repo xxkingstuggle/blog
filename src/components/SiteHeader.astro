@@ -1,51 +1,99 @@
 ---
 import ThemeSwitcher from './ThemeSwitcher.astro';
 import NavIcon from './NavIcon.astro';
+import { SOFTWARE_PRODUCTS } from '../lib/software';
+import { getListedPosts } from '../lib/posts';
+
 const path = Astro.url.pathname;
 const isHome = path === '/';
 const isWork = path.startsWith('/software');
 const isPosts = path.startsWith('/posts') || path.startsWith('/tags') || path.startsWith('/archive');
-const isAbout = path.startsWith('/about') || path.startsWith('/links');
+const isAbout = path.startsWith('/about') || path.startsWith('/now') || path.startsWith('/uses');
+const isArchive = path.startsWith('/archive');
+const isTags = path.startsWith('/tags');
+const isLinks = path.startsWith('/links');
+
+const softwareCount = SOFTWARE_PRODUCTS.length;
+const postCount = (await getListedPosts()).length;
+
 const items = [
-  { href:'/', label:'精选', icon:'home', current:isHome },
-  { href:'/software/', label:'软件与作品', icon:'grid', current:isWork },
-  { href:'/posts/', label:'文章与手记', icon:'journal', current:isPosts },
-  { href:'/about/', label:'关于 Xin', icon:'person', current:isAbout },
+  { href: '/', label: '精选首页', icon: 'home', current: isHome, badge: undefined },
+  { href: '/software/', label: '软件与作品', icon: 'grid', current: isWork, badge: String(softwareCount) },
+  { href: '/posts/', label: '文章与手记', icon: 'journal', current: isPosts && !isArchive && !isTags, badge: String(postCount) },
+  { href: '/about/', label: '关于 Xin', icon: 'person', current: isAbout, badge: undefined },
 ] as const;
+
 const collections = [
-  {href:'/archive/',label:'时间归档',icon:'archive'},
-  {href:'/tags/',label:'文章标签',icon:'tag'},
-  {href:'/links/',label:'友链收藏',icon:'links'},
+  { href: '/archive/', label: '时间归档', icon: 'archive', current: isArchive },
+  { href: '/tags/', label: '文章标签', icon: 'tag', current: isTags },
+  { href: '/links/', label: '友链收藏', icon: 'links', current: isLinks },
 ] as const;
 ---
 <header class="site-header studio-side-rail" id="site-header">
-  <a class="studio-rail-brand" href="/" aria-label="MYZJX 首页">
-    <span class="studio-brand-wordmark">MYZJX<span>.</span></span>
-  </a>
+  <div class="studio-rail-top">
+    <a class="studio-rail-brand" href="/" aria-label="MYZJX 首页">
+      <span class="studio-brand-symbol" aria-hidden="true">X<span>.</span></span>
+      <span class="studio-brand-meta">
+        <span class="studio-brand-wordmark">MYZJX<span>.</span></span>
+        <span class="studio-brand-status">
+          <span class="studio-status-dot" aria-hidden="true"></span>
+          <span>{softwareCount} 款软件 · 持续构建</span>
+        </span>
+      </span>
+    </a>
+  </div>
+
   <div class="studio-rail-content">
-    <nav class="studio-primary-nav" aria-label="主导航">
-      {items.map(item=>(
+    <div class="studio-rail-section-label">
+      <span>WORKSPACE</span>
+      <span>01</span>
+    </div>
+    <nav class="studio-primary-nav" data-liquid-nav aria-label="主导航">
+      <span class="liquid-nav-pill" aria-hidden="true"></span>
+      {items.map((item) => (
         <a href={item.href} aria-current={item.current ? 'page' : undefined}>
-          <span class="studio-nav-icon"><NavIcon name={item.icon}/></span><span>{item.label}</span>
+          <span class="studio-nav-icon"><NavIcon name={item.icon} /></span>
+          <span class="studio-nav-label">{item.label}</span>
+          {item.badge && <span class="studio-nav-badge">{item.badge}</span>}
         </a>
       ))}
     </nav>
+
     <div class="studio-rail-divider" aria-hidden="true"></div>
-    <nav class="studio-secondary-nav" aria-label="内容索引">
-      {collections.map(item=>(
-        <a href={item.href}><span class="studio-nav-icon"><NavIcon name={item.icon}/></span>{item.label}</a>
+
+    <div class="studio-rail-section-label">
+      <span>INDEX</span>
+      <span>02</span>
+    </div>
+    <nav class="studio-secondary-nav" data-liquid-nav aria-label="内容索引">
+      <span class="liquid-nav-pill" aria-hidden="true"></span>
+      {collections.map((item) => (
+        <a href={item.href} aria-current={item.current ? 'page' : undefined}>
+          <span class="studio-nav-icon"><NavIcon name={item.icon} /></span>
+          <span class="studio-nav-label">{item.label}</span>
+        </a>
       ))}
     </nav>
+
     <div class="studio-rail-spacer"></div>
   </div>
+
   <div class="studio-rail-bottom">
-    <div class="studio-rail-bottom-row"><ThemeSwitcher /><a href="/about/">关于本站</a></div>
-    <a href="/admin/apps/" class="studio-admin-access"><NavIcon name="lock" size={17}/> 私人应用中心 <span aria-hidden="true">↗</span></a>
+    <ThemeSwitcher />
+    <div class="studio-rail-footer-actions">
+      <a href="/admin/apps/" class="studio-admin-access">
+        <NavIcon name="lock" size={15} />
+        <span>私人应用中心</span>
+        <span class="studio-admin-arrow" aria-hidden="true">↗</span>
+      </a>
+    </div>
   </div>
 </header>
+
 <nav class="studio-mobile-dock" aria-label="手机端主导航">
   <a class="studio-dock-brand" href="/" aria-label="MYZJX 首页">MYZJX<span>.</span></a>
-  <div class="studio-dock-links">
+  <div class="studio-dock-links" data-liquid-nav>
+    <span class="liquid-nav-pill" aria-hidden="true"></span>
     <a href="/" aria-current={isHome ? 'page' : undefined}>精选</a>
     <a href="/software/" aria-current={isWork ? 'page' : undefined}>作品</a>
     <a href="/posts/" aria-current={isPosts ? 'page' : undefined}>文章</a>
@@ -54,11 +102,11 @@ const collections = [
     <summary>菜单 <span aria-hidden="true">⌄</span></summary>
     <div class="studio-dock-panel">
       <nav aria-label="手机端更多导航">
-        <a href="/about/"><NavIcon name="person"/> 关于 Xin</a>
-        <a href="/archive/"><NavIcon name="archive"/> 时间归档</a>
-        <a href="/tags/"><NavIcon name="tag"/> 文章标签</a>
-        <a href="/links/"><NavIcon name="links"/> 友链收藏</a>
-        <a href="/admin/apps/"><NavIcon name="lock"/> 私人应用中心</a>
+        <a href="/about/"><NavIcon name="person" /> 关于 Xin</a>
+        <a href="/archive/"><NavIcon name="archive" /> 时间归档</a>
+        <a href="/tags/"><NavIcon name="tag" /> 文章标签</a>
+        <a href="/links/"><NavIcon name="links" /> 友链收藏</a>
+        <a href="/admin/apps/"><NavIcon name="lock" /> 私人应用中心</a>
       </nav>
       <div class="studio-dock-panel-appearance"><span>主题</span><ThemeSwitcher /></div>
     </div>

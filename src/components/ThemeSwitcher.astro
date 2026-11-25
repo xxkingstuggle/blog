@@ -1,29 +1,58 @@
-<details class="theme-menu" data-theme-menu>
-	<summary class="theme-menu-trigger" aria-label="选择显示主题" title="选择显示主题">
-		<span class="theme-menu-icon" aria-hidden="true">◐</span>
-		<span class="theme-menu-label">主题</span>
-		<span class="theme-menu-chevron" aria-hidden="true">⌄</span>
-	</summary>
-	<div class="theme-menu-popover" role="group" aria-label="显示主题">
-		<button type="button" class="theme-option" data-theme-value="system" role="radio" aria-checked="true">
-			<span aria-hidden="true">◌</span><span>跟随系统</span>
-		</button>
-		<button type="button" class="theme-option" data-theme-value="light" role="radio" aria-checked="false">
-			<span aria-hidden="true">☼</span><span>日间</span>
-		</button>
-		<button type="button" class="theme-option" data-theme-value="dark" role="radio" aria-checked="false">
-			<span aria-hidden="true">☾</span><span>夜间</span>
-		</button>
-	</div>
-</details>
+<div class="theme-segmented" data-theme-switcher role="radiogroup" aria-label="显示主题">
+	<span class="theme-segmented-pill" data-theme-pill aria-hidden="true"></span>
+	<button
+		type="button"
+		class="theme-option"
+		data-theme-value="light"
+		role="radio"
+		aria-checked="false"
+		aria-label="浅色主题"
+		title="浅色主题"
+	>
+		<svg class="theme-option-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+			<circle cx="8" cy="8" r="3.2" />
+			<path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.15 1.15M11.45 11.45l1.15 1.15M12.6 3.4l-1.15 1.15M4.55 11.45 3.4 12.6" />
+		</svg>
+		<span>浅色</span>
+	</button>
+	<button
+		type="button"
+		class="theme-option"
+		data-theme-value="dark"
+		role="radio"
+		aria-checked="false"
+		aria-label="深色主题"
+		title="深色主题"
+	>
+		<svg class="theme-option-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+			<path d="M13.2 10.1A5.8 5.8 0 0 1 5.9 2.8a5.8 5.8 0 1 0 7.3 7.3Z" />
+		</svg>
+		<span>深色</span>
+	</button>
+	<button
+		type="button"
+		class="theme-option"
+		data-theme-value="system"
+		role="radio"
+		aria-checked="true"
+		aria-label="跟随系统"
+		title="跟随系统"
+	>
+		<svg class="theme-option-icon" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+			<rect x="2" y="2.5" width="12" height="8.5" rx="1.8" />
+			<path d="M5.5 13.5h5M8 11v2.5" />
+		</svg>
+		<span>系统</span>
+	</button>
+</div>
 
 <script>
-  const menus = [...document.querySelectorAll<HTMLDetailsElement>('[data-theme-menu]')];
+  const switchers = [...document.querySelectorAll<HTMLElement>('[data-theme-switcher]')];
   const options = [...document.querySelectorAll<HTMLButtonElement>('[data-theme-value]')];
   const root = document.documentElement;
   const cookieName = 'xingx-color-mode';
   type ColorMode = 'system' | 'light' | 'dark';
-  let floating: HTMLDetailsElement | null = null;
+  const order: ColorMode[] = ['light', 'dark', 'system'];
 
   function readMode(): ColorMode {
     const match = document.cookie.match(/(?:^|; )xingx-color-mode=([^;]+)/);
@@ -47,75 +76,14 @@
     document.cookie = cookieName + '=' + mode + '; Path=/;' + sharedDomain
       + ' Max-Age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
     try { localStorage.setItem(cookieName, mode); } catch { /* Private mode. */ }
+    const idx = Math.max(0, order.indexOf(mode));
+    switchers.forEach(sw => {
+      sw.dataset.activeMode = mode;
+      sw.style.setProperty('--theme-idx', String(idx));
+    });
     options.forEach(option =>
       option.setAttribute('aria-checked', String(option.dataset.themeValue === mode)));
   }
-
-  function panelFor(menu: HTMLDetailsElement): HTMLElement | null {
-    const number = menus.indexOf(menu);
-    return document.querySelector<HTMLElement>('[data-theme-floating-id="' + number + '"]');
-  }
-
-  function reposition(menu: HTMLDetailsElement) {
-    const trigger = menu.querySelector<HTMLElement>('summary');
-    const panel = panelFor(menu);
-    if (!trigger || !panel) return;
-    const anchor = trigger.getBoundingClientRect();
-    const margin = 10;
-    const width = Math.min(190, innerWidth - 2 * margin);
-    panel.style.width = width + 'px';
-    const height = panel.getBoundingClientRect().height;
-    const left = Math.max(margin, Math.min(anchor.left, innerWidth - width - margin));
-    const roomAbove = anchor.top - margin;
-    const roomBelow = innerHeight - anchor.bottom - margin;
-    const top = roomAbove >= height + margin || roomAbove > roomBelow
-      ? anchor.top - height - margin
-      : anchor.bottom + margin;
-    panel.style.left = left + 'px';
-    panel.style.top = Math.max(margin, Math.min(top, innerHeight - height - margin)) + 'px';
-    panel.style.visibility = 'visible';
-  }
-
-  // The rail is a scrollable, frosted compositor. Any descendant popover is
-  // clipped by its overflow, regardless of z-index. Portal to <body> instead.
-  function removeFloating(menu: HTMLDetailsElement) {
-    const panel = panelFor(menu);
-    if (panel && panel.parentElement === document.body) {
-      panel.removeAttribute('data-theme-floating');
-      panel.removeAttribute('style');
-      panel.style.visibility = '';
-      menu.appendChild(panel);
-    }
-    if (floating === menu) floating = null;
-    menu.querySelector<HTMLElement>('summary')?.setAttribute('aria-expanded', 'false');
-  }
-
-  function openFloating(menu: HTMLDetailsElement) {
-    if (floating && floating !== menu) {
-      floating.open = false;
-      removeFloating(floating);
-    }
-    const panel = panelFor(menu);
-    if (!panel) return;
-    floating = menu;
-    panel.dataset.themeFloating = '';
-    panel.style.visibility = 'hidden';
-    document.body.appendChild(panel);
-    menu.querySelector<HTMLElement>('summary')?.setAttribute('aria-expanded', 'true');
-    reposition(menu);
-  }
-
-  menus.forEach((menu, i) => {
-    const panel = menu.querySelector<HTMLElement>('.theme-menu-popover');
-    if (!panel) return;
-    panel.dataset.themeFloatingId = String(i);
-    panel.id = 'theme-options-' + i;
-    menu.querySelector<HTMLElement>('summary')?.setAttribute('aria-controls', panel.id);
-    menu.addEventListener('toggle', () => {
-      if (menu.open) openFloating(menu);
-      else removeFloating(menu);
-    });
-  });
 
   setMode(readCachedMode());
 
@@ -124,44 +92,6 @@
       const value = option.dataset.themeValue;
       if (value !== 'system' && value !== 'light' && value !== 'dark') return;
       setMode(value);
-      if (floating) {
-        const menu = floating;
-        menu.open = false;
-        removeFloating(menu);
-        menu.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
-      }
-    });
-  });
-
-  document.addEventListener('pointerdown', event => {
-    if (!floating) return;
-    const node = event.target;
-    if (!(node instanceof Node)) return;
-    const panel = panelFor(floating);
-    if (floating.contains(node) || panel?.contains(node)) return;
-    const menu = floating;
-    menu.open = false;
-    removeFloating(menu);
-  });
-  document.addEventListener('keydown', event => {
-    if (event.key !== 'Escape') return;
-    if (floating) {
-      const menu = floating;
-      menu.open = false;
-      removeFloating(menu);
-      menu.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
-    }
-    document.querySelectorAll<HTMLDetailsElement>('.studio-dock-menu').forEach(menu => menu.open = false);
-  });
-  window.addEventListener('resize', () => { if (floating) reposition(floating); }, { passive: true });
-  window.addEventListener('scroll', () => { if (floating) reposition(floating); }, { capture: true, passive: true });
-  document.querySelectorAll<HTMLDetailsElement>('.studio-dock-menu').forEach(dock => {
-    dock.addEventListener('toggle', () => {
-      if (!dock.open && floating && dock.contains(floating)) {
-        const menu = floating;
-        menu.open = false;
-        removeFloating(menu);
-      }
     });
   });
 </script>

@@ -19,82 +19,97 @@ interface Props {
 const { href, title, description, category, meta, image, video, videoPoster, tone = 'project', index = 0, transitionKey } = Astro.props;
 const isMotion = Boolean(video && videoPoster);
 const hasVisual = Boolean(image) || isMotion;
-const imageAspect = isMotion ? 16 / 9 : image?.width && image?.height ? image.width / image.height : null;
-// Give screenshots, portraits and text covers frames shaped by their content.
-const stageAspect = imageAspect === null
-  ? (title.length > 22 ? 0.96 : title.length > 12 ? 1.12 : 1.27)
-  : imageAspect; // Intrinsic source ratio: no clamps, distortion, or 0.93 stage scaling.
+const imageAspect = isMotion ? 16 / 10 : image?.width && image?.height ? image.width / image.height : null;
+const stageAspect = imageAspect ?? 16 / 10;
 const aspectStyle = '--visual-aspect: ' + stageAspect.toFixed(3);
 const sharedName = transitionKey ? 'view-transition-name: ' + transitionKey.replace(/[^a-zA-Z0-9_-]/g, '-') : '';
 const visualStyle = [aspectStyle, sharedName].filter(Boolean).join('; ');
-const isLong = title.length > 22;
-const editorialLayout = index % 3;
-const metaLine = hasVisual ? [category, meta].filter(Boolean).join(' · ') : meta;
+const isEager = index === 0;
+const indexBadge = String(index + 1).padStart(2, '0');
+const metaLine = [category, meta].filter(Boolean).join(' · ');
 ---
-<a href={href} class:list={['gallery-card', hasVisual ? 'gallery-card--image' : 'gallery-card--editorial', isMotion && 'gallery-card--motion', image && tone === 'tool' && 'gallery-card--software', 'gallery-card--tone-' + tone]} data-gallery-card aria-label={title}>
-  <div
-    data-glass-media={hasVisual ? '' : undefined}
-    class:list={['gallery-card-visual', 'gallery-card-visual--' + tone, hasVisual ? 'gallery-card-visual--has-image' : 'gallery-card-visual--text']}
-    style={visualStyle}
-    data-aspect={imageAspect === null ? 'editorial' : imageAspect > 1.2 ? 'landscape' : imageAspect < 0.88 ? 'portrait' : 'square'}
-  >
-    {isMotion ? (
-      <>
-        <img src={videoPoster} alt={title + ' 的视频封面'} width="480" height="270"
-          loading="lazy" decoding="async" class="gallery-card-image" />
-        <video data-motion-video data-src={video} poster={videoPoster}
-          class="gallery-card-video" preload="none" playsinline muted loop
-          aria-label={title + ' 的动态预览'}></video>
-        <span class="gallery-motion-chip" aria-hidden="true">MOTION / 04 SEC</span>
-        <span class="gallery-motion-caption" aria-hidden="true">
-          <small>LIGHT / MOTION</small>
-          <strong>每一帧，<br/>都是光源。</strong>
-        </span>
-      </>
-    ) : image ? (
-      image.format === 'svg' ? (
-        <img
-          src={image.src}
-          alt={title + ' 的作品预览'}
-          width={image.width}
-          height={image.height}
-          class="gallery-card-image"
-          loading={index < 3 ? 'eager' : 'lazy'}
-          fetchpriority={index === 0 ? 'high' : undefined}
-          decoding="async"
-        />
-      ) : (
-        <Image
-          src={image}
-          alt={title + ' 的作品预览'}
-          widths={[420, 680, 960]}
-          sizes="(max-width: 720px) calc(100vw - 46px), (max-width: 1300px) 40vw, 30vw"
-          format="webp"
-          class="gallery-card-image"
-          loading={index < 3 ? 'eager' : 'lazy'}
-          fetchpriority={index === 0 ? 'high' : undefined}
-          decoding="async"
-        />
-      )
-    ) : (
-      <div class:list={['gallery-card-art', isLong && 'gallery-card-art--long', 'gallery-card-art--layout-' + editorialLayout]}>
-        <span class="gallery-art-motif" aria-hidden="true"></span>
-        <span class="gallery-art-rail" aria-hidden="true">{String(index + 1).padStart(2, '0')} / FIELD NOTES</span>
-        <span class="gallery-art-eyebrow">{category}</span>
-        <div class="gallery-art-copy">
-          <strong>{title}</strong>
-          <p>{description}</p>
-        </div>
-        <span class="gallery-art-index">{String(index + 1).padStart(2, '0')} <span aria-hidden="true">/</span> XIN 的记录</span>
+<a
+  href={href}
+  class:list={[
+    'gallery-card',
+    hasVisual ? 'gallery-card--image' : 'gallery-card--editorial',
+    isMotion && 'gallery-card--motion',
+    image && tone === 'tool' && 'gallery-card--software',
+    'gallery-card--tone-' + tone,
+  ]}
+  data-gallery-card
+  aria-label={title}
+>
+  {hasVisual ? (
+    <>
+      <div
+        class:list={['gallery-card-visual', 'gallery-card-visual--' + tone, 'gallery-card-visual--has-image']}
+        style={visualStyle}
+        data-aspect={imageAspect && imageAspect > 1.2 ? 'landscape' : imageAspect && imageAspect < 0.88 ? 'portrait' : 'square'}
+      >
+        {isMotion ? (
+          <>
+            <img
+              src={videoPoster}
+              alt={title + ' 的视频封面'}
+              width="480"
+              height="270"
+              loading="lazy"
+              decoding="async"
+              class="gallery-card-image"
+            />
+            <span class="gallery-motion-chip" aria-hidden="true">MOTION / 04 SEC</span>
+          </>
+        ) : image!.format === 'svg' ? (
+          <img
+            src={image!.src}
+            alt={title + ' 的作品预览'}
+            width={image!.width}
+            height={image!.height}
+            class="gallery-card-image"
+            loading={isEager ? 'eager' : 'lazy'}
+            fetchpriority={isEager ? 'high' : undefined}
+            decoding="async"
+          />
+        ) : (
+          <Image
+            src={image!}
+            alt={title + ' 的作品预览'}
+            widths={[440, 720, 1080]}
+            sizes="(max-width: 720px) calc(100vw - 36px), (max-width: 1280px) 45vw, 32vw"
+            format="webp"
+            class="gallery-card-image"
+            loading={isEager ? 'eager' : 'lazy'}
+            fetchpriority={isEager ? 'high' : undefined}
+            decoding="async"
+          />
+        )}
+        <span class="gallery-visual-category">{category}</span>
       </div>
-    )}
-  </div>
-  <div class="gallery-card-info">
-    <div class="gallery-card-caption">
-      <h3>{title}</h3>
-      <span class="gallery-card-arrow" aria-hidden="true">↗</span>
+      <div class="gallery-card-info">
+        <div class="gallery-card-caption">
+          <h3>{title}</h3>
+          <span class="gallery-card-arrow" aria-hidden="true">↗</span>
+        </div>
+        <p>{description}</p>
+        {metaLine && <span class="gallery-card-meta">{metaLine}</span>}
+      </div>
+    </>
+  ) : (
+    <div class="gallery-editorial-surface" style={sharedName || undefined}>
+      <div class="gallery-editorial-top">
+        <span class="gallery-editorial-pill">{category}</span>
+        <span class="gallery-editorial-index">NO.{indexBadge}</span>
+      </div>
+      <div class="gallery-card-caption">
+        <h3>{title}</h3>
+        <span class="gallery-card-arrow" aria-hidden="true">↗</span>
+      </div>
+      <p class="gallery-editorial-desc">{description}</p>
+      <div class="gallery-editorial-foot">
+        <span class="gallery-card-meta">{meta || category}</span>
+        <span class="gallery-editorial-read">阅读全文 →</span>
+      </div>
     </div>
-    {hasVisual && <p>{description}</p>}
-    {metaLine && <span class="gallery-card-meta">{metaLine}</span>}
-  </div>
+  )}
 </a>
