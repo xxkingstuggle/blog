@@ -41,8 +41,13 @@ cover: ../../assets/projects/habitbloom-cover.png
 哪怕你永远不配任何服务器，它也是一个完完整整、随时能用的本地习惯记录工具。
 
 <figure class="case-study-figure">
+  <img src="/media/habitbloom/today-habits.webp" alt="HabitBloom 原生今日习惯打卡卡片与连续天数统计界面" width="1600" height="1049" loading="lazy" decoding="async" />
+  <figcaption>图 1 · HabitBloom 原生今日习惯打卡面板，支持连续打卡火花线、单日完成进度环与本地 SwiftData 秒级响应。</figcaption>
+</figure>
+
+<figure class="case-study-figure">
   <img src="/media/habitbloom/habitbloom-engineering-scope.svg" alt="HabitBloom 分为 SwiftUI 和 SwiftData 本地记录、WidgetKit 交互小组件、Cloudflare 轻量远程能力" width="1200" height="675" loading="lazy" decoding="async" />
-  <figcaption>图 1 · HabitBloom 核心架构，由 SwiftUI 加 SwiftData 本地优先存储、WidgetKit 交互小组件与 Cloudflare 轻量远端快照组成。</figcaption>
+  <figcaption>图 2 · HabitBloom 核心架构，由 SwiftUI 加 SwiftData 本地优先存储、WidgetKit 交互小组件与 Cloudflare 轻量远端快照组成。</figcaption>
 </figure>
 
 那既然本地优先这么爽，为什么一接上桌面小组件就到处碰壁呢？
@@ -65,7 +70,12 @@ cover: ../../assets/projects/habitbloom-cover.png
 
 <figure class="case-study-figure">
   <img src="/media/habitbloom/habitbloom-data-path.svg" alt="主 App 的 SwiftData 数据生成 Widget 快照，小组件通过 App Group 或 Cloudflare 路径读取，操作之后再回并" width="1200" height="675" loading="lazy" decoding="async" />
-  <figcaption>图 2 · 跨进程数据路径，SwiftData 生成轻量快照，小组件通过 App Group 或 Cloudflare Worker 读取并异步回并打卡状态。</figcaption>
+  <figcaption>图 3 · 跨进程数据路径，SwiftData 生成轻量快照，小组件通过 App Group 或 Cloudflare Worker 读取并异步回并打卡状态。</figcaption>
+</figure>
+
+<figure class="case-study-figure">
+  <img src="/media/habitbloom/streak-calendar.webp" alt="HabitBloom 月度热力日历与跨进程快照同步面板" width="1600" height="988" loading="lazy" decoding="async" />
+  <figcaption>图 4 · 月度打卡热力日历与历史补记视图，右侧实时呈现 WidgetKit AppIntent 与 Cloudflare 快照回并队列。</figcaption>
 </figure>
 
 写到这里，你可能会问，既然 Cloudflare Workers 和 Durable Objects 都搭起来了，为什么不干脆再往前一步，做一套全功能的云端多端实时同步呢？

@@ -151,7 +151,6 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     checksumsUrl:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.4/SHA256SUMS.txt',
     articleSlug:'zjx-download-native-architecture',articleTitle:'zjx-download 架构复盘：用 Swift 重写 macOS 原生多线程下载器与 Chrome Native Messaging 交接',
     icon:zjxDownloadIcon,screenshot:zjxDownloadShot,
-    heroCropMat:'window',
     screenshotAlt:'zjx-download macOS 原生主窗口与分片进度面板',
     screenshotCaption:'zjx-download v2.0.4 macOS 原生主界面真实运行截图，支持按分类筛选、并发队列调度、分片级断点续传与 SHA-256 校验。',
     interfaceHeading:'分片进度与队列状态，一目了然。',
@@ -159,12 +158,22 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     galleryHeading:'从浏览器捕获到原生分片落盘的完整闭环。',
     gallery:[
       {
-        src:'/media/zjx-download/task-complete.webp',
+        src:'/media/zjx-download/main-window.webp',
         width:1600,
-        height:888,
+        height:1046,
+        alt:'zjx-download v2.0.4 macOS 原生主窗口与分片进度工作台',
+        kicker:'01 · MULTI-SEGMENT WORKSPACE',
+        title:'8 线程 HTTP Range 分片队列与实时吞吐仪表盘',
+        caption:'主窗口左侧按任务状态与媒体类型分类检索，右侧实时渲染活跃任务的 8 分片并发进度条、已校验检查点（Verified Checkpoint）与单流回退状态。',
+        mechanism:'ZJXDownloadCore 分片状态机 · StateStore 检查点原子持久化 · Loopback 15151 监听'
+      },
+      {
+        src:'/media/zjx-download/task-complete.webp',
+        width:1520,
+        height:1066,
         cropMat:'dialog',
         alt:'zjx-download 下载完成弹窗与校验面板',
-        kicker:'01 · VERIFICATION & HANDOFF',
+        kicker:'02 · VERIFICATION & HANDOFF',
         title:'完成即校验摘要，直达 Finder 或拖拽投递',
         caption:'全部 HTTP Range 分片合并落盘后，自动弹出原生完成面板。支持一键计算 SHA-256 / MD5 摘要核对发行包完整性，也可直接将上方文件图标拖拽至其他 macOS 应用继续处理。',
         mechanism:'分片原子合并 · 内置 SHA-256 / MD5 摘要核验 · 原生拖拽与 Finder 定位'
@@ -235,11 +244,21 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     galleryHeading:'不打断对话流，在窄栏与弹窗中掌控全部路由细节。',
     gallery:[
       {
+        src:'/media/route-lens/rail-system-dark.webp',
+        width:1600,
+        height:1040,
+        alt:'Route Lens 深色模式右侧窄栏与 SSE 路由字段实时对照',
+        kicker:'01 · LIVE SSE ROUTING RAIL (DARK)',
+        title:'深色工作区下的实时请求/响应模型对照窄栏',
+        caption:'通过 Shadow DOM 在页面右侧挂载零样式污染的悬浮窄栏，实时展示当前会话的请求模型、SSE 响应模型、路由状态（显式降级或字段一致）与 PoW 时间戳。',
+        mechanism:'Main World Fetch / SSE 钩子 · Isolated World 握手闸门 · Shadow DOM 隔离'
+      },
+      {
         src:'/media/route-lens/rail-default-light.webp',
-        width:1280,
-        height:900,
+        width:1600,
+        height:1040,
         alt:'Route Lens 浅色模式右侧窄栏与多字段视图',
-        kicker:'01 · DETERMINISTIC ROUTING VERDICT',
+        kicker:'02 · DETERMINISTIC ROUTING VERDICT (LIGHT)',
         title:'四态路由一致性判定，拒绝盲猜模型',
         caption:'将请求体中的 target model 与 SSE 响应流中的 model_slug、server_model 等字段逐一比对，严格区分「字段一致」「显式路由转换」「服务端字段冲突」与「未报告字段」，绝不虚构未下发的模型名称。',
         mechanism:'Main World Fetch / SSE 钩子 · 四态一致性状态机 · Shadow DOM 样式隔离'
@@ -249,7 +268,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         width:360,
         height:740,
         alt:'Route Lens 中文浅色配置弹窗',
-        kicker:'02 · BILINGUAL GEOMETRY & THEME POPUP',
+        kicker:'03 · BILINGUAL GEOMETRY & THEME POPUP',
         title:'中英双语与深浅色外观控制弹窗',
         caption:'在 360px 扩展弹窗中无级调节页面侧栏的宽度、高度、垂直位置、字号与背景不透明度，支持按需勾选显示字段并一键恢复默认几何外观；内置对称的中英双语字典与深浅色主题。',
         mechanism:'chrome.storage.local 实时同步 · 窄栏几何无级调节 · 中 / EN 双语即时切换',
@@ -320,9 +339,23 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     releasesUrl:'https://github.com/xxkingstuggle/tintpane/releases/tag/v2.4.0',
     articleSlug:'tintpane-chromium-pwa-theme-engine',articleTitle:'Tintpane 2.4：Chromium PWA 窗口动态主题色注入、域名树继承与双向别名同步',
     icon:tintpaneIcon,screenshot:tintpaneShot,
-    screenshotAlt:'Tintpane v2.4.0 Chromium PWA 动态主题色架构与域名树继承机制概览',
-    screenshotCaption:'Tintpane v2.4.0 核心机制：默认关闭与 standalone 检测、域名树层级继承与双向别名组同步、以及焦点/失焦状态下的平滑 theme-color 注入。',
+    screenshotAlt:'Tintpane v2.4.0 Chromium PWA 独立窗口动态标题栏取色与扩展控制面板实景',
+    screenshotCaption:'Tintpane v2.4.0 真实运行预览：独立 Chromium PWA 窗口顶栏自动同步网页深色背景，右侧扩展 Popup 支持当前域名开关、四路调色盘与站点预设。',
     interfaceHeading:'默认安静，启用即贴合。',
+    galleryKicker:'EXTENSION & PWA WORKSPACE · 真实运行界面',
+    galleryHeading:'按需动态注入，让每个独立 PWA 窗口拥有呼吸感标题栏。',
+    gallery:[
+      {
+        src:'/media/tintpane/pwa-popup-workspace.webp',
+        width:1600,
+        height:1040,
+        alt:'Tintpane v2.4.0 Chromium PWA 窗口与扩展 Popup 控制面板',
+        kicker:'01 · STANDALONE PWA & POPUP ENGINE',
+        title:'独立 PWA 窗口标题栏实时同步与域名树控制面板',
+        caption:'仅在 display-mode: standalone 独立窗口或显式授权站点激活，实时采样页面顶栏计算色并注入 meta[name="theme-color"]；Popup 面板支持焦点/失焦双态配色与根域名层级继承。',
+        mechanism:'chrome.scripting 动态注册 · 域名树向上回溯 · 焦点/失焦双态平滑过渡'
+      }
+    ],
     verifiedAt:'2026-11-24（v2.4.0 公开 Release 与单元测试核验通过）',
     developmentVersion:'v2.4.0',
     installedVersion:'Chrome MV3 v2.4.0 公开发行版',
@@ -386,11 +419,21 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     galleryHeading:'从方法过载到按需发现的三层演进。',
     gallery:[
       {
+        src:'/media/thought-navigator-v3/codex-routing-live.webp',
+        width:1600,
+        height:1040,
+        alt:'思路导航 v3.0.1 Codex 插件三层按需路由与 25 个思考方法目录工作台',
+        kicker:'01 · CODEX PLUGIN ROUTING WORKSPACE',
+        title:'Codex CLI 实机按需路由与 25 个单文件 SKILL.md 目录',
+        caption:'左侧展示 @thought-navigator 在 Codex 中识别架构重构冲突并按需加载 first-principles 与 steelman 两个专项 Skill 的三层路由链路；右侧展示 25 个高内聚思考方法与跳过边界。',
+        mechanism:'Layer 1/2/3 渐进式上下文披露 · 1 主方法 + 1 辅助方法上限 · 显式跳过边界'
+      },
+      {
         src:'/media/thought-navigator-v3/01-method-overload.svg',
         width:1280,
         height:720,
         alt:'思考方法过载示意图',
-        kicker:'01 · COGNITIVE FRICTION',
+        kicker:'02 · COGNITIVE FRICTION',
         title:'消除“先替 AI 选框架”的启动阻力',
         caption:'传统提示词库要求用户在提问前先从几十种思维模型中手工挑一个，把“解决具体问题”变成了“先研究工具分类”。思路导航将选方法的负担下沉到 Skill 路由层。',
         mechanism:'25 个结构化思考模型 · 任务信号触发 · 零前置记忆负担'
@@ -400,7 +443,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         width:1280,
         height:720,
         alt:'双路径路由决策示意图',
-        kicker:'02 · DUAL-PATH ROUTING & STOP RULES',
+        kicker:'03 · DUAL-PATH ROUTING & STOP RULES',
         title:'双路径按需发现与防空转停止边界',
         caption:'支持“模型按任务信号自主匹配专项 Skill”与“用户显式点名 @思路导航”两条路径。遇到写代码、查事实或缺乏外部证据的任务时直接执行，绝不强行套用思考框架。',
         mechanism:'正负向触发边界 · 1 主方法 + 可选 1 辅助方法上限 · 防空转停止条件'
@@ -410,7 +453,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         width:1280,
         height:720,
         alt:'Codex 插件目录结构图',
-        kicker:'03 · PROGRESSIVE DISCLOSURE PACKAGING',
+        kicker:'04 · PROGRESSIVE DISCLOSURE PACKAGING',
         title:'单文件 SKILL.md 内聚封装与按需加载',
         caption:'去除多层 references 嵌套，每个思考方法独立收敛为单个高密度 SKILL.md。宿主默认仅读取顶部简短元数据，只有命中当前任务时才按需加载对应正文。',
         mechanism:'Codex Plugin 标准清单 · 渐进式上下文披露 · 25 个独立 Skill 入口'
@@ -472,9 +515,33 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     releasesUrl:'https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0',
     articleSlug:'habitbloom-habit-tracker',articleTitle:'HabitBloom：从习惯卡片到可交互 Widget 的工程实践',
     icon:habitbloomIcon,screenshot:habitbloomShot,
-    screenshotAlt:'HabitBloom 品牌与习惯卡片视觉概览',
-    screenshotCaption:'HabitBloom 视觉概览：结合 SwiftUI 本地习惯卡片、WidgetKit 交互小组件与 Cloudflare 轻量远端快照。',
+    screenshotAlt:'HabitBloom 原生 SwiftUI 今日习惯打卡卡片、连续天数统计与 Widget 快照状态界面',
+    screenshotCaption:'HabitBloom v1.0.0 原生运行界面：左侧为 SwiftData 习惯分类与 Cloudflare 快照同步状态，右侧为今日习惯打卡卡片、7 日火花线与完成率面板。',
     interfaceHeading:'从一张卡片开始。',
+    galleryKicker:'NATIVE SWIFTUI & WIDGETKIT · 真实界面预览',
+    galleryHeading:'本地 SwiftData 秒级打卡，跨进程快照实时同步。',
+    gallery:[
+      {
+        src:'/media/habitbloom/today-habits.webp',
+        width:1600,
+        height:1049,
+        alt:'HabitBloom 今日习惯打卡卡片与连续记录仪表盘',
+        kicker:'01 · TODAY HABIT CARDS & STREAKS',
+        title:'SwiftUI 今日习惯卡片、连续打卡火花线与 Widget 快照状态',
+        caption:'主界面展示当日待完成与已打卡习惯卡片、连续天数（Streak）及最近 7 天完成轨迹，每次点击即刻触发本地 SwiftData 事务并生成轻量 Widget 状态快照。',
+        mechanism:'SwiftData @Model 本地持久化 · HabitStatsService 连续率计算 · WidgetSnapshotPayload'
+      },
+      {
+        src:'/media/habitbloom/streak-calendar.webp',
+        width:1600,
+        height:988,
+        alt:'HabitBloom 月度热力日历与 WidgetKit / Cloudflare 双通道快照面板',
+        kicker:'02 · MONTH CALENDAR & DUAL-PATH SNAPSHOT',
+        title:'月度打卡日历补记与 App Group / Cloudflare 双通道回并',
+        caption:'支持按月回溯历史打卡网格与一键补记；右侧面板实时展示 iOS 17 AppIntent 交互小组件与 Cloudflare Durable Objects 远端快照的增量回并状态。',
+        mechanism:'MonthCalendarView 历史补记 · App Group 共享容器 · Cloudflare DO 远端快照降级'
+      }
+    ],
     verifiedAt:'2026-11-24（完成凭据隔离审计、转为 Public 并发布 v1.0.0）',
     developmentVersion:'v1.0.0 · SwiftUI + WidgetKit + Cloudflare 源码工程',
     installedVersion:'源码公开版（Xcode 本地编译与 HabitCore 单测通过）',
@@ -534,9 +601,33 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     checksumsUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v1.0.0/SHA256SUMS.txt',
     articleSlug:'dim-wallpaper-macos-desktop-overlay',articleTitle:'DimWallpaper：不改系统壁纸文件，用 CGWindowLevel 桌面图层实现深色模式壁纸压暗',
     icon:dimWallpaperIcon,screenshot:dimWallpaperShot,
-    screenshotAlt:'DimWallpaper 的 CGWindowLevel 桌面图层层级与压暗控制机制图',
-    screenshotCaption:'DimWallpaper v1.0.0 核心原理：在 .desktopWindow 与 .desktopIconWindow 之间嵌入 ignoresMouseEvents = true 的穿透遮罩层。',
+    screenshotAlt:'DimWallpaper v1.0.0 macOS 菜单栏控制面板与桌面壁纸压暗前后实景对比',
+    screenshotCaption:'DimWallpaper v1.0.0 真实运行预览：菜单栏弹窗无级调节 55% 遮罩浓度，左侧亮色壁纸被柔和压暗，而桌面 Finder 图标与文字依然保持 100% 原始清晰度。',
     interfaceHeading:'只压暗壁纸，不遮挡桌面图标。',
+    galleryKicker:'MENUBAR & CGWINDOWLEVEL · 原生图层控制',
+    galleryHeading:'卡在壁纸与桌面图标之间的 68 KB 原生薄纱。',
+    gallery:[
+      {
+        src:'/media/dim-wallpaper/menubar-overlay-split.webp',
+        width:1600,
+        height:1049,
+        alt:'DimWallpaper 菜单栏弹窗与壁纸压暗前后对比及 Finder 图标保真效果',
+        kicker:'01 · LIVE MENUBAR & SPLIT COMPARISON',
+        title:'菜单栏 10%–85% 无级压暗与桌面图标 100% 亮度保留',
+        caption:'右上角 LSUIElement 菜单栏弹窗提供「跟随系统深色模式 / 始终压暗 / 暂停」三态切换与 5 个快捷浓度档位；遮罩精准压暗底层壁纸，Finder 桌面图标毫发无损。',
+        mechanism:'CGWindowLevelForKey(.desktopWindow) + 1 · NSApp.effectiveAppearance KVO · 0.18s 渐变'
+      },
+      {
+        src:'/media/dim-wallpaper/window-level-inspector.webp',
+        width:1600,
+        height:1003,
+        alt:'DimWallpaper CoreGraphics 窗口层级夹心检视器与双屏同步状态',
+        kicker:'02 · CGWINDOWLEVEL SANDWICH & MULTI-DISPLAY',
+        title:'CoreGraphics 图层夹心结构与多显示器热插拔同步',
+        caption:'直观展示 macOS 窗口合成栈中壁纸层（-2147483624）、DimWallpaper 穿透遮罩层（-2147483623）与桌面图标层（-2147483603）的精确卡位，以及内置 Retina 与外接 4K 显示器的同步状态。',
+        mechanism:'ignoresMouseEvents = true · .canJoinAllSpaces · didChangeScreenParameters 热插拔重建'
+      }
+    ],
     verifiedAt:'2026-11-24（v1.0.0 编译签名与发版校验通过）',
     developmentVersion:'v1.0.0',
     installedVersion:'macOS arm64 v1.0.0 · 菜单栏常驻验证通过',

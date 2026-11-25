@@ -32,7 +32,7 @@ cover: ../../assets/projects/zjx-download-cover.png
 从早期版本一路打磨到 `v2.0.4`，我基本就是在跟这些平时写 Demo 根本遇不到的真坑死磕。
 
 <figure class="case-study-figure">
-  <img src="/media/zjx-download/main-window.webp" alt="zjx-download v2.0.4 macOS 原生主窗口" width="1600" height="1197" loading="lazy" decoding="async" />
+  <img src="/media/zjx-download/main-window.webp" alt="zjx-download v2.0.4 macOS 原生主窗口" width="1600" height="1046" loading="lazy" decoding="async" />
   <figcaption>图 1 · zjx-download v2.0.4 macOS 原生主窗口，集中管理并发分片队列、分类过滤与完成校验。</figcaption>
 </figure>
 
@@ -59,7 +59,7 @@ cover: ../../assets/projects/zjx-download-cover.png
 到了 `v2.0.4`，我把单流临时文件的实际落盘字节对账逻辑完完整整补了上去。只要用户没有明确点击「取消任务」，任何已经落盘的检查点和数据都绝不擅自删除，并且用 `testRecoverInterruptedTasksReconcilesCommittedSegmentsAndUnpersistedSingleConnection` 这条长长的单测把混合分片与单流恢复的场景彻底锁死。
 
 <figure class="case-study-figure">
-  <img src="/media/zjx-download/task-complete.webp" alt="zjx-download 任务完成与文件校验界面" width="1600" height="889" loading="lazy" decoding="async" />
+  <img src="/media/zjx-download/task-complete.webp" alt="zjx-download 任务完成与文件校验界面" width="1520" height="1066" loading="lazy" decoding="async" />
   <figcaption>图 2 · 下载完成后的原生面板，支持摘要校验、直接打开文件或在 Finder 中定位。</figcaption>
 </figure>
 

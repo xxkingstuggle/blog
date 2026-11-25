@@ -14,7 +14,7 @@ listed: true
 featured: true
 kind: project
 presentation: article
-cover: ../../assets/projects/thought-navigator-cover.svg
+cover: ../../assets/projects/thought-navigator-shot.png
 ---
 
 有段时间，我特别痴迷收集各种思考方法。
@@ -26,8 +26,13 @@ cover: ../../assets/projects/thought-navigator-cover.svg
 我到底该选哪一种方法？
 
 <figure class="case-study-figure">
+  <img src="/media/thought-navigator-v3/codex-routing-live.webp" alt="思路导航 v3.0.1 在 Codex 中的三层按需路由与 25 个思考方法目录" width="1600" height="1040" loading="lazy" decoding="async" />
+  <figcaption>图 1 · 思路导航 v3.0.1 在 Codex 中的按需路由工作台：只描述真实卡点，由路由层按需加载 1 个主方法与可选 1 个辅助方法。</figcaption>
+</figure>
+
+<figure class="case-study-figure">
   <img src="/media/thought-navigator-v3/01-method-overload.svg" alt="第一性原理、双向钢人等方法不断增加，用户反而卡在该选哪个方法" width="1280" height="720" loading="lazy" decoding="async" />
-  <figcaption>图 1 · 有很多方法，不代表能更快解决问题。选方法本身也有成本。</figcaption>
+  <figcaption>图 2 · 有很多方法，不代表能更快解决问题。选方法本身也有成本。</figcaption>
 </figure>
 
 方法越攒越多，挑方法本身反而成了一件最耗心神的事。我明明是想找 AI 帮我把眼前的活儿干完，最后却变成了我得先花二十分钟研究今天该翻哪本秘籍的牌子。

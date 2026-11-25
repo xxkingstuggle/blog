@@ -12,7 +12,6 @@ tags:
   - Codex
   - 工作区架构
   - 开源项目
-cover: ../../assets/projects/agent-governance-cover.png
 ---
 
 当你在同一台 Mac 上同时维护十几个项目，每天高强度开着 Codex 和 Claude Code 让它们帮你写代码的时候，如果没立下规矩，你的本地硬盘很快就会变成灾难现场。

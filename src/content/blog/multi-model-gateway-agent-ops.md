@@ -12,7 +12,6 @@ tags:
   - Agent 工程
   - Docker
   - 自动化运维
-cover: ../../assets/projects/cpa-gateway-cover.png
 ---
 
 平时在终端里同时开着 Codex CLI、Claude Code 还有桌面客户端写代码的人，只要手头的模型渠道稍微多一点，肯定都体会过那种配置散落一地的狼狈。

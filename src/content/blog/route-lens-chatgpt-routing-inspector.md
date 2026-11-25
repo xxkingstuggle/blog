@@ -28,7 +28,7 @@ cover: ../../assets/projects/route-lens-cover.png
 这就是我写 [**Route Lens (v1.3.1)**](/software/route-lens/) 这个 Chrome 扩展的起因。
 
 <figure class="case-study-figure">
-  <img src="/media/route-lens/rail-system-dark.webp" alt="Route Lens v1.3.1 深色模式右侧窄栏界面" width="1280" height="900" loading="lazy" decoding="async" />
+  <img src="/media/route-lens/rail-system-dark.webp" alt="Route Lens v1.3.1 深色模式右侧窄栏界面" width="1600" height="1040" loading="lazy" decoding="async" />
   <figcaption>图 1 · Route Lens v1.3.1 深色模式右侧窄栏，通过 Shadow DOM 隔离注入，实时对照请求模型与响应流报告的模型路由字段。</figcaption>
 </figure>
 
@@ -49,7 +49,7 @@ cover: ../../assets/projects/route-lens-cover.png
 而且当你在 ChatGPT 左侧边栏切换不同聊天窗口，或者点开新对话的时候，扩展也会自动清空上一场对话的 ID 和轮次计数，绝不让旧对话的模型标签串台到新对话里。
 
 <figure class="case-study-figure">
-  <img src="/media/route-lens/rail-default-light.webp" alt="Route Lens v1.3.1 浅色模式右侧窄栏界面" width="1280" height="900" loading="lazy" decoding="async" />
+  <img src="/media/route-lens/rail-default-light.webp" alt="Route Lens v1.3.1 浅色模式右侧窄栏界面" width="1600" height="1040" loading="lazy" decoding="async" />
   <figcaption>图 2 · 浅色模式下的右侧观测栏，清晰展示请求模型、服务端报告字段一致性及 PoW 时间戳。</figcaption>
 </figure>
 

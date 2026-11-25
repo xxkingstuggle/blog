@@ -12,7 +12,6 @@ tags:
   - AI 教育
   - 需求拆解
   - 研发协同
-cover: ../../assets/projects/paopao-edtech-cover.png
 ---
 
 之前在吉胜未来科技教育做产品助理与技术协作那段日子，我每天打交道最多的是一个叫「泡泡 AI 自习室」的 Web 平台。

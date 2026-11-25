@@ -27,6 +27,11 @@ cover: ../../assets/projects/tintpane-cover.png
 
 为了消掉这条白边，我最早随手写过一个内部叫 `Colorful` 的小脚本。后来用着发现值得深挖的细节太多了，干脆把它推倒重做，改名为 [**Tintpane**](/software/tintpane/)，一路迭代到了现在的 [**v2.4.0 Release**](https://github.com/xxkingstuggle/tintpane/releases/tag/v2.4.0)。
 
+<figure class="case-study-figure">
+  <img src="/media/tintpane/pwa-popup-workspace.webp" alt="Tintpane v2.4.0 Chromium PWA 窗口动态标题栏与扩展 Popup 控制面板" width="1600" height="1040" loading="lazy" decoding="async" />
+  <figcaption>图 1 · Tintpane v2.4.0 真实运行工作台：左侧独立 Chromium PWA 窗口顶栏自动同步深色背景，右侧 Popup 面板提供域名开关、焦点/失焦双态四路调色盘与预设规则。</figcaption>
+</figure>
+
 重做的时候，我先拿自己早期最偷懒的一处设计开了刀。
 
 早期的 `Colorful` 原型为了省事，直接在 `manifest.json` 的 `content_scripts` 里写了个 `<all_urls>` 全局注入。
