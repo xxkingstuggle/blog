@@ -119,7 +119,7 @@ async function run(){
   await colorAudit.evaluate(() => window.scrollTo(0, 0));
   const aboutHomeLink = colorAudit.locator('.studio-primary-nav a[href="/"]');
   await aboutHomeLink.hover();
-  await colorAudit.waitForTimeout(260);
+  await colorAudit.waitForTimeout(420);
   await colorAudit.evaluate(() => {
     window.addEventListener('click', (e) => e.preventDefault(), { once: true });
   });
@@ -156,7 +156,7 @@ async function run(){
   // Regression 2: Real click navigation from / to /software/ must land directly on /software/ with no fallback to / or secondary drop
   const softwareNavLink = desktop.locator('.studio-primary-nav a[href="/software/"]');
   await softwareNavLink.hover();
-  await desktop.waitForTimeout(220);
+  await desktop.waitForTimeout(380);
   await Promise.all([
     desktop.waitForURL('**/software/'),
     softwareNavLink.click()
@@ -236,7 +236,7 @@ async function run(){
   const subnavCapLink = desktop.locator('.launch-subnav-links a[href="#capabilities"]');
   await subnavCapLink.click();
   await desktop.mouse.move(12, 12);
-  await desktop.waitForTimeout(260);
+  await desktop.waitForTimeout(440);
   const subnavAnchorLock = await desktop.evaluate(() => {
     const pill = document.querySelector('.launch-subnav-links > .liquid-nav-pill');
     const cap = document.querySelector('.launch-subnav-links a[href="#capabilities"]');

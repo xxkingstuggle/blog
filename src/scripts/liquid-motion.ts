@@ -95,7 +95,7 @@ function initLiquidMotion(): void {
 		if (!sideRail || state.railGroupIndex < 0) return;
 		const activeItem = state.lockedItem ?? findActiveItem(state.items);
 		const box = activeItem ? state.cache.get(activeItem) : undefined;
-		const y = state.lockedItem && box ? box.y : state.y;
+		const y = state.initialized ? state.y : (box?.y ?? 0);
 		const h = box?.h || parseFloat(state.pill.style.height) || 40;
 		const railY = getContainerRailOffsetY(state.container) + y;
 		const payload: StoredRailPill = {
@@ -133,14 +133,6 @@ function initLiquidMotion(): void {
 
 		for (const state of states) {
 			if (!state.visible) continue;
-			if (state.lockedItem) {
-				state.x = state.tx;
-				state.y = state.ty;
-				state.vx = 0;
-				state.vy = 0;
-				state.pill.style.transform = `translate3d(${state.tx.toFixed(2)}px,${state.ty.toFixed(2)}px,0)`;
-				continue;
-			}
 			const prevX = state.x;
 			const prevY = state.y;
 			const dx = state.tx - state.x;
@@ -200,7 +192,7 @@ function initLiquidMotion(): void {
 
 	function targetItem(state: NavSpringState, item: HTMLElement | null, immediate = false): void {
 		const resolvedItem = state.lockedItem ?? item;
-		const forceImmediate = state.lockedItem !== null || immediate;
+		const forceImmediate = immediate;
 		if (resolvedItem && (state.dirty || !state.cache.has(resolvedItem))) measureContainer(state);
 		const box = resolvedItem ? state.cache.get(resolvedItem) : undefined;
 		if (!box || box.w === 0 || box.h === 0) {
@@ -346,13 +338,13 @@ function initLiquidMotion(): void {
 					const rawHref = item.getAttribute('href') ?? '';
 					if (!rawHref.startsWith('#')) {
 						state.lockedItem = item;
-						targetItem(state, item, true);
+						targetItem(state, item, false);
 						if (isRailGroup) {
 							saveRailPillState(state);
 						}
 						return;
 					}
-					targetItem(state, item, true);
+					targetItem(state, item, false);
 					return;
 				}
 
@@ -396,6 +388,15 @@ function initLiquidMotion(): void {
 			}
 		});
 	}
+
+	window.addEventListener('pagehide', () => {
+		const activeRailState =
+			railStates.find((s) => s.lockedItem !== null) ??
+			railStates.find((s) => s.visible);
+		if (activeRailState) {
+			saveRailPillState(activeRailState);
+		}
+	});
 
 	window.addEventListener('pageshow', (event) => {
 		if (!event.persisted) return;
