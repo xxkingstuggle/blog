@@ -335,16 +335,24 @@ function initLiquidMotion(): void {
 							other.pill.style.opacity = '0';
 						}
 					}
+					if (state.dirty || !state.cache.has(item)) measureContainer(state);
+					const targetBox = state.cache.get(item);
+					const nearTarget = Boolean(
+						state.initialized &&
+							state.visible &&
+							targetBox &&
+							Math.hypot(targetBox.x - state.x, targetBox.y - state.y) <= 3
+					);
 					const rawHref = item.getAttribute('href') ?? '';
 					if (!rawHref.startsWith('#')) {
 						state.lockedItem = item;
-						targetItem(state, item, false);
+						targetItem(state, item, nearTarget);
 						if (isRailGroup) {
 							saveRailPillState(state);
 						}
 						return;
 					}
-					targetItem(state, item, false);
+					targetItem(state, item, nearTarget);
 					return;
 				}
 
