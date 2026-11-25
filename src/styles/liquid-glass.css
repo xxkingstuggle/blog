@@ -33,6 +33,10 @@
 	transform: translate3d(0, 0, 0);
 	transform-origin: center center;
 	will-change: transform, opacity;
+	transition: none;
+}
+
+.liquid-nav-pill[data-ready='1'] {
 	transition:
 		opacity 150ms ease,
 		width 180ms var(--ease-out),

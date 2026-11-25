@@ -114,7 +114,74 @@ async function run(){
     'GitHub link label must be visible on its button in dark mode: '+JSON.stringify(aboutDark));
   await auditButton.scrollIntoViewIfNeeded();
   await colorAudit.screenshot({path:'artifacts/studio-about-button-dark.png'});
+
+  // Regression 1: On /about/, hovering and clicking '/' must lock the pill at '/' with zero downward bounce toward /about/
+  await colorAudit.evaluate(() => window.scrollTo(0, 0));
+  const aboutHomeLink = colorAudit.locator('.studio-primary-nav a[href="/"]');
+  await aboutHomeLink.hover();
+  await colorAudit.waitForTimeout(260);
+  await colorAudit.evaluate(() => {
+    window.addEventListener('click', (e) => e.preventDefault(), { once: true });
+  });
+  await aboutHomeLink.click();
+  await colorAudit.mouse.move(640, 320);
+  const postClickBounce = await colorAudit.evaluate(async () => {
+    const pill = document.querySelector('.studio-primary-nav > .liquid-nav-pill');
+    const homeLink = document.querySelector('.studio-primary-nav a[href="/"]');
+    const aboutLink = document.querySelector('.studio-primary-nav a[href="/about/"]');
+    const homeTop = homeLink.getBoundingClientRect().top;
+    const aboutTop = aboutLink.getBoundingClientRect().top;
+    const samples = [pill.getBoundingClientRect().top];
+    for (let i = 0; i < 16; i++) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      samples.push(pill.getBoundingClientRect().top);
+    }
+    const maxDrift = Math.max(...samples.map((top) => Math.abs(top - homeTop)));
+    return {
+      homeTop,
+      aboutTop,
+      maxDrift,
+      homeCurrent: homeLink.getAttribute('aria-current'),
+      aboutCurrent: aboutLink.getAttribute('aria-current')
+    };
+  });
+  assert.ok(
+    postClickBounce.maxDrift <= 1,
+    'clicking / from /about/ must never bounce pill back toward /about/: ' + JSON.stringify(postClickBounce)
+  );
+  assert.equal(postClickBounce.homeCurrent, 'page', 'clicked nav item must immediately acquire aria-current="page"');
+  assert.equal(postClickBounce.aboutCurrent, null, 'previous nav item must immediately lose aria-current');
   await colorAudit.close();
+
+  // Regression 2: Real click navigation from / to /software/ must land directly on /software/ with no fallback to / or secondary drop
+  const softwareNavLink = desktop.locator('.studio-primary-nav a[href="/software/"]');
+  await softwareNavLink.hover();
+  await desktop.waitForTimeout(220);
+  await Promise.all([
+    desktop.waitForURL('**/software/'),
+    softwareNavLink.click()
+  ]);
+  const crossPageLanding = await desktop.evaluate(async () => {
+    const pill = document.querySelector('.studio-primary-nav > .liquid-nav-pill');
+    const softwareLink = document.querySelector('.studio-primary-nav a[href="/software/"]');
+    const targetTop = softwareLink.getBoundingClientRect().top;
+    const samples = [pill.getBoundingClientRect().top];
+    const opacities = [parseFloat(getComputedStyle(pill).opacity)];
+    for (let i = 0; i < 12; i++) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      samples.push(pill.getBoundingClientRect().top);
+      opacities.push(parseFloat(getComputedStyle(pill).opacity));
+    }
+    const maxDrift = Math.max(...samples.map((top) => Math.abs(top - targetTop)));
+    const minOpacity = Math.min(...opacities);
+    return { targetTop, maxDrift, minOpacity, ready: pill.dataset.ready };
+  });
+  assert.ok(
+    crossPageLanding.maxDrift <= 1 && crossPageLanding.minOpacity >= 0.99,
+    'navigating / -> /software/ must keep pill stably locked on /software/ without fallback or drop: ' +
+      JSON.stringify(crossPageLanding)
+  );
+  await desktop.goto(origin + '/', { waitUntil: 'networkidle' });
 
   // Verify Bento image cards & editorial cards
   const mediaGeometry=await desktop.locator('.gallery-card--image').evaluateAll(cards =>
@@ -166,6 +233,20 @@ async function run(){
     assert.equal(await desktop.locator('[data-stage-pane="1"]').getAttribute('hidden'), null,
       'clicking second stage tab must reveal second stage pane');
   }
+  const subnavCapLink = desktop.locator('.launch-subnav-links a[href="#capabilities"]');
+  await subnavCapLink.click();
+  await desktop.mouse.move(12, 12);
+  await desktop.waitForTimeout(260);
+  const subnavAnchorLock = await desktop.evaluate(() => {
+    const pill = document.querySelector('.launch-subnav-links > .liquid-nav-pill');
+    const cap = document.querySelector('.launch-subnav-links a[href="#capabilities"]');
+    return {
+      current: cap?.getAttribute('aria-current'),
+      driftX: Math.abs(pill.getBoundingClientRect().left - cap.getBoundingClientRect().left)
+    };
+  });
+  assert.equal(subnavAnchorLock.current, 'page', 'in-page hash link must acquire aria-current="page" on click');
+  assert.ok(subnavAnchorLock.driftX <= 2, 'subnav pill must stay docked on clicked #capabilities section');
 
   await desktop.goto(origin+'/posts/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().click();
