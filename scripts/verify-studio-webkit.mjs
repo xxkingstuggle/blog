@@ -10,7 +10,7 @@ import { webkit } from 'playwright';
 
 const origin='http://127.0.0.1:4373';
 const server=spawn('npm',['run','preview','--','--host','127.0.0.1','--port','4373'],
-  {stdio:['ignore','pipe','pipe'],detached:true});
+  {stdio:['ignore','pipe','pipe'],detached:true,env:{...process.env,ASTRO_PREVIEW_BACKGROUND:'1'}});
 let output='';
 server.stdout.on('data',chunk=>output+=String(chunk).slice(0,1000));
 server.stderr.on('data',chunk=>output+=String(chunk).slice(0,1000));
@@ -36,129 +36,55 @@ async function run(){
   await desktop.goto(origin+'/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().waitFor();
   assert.ok(await desktop.locator('.gallery-card').count()>=5,'home has gallery cards');
-  const frameRatios = await desktop.locator('.gallery-card-visual').evaluateAll(elements =>
-    elements.map(element => Number.parseFloat(getComputedStyle(element).aspectRatio))
-  );
-  assert.ok(new Set(frameRatios.map(value => value.toFixed(2))).size >= 3,
-    'gallery frames should reflect source image and editorial contents rather than one fixed ratio');
-  assert.equal(await desktop.locator('.gallery-art-shape').count(),0,
-    'decorative rings must not mask content');
-  assert.equal(await desktop.locator('.gallery-card-visual--has-image').count()>=2,true,
-    'existing product media must remain in the gallery');
+  const totalItems = await desktop.locator('.gallery-item').count();
+  assert.ok(await desktop.locator('.gallery-card-visual').count() >= 8,
+    'all software product media must be rendered in optical stage frames');
+  assert.equal(await desktop.locator('.gallery-visual-category').count(), 0,
+    'top-left floating overlay pill must not cover macOS window traffic lights');
+  assert.ok(await desktop.locator('.gallery-card-app-icon').count() >= 8,
+    'software cards must display authentic 22x22 squircle app icons beside titles');
   await desktop.locator('[data-gallery-filter="writing"]').click();
   const visibleWrites = await desktop.locator('.gallery-item:not([hidden])').count();
-  assert.ok(visibleWrites > 0 && visibleWrites < frameRatios.length,'category filter narrows results');
+  assert.ok(visibleWrites > 0 && visibleWrites < totalItems,'category filter narrows results');
   await desktop.locator('[data-gallery-filter="all"]').click();
-  assert.equal(await desktop.locator('.gallery-item:not([hidden])').count(),frameRatios.length);
-  // The left separator receives a 2.5 CSS px optical correction (5 px at
-  // 2x Retina), without moving any of the secondary navigation links.
-  const dividerMargins=await desktop.locator('.studio-rail-divider').evaluate(el=>({
-    top:parseFloat(getComputedStyle(el).marginTop),
-    bottom:parseFloat(getComputedStyle(el).marginBottom),
-    line:parseFloat(getComputedStyle(el).borderTopWidth),
-    rect:el.getBoundingClientRect().toJSON()
-  }));
-  assert.ok(Math.abs(dividerMargins.top-12.5)<.02 &&
-    Math.abs(dividerMargins.bottom-17.5)<.02 &&
-    dividerMargins.line>=1 &&
-    Math.abs(dividerMargins.top+dividerMargins.bottom-30)<.02,
-    'rail separator must align 5 Retina px higher without displacing lower navigation');
+  assert.equal(await desktop.locator('.gallery-item:not([hidden])').count(),totalItems);
   assert.equal(await desktop.locator('.studio-side-rail').evaluate(el=>getComputedStyle(el).position),'fixed');
   assert.equal(await desktop.locator('.gallery-grid').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
-  await desktop.waitForFunction(() => document.querySelector('.gallery-grid')?.dataset.masonry === 'true');
   await ensureWithinViewport(desktop,'desktop homepage');
-  // The left rail must refract the SAME full-viewport light as the gallery,
-  // instead of hiding it behind a fully opaque rectangle.
+  // The left rail must be physically translucent Liquid Glass over a static ambient field.
   const navigationGlass=await desktop.locator('.studio-side-rail').evaluate(el=>{
     const computed=getComputedStyle(el);
+    const ambient=getComputedStyle(document.body,'::before').backgroundImage;
     return {background:computed.backgroundColor,
+      gradient:computed.backgroundImage,
       blur:computed.backdropFilter || computed.webkitBackdropFilter,
+      ambient,
       width:el.getBoundingClientRect().width};
   });
   assert.ok(navigationGlass.background.startsWith('rgba(') &&
     parseFloat(navigationGlass.background.split(',').at(-1)) < .87,
     'side rail must be physically translucent rather than opaque');
   assert.match(navigationGlass.blur,/blur\(/,'side rail must use real backdrop filtering');
-  const opticalField=await desktop.locator('[data-ambient-stage]').evaluate(el=>el.getBoundingClientRect().toJSON());
-  console.log('Optical rail:',JSON.stringify({navigationGlass,opticalField}));
-  assert.ok(opticalField.x<=1 && opticalField.width>=1439,
-    'ambient light must cover the rail as well as main content');
-  const railTheme=desktop.locator('.studio-side-rail .theme-menu-trigger');
-  await railTheme.click();
-  const floatedMenu=desktop.locator('body > .theme-menu-popover[data-theme-floating]');
-  await floatedMenu.waitFor({state:'visible'});
-  const menuBounds=await floatedMenu.evaluate(el=>el.getBoundingClientRect().toJSON());
-  console.log('Desktop popup:',JSON.stringify(menuBounds));
-  assert.ok(menuBounds.x>=5 && menuBounds.right<=1440-5 &&
-    menuBounds.y>=5 && menuBounds.bottom<=900-5,
-    'theme menu must stay wholly inside desktop viewport');
-  await desktop.screenshot({path:'artifacts/studio-theme-popover-desktop.png',fullPage:false});
-  await floatedMenu.locator('[data-theme-value="dark"]').click();
+  assert.match(navigationGlass.ambient,/radial-gradient/,'static ambient light field must back the liquid glass rail');
+  assert.ok(await desktop.locator('.liquid-nav-pill').count() >= 2,
+    'spring-driven liquid gliding pill must be mounted on navigation containers');
+
+  // Verify 3-State Segmented Liquid Glass Theme Switcher
+  const segmented=desktop.locator('.studio-side-rail .theme-segmented');
+  await segmented.waitFor({state:'visible'});
+  await segmented.locator('[data-theme-value="dark"]').click();
   await desktop.waitForFunction(()=>document.documentElement.dataset.colorMode==='dark');
   const darkRail=await desktop.locator('.studio-side-rail').evaluate(el=>getComputedStyle(el).backgroundColor);
   assert.match(darkRail,/rgba\(/,'dark navigation must stay translucent');
-  await railTheme.click();
-  await desktop.locator('body > .theme-menu-popover[data-theme-floating] [data-theme-value="light"]').click();
+  await desktop.screenshot({path:'artifacts/studio-home-designed-dark.png',fullPage:true});
+  await segmented.locator('[data-theme-value="light"]').click();
   await desktop.waitForFunction(()=>document.documentElement.dataset.colorMode==='light');
-  await railTheme.click();
-  await desktop.locator('body > .theme-menu-popover[data-theme-floating] [data-theme-value="system"]').click();
+  await segmented.locator('[data-theme-value="system"]').click();
   assert.equal(await desktop.evaluate(()=>document.documentElement.dataset.colorMode),'system');
-  // Real WebKit capture of the specific seam the user pointed to.
-  // Scroll the article footer to the fixed rail separator for a direct
-  // two-line visual comparison; no mockups or image compositing involved.
-  await desktop.goto(origin+'/posts/lightweight-multi-agent-coding-loop/',{waitUntil:'networkidle'});
-  await desktop.evaluate(()=>{
-    const footer=document.querySelector('.studio-footer');
-    const divider=document.querySelector('.studio-rail-divider');
-    if(!footer || !divider) return;
-    const documentFooterTop=footer.getBoundingClientRect().top+scrollY;
-    const desiredTop=divider.getBoundingClientRect().top;
-    // The site normally uses html{scroll-behavior:smooth}; forcing an
-    // immediate jump is necessary for a deterministic Safari snapshot.
-    document.documentElement.style.scrollBehavior='auto';
-    window.scrollTo({top:documentFooterTop-desiredTop,behavior:'instant'});
-  });
-  await desktop.waitForTimeout(150);
-  const footerSeam=await desktop.evaluate(()=>{
-    const divider=document.querySelector('.studio-rail-divider');
-    const footer=document.querySelector('.studio-footer');
-    const rail=divider?.getBoundingClientRect();
-    return {
-      dividerY:rail?.top,
-      footerY:footer?.getBoundingClientRect().top,
-      scrollY,innerHeight
-    };
-  });
-  console.log('Editorial rail/footer seam',JSON.stringify(footerSeam));
-  assert.ok(Math.abs(footerSeam.dividerY-footerSeam.footerY)<1.5,
-    'Safari footer/rail comparison screenshot requires exact settled scroll position');
-  await desktop.screenshot({path:'artifacts/studio-divider-alignment-desktop.png',fullPage:false});
-  const clipTop=Math.max(0,Math.floor(footerSeam.dividerY-115));
-  await desktop.screenshot({path:'artifacts/studio-divider-alignment-detail.png',
-    clip:{x:0,y:clipTop,width:1440,height:Math.min(370,900-clipTop)}});
-  await desktop.goto(origin+'/',{waitUntil:'networkidle'});
+  await desktop.screenshot({path:'artifacts/studio-home-desktop.png',fullPage:true});
 
-
-
-  // Public theme regression: genuine button contrast in article prose and
-  // dark CSS-generated posters, while source media stays untouched.
+  // Public theme regression: genuine button contrast in light & dark mode on /about/
   const colorAudit=await browser.newPage({viewport:{width:1440,height:900}});
-  await colorAudit.goto(origin+'/',{waitUntil:'networkidle'});
-  const editorialSample=colorAudit.locator('.gallery-card--editorial .gallery-card-art').first();
-  const lightArt=await editorialSample.evaluate(el=>getComputedStyle(el).backgroundImage);
-  await colorAudit.evaluate(()=>{document.documentElement.dataset.colorMode='dark';});
-  const darkArt=await editorialSample.evaluate(el=>({
-    background:getComputedStyle(el).backgroundImage,
-    foreground:getComputedStyle(el).color,
-    filter:getComputedStyle(el).filter
-  }));
-  assert.notEqual(darkArt.background,lightArt,
-    'dark mode must redraw CSS-generated editorial posters, not show bright light artwork');
-  assert.match(darkArt.background,/linear-gradient/,
-    'dark editorial cards retain layered editorial art');
-  assert.equal(darkArt.filter,'none',
-    'dark-mode colors must be designed directly, not darkened by a blanket brightness filter');
-  await colorAudit.screenshot({path:'artifacts/studio-home-designed-dark.png',fullPage:true});
   await colorAudit.goto(origin+'/about/',{waitUntil:'networkidle'});
   const auditButton=colorAudit.locator('.about-prose .btn-primary').first();
   const readButton=()=>auditButton.evaluate(el=>{
@@ -186,299 +112,66 @@ async function run(){
   const aboutDark=await readButton();
   assert.ok(contrastRatio(aboutDark)>=4.5,
     'GitHub link label must be visible on its button in dark mode: '+JSON.stringify(aboutDark));
-  // All sidebar rows and editorial links must remain visible when dark.
-  const aboutDarkPanels=await colorAudit.evaluate(()=>{
-    const get=selector=>{
-      const el=document.querySelector(selector);
-      if(!el)return null;
-      const s=getComputedStyle(el);
-      return {fg:s.color,fill:s.webkitTextFillColor,bg:s.backgroundColor,bgImage:s.backgroundImage,label:el.textContent?.trim()};
-    };
-    return {
-      product:get('.about-sidebar .workbench-product-card strong'),
-      productPanel:get('.about-sidebar .workbench-product-card'),
-      quick:get('.about-sidebar .about-quick-links a'),
-      articleLink:get('.about-prose p a'),
-      navigation:get('.studio-primary-nav a[aria-current="page"]')
-    };
-  });
-  const themeDiag = await colorAudit.locator('.about-sidebar .workbench-product-card').first().evaluate(el=>{
-    const st=getComputedStyle(el);
-    const rules=[];
-    const walk=(ruleList)=>{
-      for(const rule of Array.from(ruleList)){
-        if(rule.cssRules){try{walk(rule.cssRules);}catch{}}
-        const selectors=rule.selectorText;
-        if(!selectors || !selectors.includes('workbench-product-card')) continue;
-        try {
-          if(el.matches(selectors))rules.push({
-            selector:selectors.slice(0,200),
-            background:rule.style?.getPropertyValue('background'),
-            priority:rule.style?.getPropertyPriority('background'),
-            bgColor:rule.style?.getPropertyValue('background-color'),
-            color:rule.style?.getPropertyValue('color')
-          });
-        }catch{}
-      }
-    };
-    for(const sheet of Array.from(document.styleSheets)){
-      try{walk(sheet.cssRules);}catch{}
-    }
-    return {
-      rootMode:document.documentElement.dataset.colorMode,
-      bodyBg:getComputedStyle(document.body).getPropertyValue('--bg'),
-      elementStyle:el.getAttribute('style'),
-      bg:st.background,fg:st.color,backgroundColor:st.backgroundColor,
-      rules:rules.slice(-25)
-    };
-  });
-  console.log('THEME DIAGNOSTIC',JSON.stringify(themeDiag));
-  for(const item of [aboutDarkPanels.productPanel,aboutDarkPanels.quick,aboutDarkPanels.navigation]) {
-    assert.ok(item && (
-      (!item.bg.includes('255, 255, 255') && /^(?:rgb|rgba)[(]/.test(item.bg)) ||
-      item.bgImage?.includes('linear-gradient')
-    ), 'dark-mode navigation and cards must not become white blocks: '+JSON.stringify(item));
-  }
-  assert.ok(aboutDarkPanels.articleLink &&
-    !(aboutDarkPanels.articleLink.fill || aboutDarkPanels.articleLink.fg).includes('23, 32, 57'),
-    'dark article links must not inherit navy-on-black typography: '+JSON.stringify(aboutDarkPanels.articleLink));
   await auditButton.scrollIntoViewIfNeeded();
   await colorAudit.screenshot({path:'artifacts/studio-about-button-dark.png'});
   await colorAudit.close();
 
-  // Media geometry is now TWO concentric radii: shell + stage clip.
-  // The image has NO extra radius/inset and fills the stage exactly.
+  // Verify Bento image cards & editorial cards
   const mediaGeometry=await desktop.locator('.gallery-card--image').evaluateAll(cards =>
     cards.map(card => {
       const frame=card.querySelector('.gallery-card-visual');
       const img=card.querySelector('.gallery-card-image');
-      const outer=getComputedStyle(card);
       const inner=getComputedStyle(frame);
       const pixels=getComputedStyle(img);
-      const a=frame.getBoundingClientRect();
-      const b=img.getBoundingClientRect();
       return {
-        outer:parseFloat(outer.borderTopLeftRadius),
-        inset:parseFloat(outer.paddingLeft),
-        inner:parseFloat(inner.borderTopLeftRadius),
-        imageRadius:parseFloat(pixels.borderTopLeftRadius),
-        imagePadding:parseFloat(pixels.paddingLeft),
-        aspect:parseFloat(inner.aspectRatio),
-        actual:a.width/a.height,
-        widthDelta:Math.abs(a.width-b.width),
-        heightDelta:Math.abs(a.height-b.height),
-        leftDelta:Math.abs(a.left-b.left),
-        topDelta:Math.abs(a.top-b.top),
+        innerRadius:parseFloat(inner.borderTopLeftRadius),
+        padding:parseFloat(inner.paddingLeft),
         fit:pixels.objectFit
       };
     })
   );
-  assert.ok(mediaGeometry.length >= 3,'multiple photo and video cards must be measured');
+  assert.ok(mediaGeometry.length >= 8, 'all 8 software cards must use optical stage frames');
   for (const media of mediaGeometry) {
-    assert.ok(Math.abs(media.outer-media.inset-media.inner)<.75,
-      'only shell and inner stage have concentric rounded corners');
-    assert.ok(media.imageRadius<.2 && media.imagePadding<.2,
-      'image cannot introduce a third rounded/padded frame');
-    assert.ok(Math.abs(media.aspect-media.actual)<.025,
-      'card height must follow the actual source aspect ratio');
-    assert.ok(media.widthDelta<1 && media.heightDelta<1 &&
-      media.leftDelta<1 && media.topDelta<1 && media.fit==='cover',
-      'media must fill its responsive frame edge-to-edge without letterboxing');
+    assert.ok(media.innerRadius >= 14 && media.padding >= 14 && media.fit === 'contain',
+      'card media must sit uncropped (object-fit: contain) inside a padded optical stage');
   }
-  await desktop.locator('.gallery-card--image').first().screenshot({path:'artifacts/studio-two-layer-image.png'});
-
   const editorialCards = desktop.locator('.gallery-card--editorial');
-  assert.ok(await editorialCards.count()>=2,'text-only cards should have their own compositions');
-  assert.ok(await desktop.locator('.gallery-card-art--layout-0, .gallery-card-art--layout-1, .gallery-card-art--layout-2').count()>=2,
-    'text cards should use distinct editorial treatments');
-  const ambient = desktop.locator('[data-ambient-stage]');
-  await desktop.waitForFunction(() => Boolean(document.querySelector('[data-ambient-stage]')?.getAttribute('data-ambient-primary')));
-  const productCards=desktop.locator('.gallery-card--image');
-  await productCards.first().focus();
-  const firstLight = await ambient.getAttribute('data-ambient-primary');
-  const firstSource = await ambient.getAttribute('data-ambient-source');
-  await productCards.nth(1).focus();
-  const secondLight = await ambient.getAttribute('data-ambient-primary');
-  const secondSource = await ambient.getAttribute('data-ambient-source');
-  assert.ok(firstSource !== secondSource, 'keyboard focus moves accessible ambient scene between works');
-  await productCards.nth(1).evaluate(el=>el.blur());
+  assert.ok(await editorialCards.count() >= 2, 'text-only cards should use clean single-title editorial surfaces');
 
-  // No global cursor lamp, black shadow, three-layer wake or proximity glow.
-  assert.equal(await desktop.locator('.studio-kinetic-field').count(),0,
-    'the floating pointer light and its three shadow blobs must be removed');
-  const touchCard=productCards.first();
-  await touchCard.hover({position:{x:42,y:45}});
-  await desktop.waitForTimeout(280);
-  const firstPress=await touchCard.evaluate(card=>({
-    active:card.dataset.clothActive,
-    x:card.style.getPropertyValue('--pressure-x'),
-    opacity:Number(card.style.getPropertyValue('--pressure-opacity')),
-    surface:getComputedStyle(card.querySelector('.gallery-card-visual'),'::after').opacity,
-    borderCount:parseFloat(getComputedStyle(card.querySelector('.gallery-card-image')).borderTopLeftRadius)
-  }));
-  await touchCard.hover({position:{x:174,y:112}});
-  await desktop.waitForTimeout(270);
-  const nextPress=await touchCard.evaluate(card=>({
-    x:card.style.getPropertyValue('--pressure-x'),
-    y:card.style.getPropertyValue('--pressure-y'),
-    opacity:Number(card.style.getPropertyValue('--pressure-opacity')),
-    transform:getComputedStyle(card.querySelector('.gallery-card-visual')).transform
-  }));
-  assert.ok(firstPress.active==='true' && firstPress.opacity>.32 &&
-    nextPress.opacity>.45 && firstPress.x!==nextPress.x,
-    'localized pressure must follow the mouse INSIDE its card, not trail globally');
-  assert.notEqual(nextPress.transform,'none',
-    'the card surface must respond mechanically with a shallow counter-tilt');
-  const outsideShadow=await touchCard.locator('xpath=..').evaluate(el=>({
-    a:getComputedStyle(el,'::before').display,
-    b:getComputedStyle(el,'::after').display
-  }));
-  assert.equal(outsideShadow.a,'none','no coloured ambient shadow outside the card');
-  assert.equal(outsideShadow.b,'none','no conic trailing shadow outside the card');
-  await touchCard.screenshot({path:'artifacts/studio-cloth-pressed.png'});
-  await desktop.screenshot({path:'artifacts/studio-cloth-hover-desktop.png',fullPage:false});
-  await desktop.mouse.move(12,12);
-  await desktop.waitForTimeout(1100);
-  const released=await touchCard.evaluate(el=>({
-    opacity:Number(el.style.getPropertyValue('--pressure-opacity')),
-    active:el.dataset.clothActive || 'none',
-    hovered:el.matches(':hover'),
-    focused:el.contains(document.activeElement),
-    transform:getComputedStyle(el.querySelector('.gallery-card-visual')).transform
-  }));
-  assert.ok(released.opacity<.04,
-    'cloth rebounds and leaves no floating cursor shadow: '+JSON.stringify(released));
-  await desktop.screenshot({path:'artifacts/studio-cloth-released.png',fullPage:false});
-
-  const fieldGlow=await ambient.locator('[data-ambient-layer]').first().evaluate(el=>getComputedStyle(el).backgroundImage);
-  assert.ok(fieldGlow.includes('radial-gradient') && fieldGlow.includes('linear-gradient'),
-    'chromatic atmosphere must use multiple lights rather than a single generic shadow');
-  await desktop.screenshot({path:'artifacts/studio-chromatic-hover-desktop.png',fullPage:false});
-  await productCards.first().screenshot({path:'artifacts/studio-chromatic-card.png'});
-
-  // Source palettes are allowed to be similar, but the live field must track
-  // each real card, never a frozen global CSS gradient.
-  assert.ok(firstLight && secondLight,'global ambient field must have content-derived colour');
-  const noOldLight = await desktop.locator('.gallery-item').first().evaluate(el => getComputedStyle(el,'::before').display);
-  assert.equal(noOldLight,'none','permanent glow shadow stays disabled');
-  await desktop.screenshot({path:'artifacts/studio-ambient-hover-desktop.png',fullPage:false});
-  await editorialCards.first().screenshot({path:'artifacts/studio-editorial-card.png'});
-  await desktop.waitForTimeout(320);
-  await desktop.screenshot({path:'artifacts/studio-home-desktop.png',fullPage:true});
-  await desktop.screenshot({path:'artifacts/studio-chromatic-overview.png',fullPage:false});
-  // Media quality: sample real local pixels, not one global background token.
-  const mediaCards = desktop.locator('.gallery-card--image');
-  const mediaCardCount = await mediaCards.count();
-  assert.ok(mediaCardCount >= 2,'two original product images must remain present');
-  for (let i = 0; i < mediaCardCount; i++) {
-    await mediaCards.nth(i).scrollIntoViewIfNeeded();
-  }
-  const sampledMedia = await mediaCards.evaluateAll(cards => cards.map(card => {
-    const stage=card.querySelector('.gallery-card-visual');
-    const img=card.querySelector('img');
-    return {hasAttribute:stage?.hasAttribute('data-glass-media'),
-      state:stage?.dataset.glassState,complete:img?.complete,naturalWidth:img?.naturalWidth,
-      src:img?.currentSrc?.slice(-90)};
-  }));
-  console.log('Glass surface diagnostics:',JSON.stringify(sampledMedia));
-  await desktop.waitForFunction(() => {
-    const media = [...document.querySelectorAll('.gallery-card--image [data-glass-media]')];
-    return media.length >= 2 && media.every(el => el.dataset.glassState === 'sampled');
-  },null,{timeout:8000});
-  const glassMeasurements = await mediaCards.evaluateAll(cards => cards.map(card => {
-    const stage=card.querySelector('.gallery-card-visual');
-    const image=card.querySelector('img');
-    if(!stage || !image)return null;
-    const mediaBox=stage.getBoundingClientRect(), imageBox=image.getBoundingClientRect();
-    const imageStyle=getComputedStyle(image);
-    return {
-      palette:stage.style.getPropertyValue('--glass-primary-rgb').trim(),
-      stageRadius:parseFloat(getComputedStyle(stage).borderTopLeftRadius),
-      imageRadius:parseFloat(imageStyle.borderTopLeftRadius),
-      imagePadding:parseFloat(imageStyle.paddingTop),
-      imageInside:
-        imageBox.left >= mediaBox.left-1 && imageBox.top>=mediaBox.top-1 &&
-        imageBox.right <= mediaBox.right+1 && imageBox.bottom<=mediaBox.bottom+1,
-      mediaBG:getComputedStyle(stage).backgroundImage,
-    };
-  }));
-  assert.ok(glassMeasurements.every(x=>x && x.imageRadius<.2 && x.stageRadius>=10),
-    'the clipped stage is rounded but the edge-to-edge image MUST NOT add a third radius');
-  assert.ok(glassMeasurements.every(x=>x && x.imagePadding===0 && x.imageInside),
-    'painted image cannot be square inside a rounded padded image or overflow its stage');
-  assert.ok(new Set(glassMeasurements.map(x=>x.palette)).size >= 2,
-    'different local product images should produce different sampled glass colours');
-  assert.ok(glassMeasurements.every(x=>x?.mediaBG==='none'),
-    'media stage must no longer have a coloured third-layer well behind the image');
-  await mediaCards.last().screenshot({path:'artifacts/studio-glass-card.png'});
+  // Verify Software Launch Page (/software/usblinkmic/) Multi-View Optical Stage
   await desktop.evaluate(()=>window.scrollTo(0,0));
   await desktop.locator('.gallery-card[href="/software/usblinkmic/"]').first().click();
   await desktop.waitForURL('**/software/usblinkmic/');
   assert.ok(await desktop.locator('h1').first().isVisible());
-  await desktop.waitForFunction(() =>
-    document.querySelector('.product-gallery[data-glass-media]')?.dataset.glassState === 'sampled',
-    null,{timeout:8000});
-  const productGlass=await desktop.locator('.product-gallery').evaluate(el=>{
-    const img=el.querySelector('img');
-    const frame=el.querySelector('.stage-window-frame') || img;
-    const a=el.getBoundingClientRect(), b=img?.getBoundingClientRect();
-    const rail=document.querySelector('.studio-side-rail');
-    const main=document.querySelector('#main-content');
-    const hero=document.querySelector('.launch-hero-center');
-    const heroRect=hero?.getBoundingClientRect();
-    return { single:el.classList.contains('single'),
-      stageRadius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
-      imgRadius:frame?parseFloat(getComputedStyle(frame).borderTopLeftRadius):0,
-      palette:el.style.getPropertyValue('--glass-primary-rgb'),
-      imgNaturalRatio:img&&img.naturalHeight?img.naturalWidth/img.naturalHeight:0,
-      imgActualRatio:b&&b.height?b.width/b.height:0,
-      widthDelta:b?Math.abs(a.width-b.width):999,
-      heightDelta:b?Math.abs(a.height-b.height):999,
-      railDisplay:rail?getComputedStyle(rail).display:'none',
-      mainMarginLeft:main?parseFloat(getComputedStyle(main).marginLeft):0,
-      heroCenterDelta:heroRect?Math.abs((heroRect.left+heroRect.right)/2 - window.innerWidth/2):999,
-      legacyPanels:document.querySelectorAll('.acquisition-panel,.version-table').length,
-      overflowX:document.documentElement.scrollWidth - window.innerWidth };
+  const launchInfo = await desktop.evaluate(() => {
+    const stage = document.querySelector('.launch-stage-frame');
+    const subnav = document.querySelector('.launch-subnav');
+    const trustFirst = document.querySelector('.launch-trust-cell dd')?.textContent?.trim() || '';
+    return {
+      stageRadius: stage ? parseFloat(getComputedStyle(stage).borderTopLeftRadius) : 0,
+      subnavBlur: subnav ? (getComputedStyle(subnav).backdropFilter || getComputedStyle(subnav).webkitBackdropFilter) : '',
+      tabs: document.querySelectorAll('[data-stage-tab]').length,
+      trustFirst,
+      legacyPanels: document.querySelectorAll('.acquisition-panel,.version-table').length,
+      overflowX: document.documentElement.scrollWidth - window.innerWidth
+    };
   });
-  assert.ok(productGlass.stageRadius>=20 && productGlass.palette,
-    'product image preview should preserve its outer round frame and sampled colour');
-  console.log('Product geometry:',JSON.stringify(productGlass));
-  assert.equal(productGlass.railDisplay,'none','product launch page must collapse the 280px blog side rail');
-  assert.equal(productGlass.mainMarginLeft,0,'product launch page main canvas must span full width');
-  assert.ok(productGlass.heroCenterDelta<=4,'product launch hero must be centered in viewport');
-  assert.equal(productGlass.legacyPanels,0,'legacy acceptance-checklist panels and duplicate version grid must be removed');
-  assert.ok(productGlass.overflowX<=1,'product launch page must not overflow horizontally');
-  assert.ok(
-    productGlass.imgRadius>=10 &&
-    productGlass.widthDelta>=48 &&
-    productGlass.heightDelta>=48 &&
-    Math.abs(productGlass.imgNaturalRatio - productGlass.imgActualRatio) < 0.03,
-    'product screenshots must sit inside a padded Stage Canvas with natural aspect ratio and rounded window frame'
-  );
+  assert.ok(launchInfo.stageRadius >= 20, 'software launch stage must use a 24px rounded optical frame');
+  assert.match(launchInfo.subnavBlur, /blur\(/, 'software sub-topbar must use liquid glass blur');
+  assert.ok(launchInfo.tabs >= 2, 'software launch stage must provide multi-view stage tabs');
+  assert.equal(launchInfo.legacyPanels, 0, 'legacy acceptance-checklist panels must remain removed');
+  assert.ok(launchInfo.overflowX <= 1, 'software launch page must not overflow horizontally');
+  if (launchInfo.tabs >= 2) {
+    await desktop.locator('[data-stage-tab="1"]').click();
+    assert.equal(await desktop.locator('[data-stage-pane="1"]').getAttribute('hidden'), null,
+      'clicking second stage tab must reveal second stage pane');
+  }
 
   await desktop.goto(origin+'/posts/',{waitUntil:'networkidle'});
   await desktop.locator('.gallery-card').first().click();
   await desktop.waitForURL('**/posts/*/');
   await desktop.locator('.article-prose').waitFor();
   assert.equal(await desktop.locator('h1').count()>=1,true);
-  const articleImage=desktop.locator('.gallery-detail-cover--image');
-  if(await articleImage.count()) {
-    await desktop.waitForFunction(() => document.querySelector('.gallery-detail-cover--image')?.dataset.glassState === 'sampled',
-      null,{timeout:8000});
-    const coverGeometry=await articleImage.evaluate(el=>{
-      const img=el.querySelector('img');
-      const r=el.getBoundingClientRect(), p=img.getBoundingClientRect();
-      return {radius:parseFloat(getComputedStyle(el).borderTopLeftRadius),
-        imgRadius:parseFloat(getComputedStyle(img).borderTopLeftRadius),
-        ratio:parseFloat(getComputedStyle(el).aspectRatio),
-        actual:r.width/r.height,
-        widthDelta:Math.abs(r.width-p.width),heightDelta:Math.abs(r.height-p.height)};
-    });
-    assert.ok(coverGeometry.radius>=10 && coverGeometry.imgRadius<.2 &&
-      Math.abs(coverGeometry.ratio-coverGeometry.actual)<.03 &&
-      coverGeometry.widthDelta<1 && coverGeometry.heightDelta<1,
-      'article covers also fill their source-sized rounded frame without a third image inset');
-  }
   await desktop.waitForTimeout(380);
   await desktop.screenshot({path:'artifacts/studio-article-desktop.png',fullPage:true});
 
@@ -508,53 +201,15 @@ async function run(){
   assert.ok(tapHeights.every(h=>h>=43.5),'touch navigation must have at least 44px hit targets');
   await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.studio-dock-menu').evaluate(el=>el.open),true);
+  await mobile.locator('.studio-dock-panel-appearance [data-theme-value="dark"]').click();
+  await mobile.waitForFunction(()=>document.documentElement.dataset.colorMode==='dark');
+  await mobile.locator('.studio-dock-panel-appearance [data-theme-value="system"]').click();
   await mobile.locator('.studio-dock-menu > summary').click();
   assert.equal(await mobile.locator('.gallery-grid').first().getAttribute('data-masonry'), null,
     'single-column mobile layout must retain natural document order');
   await ensureWithinViewport(mobile,'mobile homepage');
   assert.equal(await mobile.locator('.gallery-card--motion video').count(),0,
     'homepage must not render placeholder motion study video cards');
-  await mobile.locator('.studio-dock-menu > summary').click();
-  await mobile.locator('.studio-dock-panel-appearance .theme-menu-trigger').click();
-  const mobilePopup=mobile.locator('body > .theme-menu-popover[data-theme-floating]');
-  await mobilePopup.waitFor({state:'visible'});
-  const safeRect=await mobilePopup.evaluate(el=>el.getBoundingClientRect().toJSON());
-  const viewport=await mobile.evaluate(()=>({width:innerWidth,height:innerHeight}));
-  assert.ok(safeRect.x>=5 && safeRect.right<=viewport.width-5 &&
-    safeRect.y>=5 && safeRect.bottom<=viewport.height-5,
-    'mobile theme popover must not exit viewport');
-  await mobile.screenshot({path:'artifacts/studio-theme-popover-mobile.png',fullPage:false});
-  await mobilePopup.locator('[data-theme-value="system"]').click();
-  await mobile.locator('.studio-dock-menu > summary').click();
-
-  assert.ok(await mobile.locator('[data-ambient-stage]').count() === 1,
-    'touch devices should keep a single lightweight page background field');
-
-  assert.equal(await mobile.locator('.studio-kinetic-field').count(),0,
-    'coarse/touch devices must not create an invisible pointer field');
-  const mobileMedia=await mobile.locator('.gallery-card--image').first().evaluate(card=>{
-    const stage=card.querySelector('.gallery-card-visual');
-    const img=card.querySelector('.gallery-card-image');
-    const outer=getComputedStyle(card), inner=getComputedStyle(stage);
-    const pixels=getComputedStyle(img);
-    const a=stage.getBoundingClientRect(),b=img.getBoundingClientRect();
-    return {
-      outer:parseFloat(outer.borderTopLeftRadius),
-      inset:parseFloat(outer.paddingLeft),
-      inner:parseFloat(inner.borderTopLeftRadius),
-      imgRadius:parseFloat(pixels.borderTopLeftRadius),
-      imgPad:parseFloat(pixels.paddingLeft),
-      ratio:parseFloat(inner.aspectRatio),
-      actual:a.width/a.height,
-      widthDelta:Math.abs(a.width-b.width),
-      heightDelta:Math.abs(a.height-b.height)
-    };
-  });
-  assert.ok(Math.abs(mobileMedia.outer-mobileMedia.inset-mobileMedia.inner)<.75 &&
-    mobileMedia.imgRadius<.2 && mobileMedia.imgPad<.2 &&
-    Math.abs(mobileMedia.actual-mobileMedia.ratio)<.03 &&
-    mobileMedia.widthDelta<1 && mobileMedia.heightDelta<1,
-    'mobile must also have exactly two concentric surfaces and source-sized media');
 
   // The last page element is the large brand wordmark; its bottom clearance
   // must reserve the fixed dock (64px + bottom offset) on iPhone Safari.

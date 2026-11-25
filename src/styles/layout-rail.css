@@ -7,6 +7,18 @@ body.front-body {
 	background: var(--bg);
 	color: var(--text);
 	font-size: 15px;
+	position: relative;
+	isolation: isolate;
+}
+
+/* 0% CPU Pure CSS Static Ambient Optical Light Field */
+body.front-body::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: -1;
+	background: var(--ambient-field);
 }
 
 body.front-body :where(h1, h2, h3) {
@@ -37,9 +49,10 @@ body.front-body :where(h1, h2, h3) {
 	align-items: stretch;
 	padding: 16px 13px 13px;
 	border-radius: 22px;
-	background: var(--surface-glass);
-	backdrop-filter: blur(22px) saturate(180%);
-	-webkit-backdrop-filter: blur(22px) saturate(180%);
+	background-color: var(--surface-glass);
+	background-image: var(--glass-gradient);
+	backdrop-filter: blur(28px) saturate(190%);
+	-webkit-backdrop-filter: blur(28px) saturate(190%);
 	border: 1px solid var(--line);
 	box-shadow: var(--specular-rim), var(--shadow-card);
 	z-index: 120;
@@ -481,7 +494,7 @@ body.front-body :where(h1, h2, h3) {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 40px;
+		min-height: 44px;
 		padding: 6px 11px;
 		border-radius: 10px;
 		font-size: 12.5px;
@@ -505,7 +518,7 @@ body.front-body :where(h1, h2, h3) {
 		align-items: center;
 		justify-content: center;
 		gap: 4px;
-		min-height: 40px;
+		min-height: 44px;
 		padding: 6px 10px;
 		border-radius: 10px;
 		font-size: 12.5px;

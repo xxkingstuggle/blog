@@ -19,6 +19,7 @@ import { SOFTWARE_PRODUCTS, WORKBENCH_PROJECTS } from '../../lib/software';
           <GalleryCard href={'/software/'+product.slug+'/'} title={product.name}
             description={product.tagline + '。' + product.headline} category={product.platformsLabel}
             meta={product.statusBadge} image={product.screenshot} tone="tool" index={index}
+            icon={product.icon} badge={product.latestVersion}
             transitionKey={'work-'+product.slug} />
         </div>
       ))}

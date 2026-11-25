@@ -5,8 +5,13 @@
   --surface: #ffffff;
   --surface-subtle: #ebe8e0;
   --surface-elevated: #ffffff;
-  --surface-glass: rgb(255 255 255 / 0.72);
-  --surface-glass-strong: rgb(255 255 255 / 0.84);
+  --surface-glass: rgb(255 255 255 / 0.62);
+  --surface-glass-strong: rgb(255 255 255 / 0.78);
+  --glass-gradient: linear-gradient(145deg, rgb(255 255 255 / 0.80) 0%, rgb(255 255 255 / 0.46) 100%);
+  --ambient-field:
+    radial-gradient(62% 54% at 10% 18%, rgb(218 164 128 / 0.22), transparent 72%),
+    radial-gradient(54% 48% at 76% 14%, rgb(138 176 196 / 0.16), transparent 70%),
+    radial-gradient(60% 56% at 22% 84%, rgb(186 170 210 / 0.14), transparent 74%);
   --surface-dark: #12141c;
   --surface-dark-subtle: #1b1f2b;
   --stage-surface: #e8e5dc;
@@ -19,7 +24,10 @@
   --line: #dad7ce;
   --line-subtle: #e6e3da;
   --line-strong: #b5b1a6;
-  --specular-rim: inset 0 1px 0 0 rgb(255 255 255 / 0.9), inset 0 0 0 1px rgb(255 255 255 / 0.45);
+  --specular-rim:
+    inset 0 1px 0.5px 0 rgb(255 255 255 / 0.95),
+    inset 1px 0 0.5px 0 rgb(255 255 255 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.38);
   --accent: #c84b31;
   --accent-contrast: #b03a21;
   --accent-hover: #942e18;
@@ -66,8 +74,13 @@
   --surface: #11141c;
   --surface-subtle: #171b26;
   --surface-elevated: #1b202d;
-  --surface-glass: rgb(17 20 28 / 0.72);
-  --surface-glass-strong: rgb(23 27 38 / 0.84);
+  --surface-glass: rgb(19 23 33 / 0.62);
+  --surface-glass-strong: rgb(24 29 41 / 0.78);
+  --glass-gradient: linear-gradient(145deg, rgb(28 34 48 / 0.72) 0%, rgb(15 18 26 / 0.54) 100%);
+  --ambient-field:
+    radial-gradient(58% 50% at 8% 20%, rgb(74 114 196 / 0.18), transparent 72%),
+    radial-gradient(52% 46% at 78% 16%, rgb(214 112 78 / 0.12), transparent 70%),
+    radial-gradient(60% 54% at 18% 82%, rgb(86 140 168 / 0.13), transparent 74%);
   --surface-dark: #06070a;
   --surface-dark-subtle: #11141c;
   --stage-surface: #151924;
@@ -78,7 +91,10 @@
   --line: #262b38;
   --line-subtle: #1d222d;
   --line-strong: #495268;
-  --specular-rim: inset 0 1px 0 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.04);
+  --specular-rim:
+    inset 0 1px 0.5px 0 rgb(255 255 255 / 0.22),
+    inset 1px 0 0.5px 0 rgb(255 255 255 / 0.10),
+    inset 0 0 20px 0 rgb(255 255 255 / 0.03);
   --accent: #ff7e63;
   --accent-contrast: #ff9882;
   --accent-hover: #ffb3a1;
@@ -104,8 +120,13 @@
     --surface: #11141c;
     --surface-subtle: #171b26;
     --surface-elevated: #1b202d;
-    --surface-glass: rgb(17 20 28 / 0.72);
-    --surface-glass-strong: rgb(23 27 38 / 0.84);
+    --surface-glass: rgb(19 23 33 / 0.62);
+    --surface-glass-strong: rgb(24 29 41 / 0.78);
+    --glass-gradient: linear-gradient(145deg, rgb(28 34 48 / 0.72) 0%, rgb(15 18 26 / 0.54) 100%);
+    --ambient-field:
+      radial-gradient(58% 50% at 8% 20%, rgb(74 114 196 / 0.18), transparent 72%),
+      radial-gradient(52% 46% at 78% 16%, rgb(214 112 78 / 0.12), transparent 70%),
+      radial-gradient(60% 54% at 18% 82%, rgb(86 140 168 / 0.13), transparent 74%);
     --surface-dark: #06070a;
     --surface-dark-subtle: #11141c;
     --stage-surface: #151924;
@@ -116,7 +137,10 @@
     --line: #262b38;
     --line-subtle: #1d222d;
     --line-strong: #495268;
-    --specular-rim: inset 0 1px 0 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.04);
+    --specular-rim:
+      inset 0 1px 0.5px 0 rgb(255 255 255 / 0.22),
+      inset 1px 0 0.5px 0 rgb(255 255 255 / 0.10),
+      inset 0 0 20px 0 rgb(255 255 255 / 0.03);
     --accent: #ff7e63;
     --accent-contrast: #ff9882;
     --accent-hover: #ffb3a1;

@@ -348,12 +348,22 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {
         src:'/media/tintpane/pwa-popup-workspace.webp',
         width:1600,
-        height:1040,
+        height:1000,
         alt:'Tintpane v2.4.0 Chromium PWA 窗口与扩展 Popup 控制面板',
         kicker:'01 · STANDALONE PWA & POPUP ENGINE',
         title:'独立 PWA 窗口标题栏实时同步与域名树控制面板',
         caption:'仅在 display-mode: standalone 独立窗口或显式授权站点激活，实时采样页面顶栏计算色并注入 meta[name="theme-color"]；Popup 面板支持焦点/失焦双态配色与根域名层级继承。',
         mechanism:'chrome.scripting 动态注册 · 域名树向上回溯 · 焦点/失焦双态平滑过渡'
+      },
+      {
+        src:'/media/tintpane/pwa-light-fixed.webp',
+        width:1600,
+        height:1000,
+        alt:'Tintpane v2.4.0 浅色外观与固定颜色模式下的独立 PWA 窗口控制界面',
+        kicker:'02 · FIXED PALETTE & LIGHT APPEARANCE',
+        title:'浅色与固定颜色模式下的无白条沉浸式顶栏',
+        caption:'支持「跟随系统」与「固定颜色」双模式切换；在浅色文档或知识库 PWA 中将标题栏锁定为暖白底色，彻底消除默认 Chromium 刺眼顶栏色差。',
+        mechanism:'MutationObserver 节点守护 · 固定色值锁定 · 关闭开关即刻还原'
       }
     ],
     verifiedAt:'2026-11-24（v2.4.0 公开 Release 与单元测试核验通过）',
@@ -523,8 +533,9 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     gallery:[
       {
         src:'/media/habitbloom/today-habits.webp',
-        width:1600,
-        height:1049,
+        width:800,
+        height:1400,
+        narrow:true,
         alt:'HabitBloom 今日习惯打卡卡片与连续记录仪表盘',
         kicker:'01 · TODAY HABIT CARDS & STREAKS',
         title:'SwiftUI 今日习惯卡片、连续打卡火花线与 Widget 快照状态',
@@ -533,8 +544,9 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       },
       {
         src:'/media/habitbloom/streak-calendar.webp',
-        width:1600,
-        height:988,
+        width:800,
+        height:1400,
+        narrow:true,
         alt:'HabitBloom 月度热力日历与 WidgetKit / Cloudflare 双通道快照面板',
         kicker:'02 · MONTH CALENDAR & DUAL-PATH SNAPSHOT',
         title:'月度打卡日历补记与 App Group / Cloudflare 双通道回并',
@@ -610,21 +622,21 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {
         src:'/media/dim-wallpaper/menubar-overlay-split.webp',
         width:1600,
-        height:1049,
-        alt:'DimWallpaper 菜单栏弹窗与壁纸压暗前后对比及 Finder 图标保真效果',
-        kicker:'01 · LIVE MENUBAR & SPLIT COMPARISON',
-        title:'菜单栏 10%–85% 无级压暗与桌面图标 100% 亮度保留',
-        caption:'右上角 LSUIElement 菜单栏弹窗提供「跟随系统深色模式 / 始终压暗 / 暂停」三态切换与 5 个快捷浓度档位；遮罩精准压暗底层壁纸，Finder 桌面图标毫发无损。',
+        height:1000,
+        alt:'DimWallpaper 深色模式下的 macOS 菜单栏状态面板与 40% 壁纸调暗效果',
+        kicker:'01 · DARK MODE MENUBAR & OVERLAY',
+        title:'深色模式自动生效：5%–80% 无级调暗与桌面图标原亮保留',
+        caption:'右上角菜单栏面板提供「启用壁纸调暗」「仅在深色模式下生效」与 5%–80% 连续滑块；遮罩精准压暗底层壁纸，Finder 桌面文件夹图标与标签依然保持 100% 原始清晰度。',
         mechanism:'CGWindowLevelForKey(.desktopWindow) + 1 · NSApp.effectiveAppearance KVO · 0.18s 渐变'
       },
       {
-        src:'/media/dim-wallpaper/window-level-inspector.webp',
+        src:'/media/dim-wallpaper/menubar-light-mode.webp',
         width:1600,
-        height:1003,
-        alt:'DimWallpaper CoreGraphics 窗口层级夹心检视器与双屏同步状态',
-        kicker:'02 · CGWINDOWLEVEL SANDWICH & MULTI-DISPLAY',
-        title:'CoreGraphics 图层夹心结构与多显示器热插拔同步',
-        caption:'直观展示 macOS 窗口合成栈中壁纸层（-2147483624）、DimWallpaper 穿透遮罩层（-2147483623）与桌面图标层（-2147483603）的精确卡位，以及内置 Retina 与外接 4K 显示器的同步状态。',
+        height:1000,
+        alt:'DimWallpaper 浅色模式下的 macOS 菜单栏控制面板与全天候手动调暗视图',
+        kicker:'02 · LIGHT APPEARANCE & ALWAYS-ON DIMMING',
+        title:'浅色与全天候模式：跨空间常驻与多显示器同步',
+        caption:'取消勾选「仅在深色模式下生效」即可在浅色外观下独立压暗高对比壁纸；监听显示器热插拔与系统休眠唤醒通知，自动对齐每块屏幕的物理边界。',
         mechanism:'ignoresMouseEvents = true · .canJoinAllSpaces · didChangeScreenParameters 热插拔重建'
       }
     ],
@@ -689,34 +701,44 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     galleryHeading:'把复杂的窗口坐标计算，收进直观的原生面板。',
     gallery:[
       {
-        src:'/media/framelit/states-dark.webp',
+        src:'/media/framelit/commands-dark.webp',
         width:1600,
-        height:853,
-        alt:'FrameLit 目标区域编辑器在默认、悬停、拖动吸附、缩放、48x24细网格与绘制六种状态下的视图',
-        kicker:'01 · SIX-STATE GRID CANVAS',
-        title:'6×3 至 48×24 网格的六态交互与刻度吸附',
-        caption:'Custom Layout Canvas 覆盖默认选中、边缘悬停高亮、主刻度拖动吸附、右下角最小格缩放、48×24 高密度网格及空白区拖拽新建六种交互状态，实时换算归一化窗口坐标。',
+        height:1369,
+        alt:'FrameLit 深色模式下的窗口布局命令列表与 6x3 至 48x24 坐标网格编辑器',
+        kicker:'01 · COMMANDS & GRID WORKSPACE',
+        title:'窗口布局命令列表与 6×3 至 48×24 坐标网格编辑器',
+        caption:'左侧集中管理横向与纵向分屏命令、快捷键绑定与菜单栏显示开关，右侧内嵌可实时拖拽缩放的目标区域网格画布，支持 6×3 至 48×24 五档网格密度切换。',
         mechanism:'Normalized Grid Rect · 6 档刻度吸附反馈 · 实时百分比与网格坐标读数'
       },
       {
         src:'/media/framelit/prefs-dark.webp',
         width:1600,
-        height:1236,
+        height:1369,
         alt:'FrameLit 深色模式偏好设置面板',
         kicker:'02 · EDGES, GAPS & TRIGGER ZONES',
-        title:'边缘贴靠、窗口留白与触发热区精细控制',
-        caption:'在设置面板中集中配置屏幕边缘贴靠、拖开时自动恢复原始窗口尺寸、窗口间点距（pt）留白，以及屏幕边缘激活区域的缩放比例与触发宽度。',
+        title:'边缘贴靠、窗口边距与 Dock / 菜单栏安全区控制',
+        caption:'在原生设置面板中集中配置菜单栏/Dock 图标显隐、开机自启、窗口点距（pt）留白、贴边豁免、避开 Dock 和菜单栏安全区以及 iCloud 配置同步。',
         mechanism:'NSScreen.visibleFrame 安全区扣除 · 边缘触发热区可调 · 拖拽还原记忆'
       },
       {
         src:'/media/framelit/commands-light.webp',
         width:1600,
-        height:1236,
+        height:1169,
         alt:'FrameLit 浅色模式指令面板与网格画布',
         kicker:'03 · SEMANTIC LIGHT & DARK TOKENS',
         title:'语义化深浅双主题与 77 项重绘矢量图标',
         caption:'基于统一的色彩与表面语义 Token 构建浅色与深色双套原生外观，配合自动化图稿管线生成的 77 项 1x/2x 布局指令图标，确保网格标尺与快捷键徽章在任意光照下清晰锐利。',
         mechanism:'AppKit Semantic Appearance · prepare_artwork.swift 资产管线 · 1x/2x Template Glyphs'
+      },
+      {
+        src:'/media/framelit/states-dark.webp',
+        width:1600,
+        height:1183,
+        alt:'FrameLit 48x24 放大网格编辑器独立视图',
+        kicker:'04 · ENLARGED 48×24 GRID EDITOR',
+        title:'48×24 放大编辑画布与命令页实时双向同步',
+        caption:'点击「放大编辑」即可展开高密度 48×24 全幅坐标网格，支持拖动移动、边缘吸附缩放与空白处重新框选绘制，所有修改即时同步回命令列表。',
+        mechanism:'48×24 高精度网格吸附 · 归一化分数坐标 · 即时持久化'
       }
     ],
     verifiedAt:'2026-11-24（Swift 源码构建、77 项原创图稿打包与诊断日志单测核验）',

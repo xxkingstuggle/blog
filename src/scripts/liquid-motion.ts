@@ -84,8 +84,10 @@ function initLiquidMotion(): void {
 
 			if (energy >= STOP_EPSILON) {
 				anyMoving = true;
-				const sx = 1 + Math.min(Math.abs(state.vx) * 0.00012, 0.04);
-				const sy = 1 + Math.min(Math.abs(state.vy) * 0.00015, 0.04);
+				const stretchX = Math.max(-0.04, Math.min(Math.abs(state.vx) * 0.00026 - Math.abs(state.vy) * 0.00011, 0.075));
+				const stretchY = Math.max(-0.04, Math.min(Math.abs(state.vy) * 0.0003 - Math.abs(state.vx) * 0.00013, 0.075));
+				const sx = 1 + stretchX;
+				const sy = 1 + stretchY;
 				state.pill.style.transform = `translate3d(${state.x.toFixed(2)}px,${state.y.toFixed(2)}px,0) scale3d(${sx.toFixed(3)},${sy.toFixed(3)},1)`;
 			} else {
 				state.x = state.tx;
@@ -251,6 +253,45 @@ function initLiquidMotion(): void {
 					nextTab.click();
 				}
 			});
+		});
+	}
+
+	// On-demand pointer specular reflection for liquid glass rail & Bento cards (0% idle CPU)
+	if (!reducedMotion) {
+		const sheenTargets = document.querySelectorAll<HTMLElement>(
+			'.studio-side-rail, .gallery-card, .launch-bento-card'
+		);
+		sheenTargets.forEach((surface) => {
+			let sheenRaf = 0;
+			let px = 0;
+			let py = 0;
+			surface.addEventListener(
+				'pointermove',
+				(e) => {
+					px = e.clientX;
+					py = e.clientY;
+					if (sheenRaf) return;
+					sheenRaf = requestAnimationFrame(() => {
+						sheenRaf = 0;
+						const rect = surface.getBoundingClientRect();
+						surface.style.setProperty('--spot-x', `${(px - rect.left).toFixed(1)}px`);
+						surface.style.setProperty('--spot-y', `${(py - rect.top).toFixed(1)}px`);
+						surface.setAttribute('data-spot', '1');
+					});
+				},
+				{ passive: true }
+			);
+			surface.addEventListener(
+				'pointerleave',
+				() => {
+					if (sheenRaf) {
+						cancelAnimationFrame(sheenRaf);
+						sheenRaf = 0;
+					}
+					surface.removeAttribute('data-spot');
+				},
+				{ passive: true }
+			);
 		});
 	}
 }

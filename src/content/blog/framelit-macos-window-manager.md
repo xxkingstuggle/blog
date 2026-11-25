@@ -30,7 +30,7 @@ cover: ../../assets/projects/framelit-cover.png
 这下尺寸倒是拉大了，可窗口停下来的位置却莫名其妙往旁边歪了好几个像素，没能严丝合缝地贴齐屏幕边缘。
 
 <figure class="case-study-figure">
-  <img src="/media/framelit/commands-dark.webp" alt="FrameLit 深色模式下的窗口布局指令与自定义网格画布" width="1600" height="1236" loading="lazy" decoding="async" />
+  <img src="/media/framelit/commands-dark.webp" alt="FrameLit 深色模式下的窗口布局指令与自定义网格画布" width="1600" height="1369" loading="lazy" decoding="async" />
   <figcaption>图 1 · FrameLit 深色模式主界面，左侧管理分屏指令与全局快捷键，右侧在 Custom Layout Canvas 上拖拽定义任意网格比例。</figcaption>
 </figure>
 
@@ -69,7 +69,7 @@ $$x = \frac{c_1}{W_{\text{grid}}}, \quad y = \frac{r_1}{H_{\text{grid}}}, \quad 
 这样做的好处是，不管我当前窗口是在 13 寸的笔记本内屏，还是在 27 寸的 4K 外接大屏上，按下同一个快捷键的瞬间，引擎直接拿这套归一化比例乘上当前屏幕的 `visibleFrame`，就能在任何分辨率的显示器上分毫不差地复刻出同一套版式。
 
 <figure class="case-study-figure">
-  <img src="/media/framelit/prefs-dark.webp" alt="FrameLit 偏好设置与排除应用规则面板" width="1600" height="1236" loading="lazy" decoding="async" />
+  <img src="/media/framelit/prefs-dark.webp" alt="FrameLit 偏好设置与安全区边界控制面板" width="1600" height="1369" loading="lazy" decoding="async" />
   <figcaption>图 2 · FrameLit 偏好设置面板，管理边缘拖拽触发区、多屏投送策略、排除应用列表与异步诊断日志。</figcaption>
 </figure>
 

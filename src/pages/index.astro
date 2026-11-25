@@ -20,11 +20,10 @@ const total = SOFTWARE_PRODUCTS.length + posts.length + workbench.length;
     <p class="gallery-hero-description">专注 AI Agent 工具链、多模型网关治理与 macOS / iOS / Android 原生应用开发。这里收录已开源发布的 {SOFTWARE_PRODUCTS.length} 款代表软件、真实运行截图与 {listedPosts.length} 篇技术及产品复盘。</p>
     <div class="gallery-hero-bottom">
       <div class="gallery-hero-links">
-        <a href="/software/">软件作品 ({SOFTWARE_PRODUCTS.length}) <span aria-hidden="true">↘</span></a>
-        <a href="/posts/">技术与产品复盘 ({listedPosts.length}) <span aria-hidden="true">↘</span></a>
-        <a href="/about/">关于与简历 <span aria-hidden="true">↗</span></a>
+        <a href="/software/">浏览软件作品 <span aria-hidden="true">↘</span></a>
+        <a href="/posts/">技术与产品文章 <span aria-hidden="true">↘</span></a>
+        <a href="/about/">关于 Xin <span aria-hidden="true">↗</span></a>
       </div>
-      <span class="gallery-status-light">{SOFTWARE_PRODUCTS.length} 款开源软件 · {listedPosts.length} 篇实战文章</span>
     </div>
     <div class="gallery-index-rule"></div>
   </header>
@@ -48,7 +47,8 @@ const total = SOFTWARE_PRODUCTS.length + posts.length + workbench.length;
           <GalleryCard href={`/software/${product.slug}/`} title={product.name}
             description={product.tagline + '。' + product.availabilitySummary}
             category={'软件 / ' + product.platformsLabel} meta={product.statusBadge}
-            image={product.screenshot} tone="tool" index={index} transitionKey={'work-' + product.slug} />
+            image={product.screenshot} icon={product.icon} badge={product.latestVersion}
+            tone="tool" index={index} transitionKey={'work-' + product.slug} />
         </div>
       ))}
       {posts.map((post, index) => (

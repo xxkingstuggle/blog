@@ -39,7 +39,7 @@ const files = Object.fromEntries(
 );
 
 const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4372'], {
-  stdio: ['ignore', 'pipe', 'pipe'], detached: true
+  stdio: ['ignore', 'pipe', 'pipe'], detached: true, env: { ...process.env, ASTRO_PREVIEW_BACKGROUND: '1' }
 });
 let output = '';
 server.stdout.on('data', data => { output += String(data).slice(0, 4000); });

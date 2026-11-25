@@ -9,6 +9,8 @@ interface Props {
   category: string;
   meta?: string;
   image?: ImageMetadata;
+  icon?: ImageMetadata;
+  badge?: string;
   video?: string;
   videoPoster?: string;
   tone?: 'tool' | 'thinking' | 'project' | 'update';
@@ -16,7 +18,7 @@ interface Props {
   transitionKey?: string;
 }
 
-const { href, title, description, category, meta, image, video, videoPoster, tone = 'project', index = 0, transitionKey } = Astro.props;
+const { href, title, description, category, meta, image, icon, badge, video, videoPoster, tone = 'project', index = 0, transitionKey } = Astro.props;
 const isMotion = Boolean(video && videoPoster);
 const hasVisual = Boolean(image) || isMotion;
 const imageAspect = isMotion ? 16 / 10 : image?.width && image?.height ? image.width / image.height : null;
@@ -84,11 +86,26 @@ const metaLine = [category, meta].filter(Boolean).join(' · ');
             decoding="async"
           />
         )}
-        <span class="gallery-visual-category">{category}</span>
       </div>
       <div class="gallery-card-info">
         <div class="gallery-card-caption">
-          <h3>{title}</h3>
+          <div class="gallery-card-title-group">
+            {icon && (
+              <Image
+                src={icon}
+                alt=""
+                width={22}
+                height={22}
+                format="webp"
+                densities={[1, 2]}
+                class="gallery-card-app-icon"
+                loading={isEager ? 'eager' : 'lazy'}
+                decoding="async"
+              />
+            )}
+            <h3>{title}</h3>
+            {badge && <span class="gallery-card-version-pill">{badge}</span>}
+          </div>
           <span class="gallery-card-arrow" aria-hidden="true">↗</span>
         </div>
         <p>{description}</p>

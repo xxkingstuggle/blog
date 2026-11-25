@@ -238,13 +238,27 @@
 }
 
 /* Prose Styling */
-.article-prose {
+.article-prose,
+.feature-prose {
 	max-width: var(--content-width);
 	margin-inline: auto;
 	font-family: var(--font-serif);
 	font-size: 1.1rem;
 	line-height: 1.95;
 	color: var(--text);
+}
+
+.feature-badge-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 16px;
+}
+
+.feature-content-wrapper {
+	max-width: var(--wide-width);
+	margin-inline: auto;
 }
 
 .article-prose p {
@@ -340,7 +354,7 @@
 	scroll-margin-top: 96px;
 }
 
-.article-prose a {
+.article-prose a:not(.btn-primary):not(.btn-secondary):not(.workbench-product-card) {
 	color: var(--accent-contrast);
 	text-decoration: underline;
 	text-underline-offset: 4px;

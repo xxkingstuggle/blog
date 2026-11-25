@@ -24,9 +24,10 @@
 	min-height: 54px;
 	padding: 8px 14px;
 	border-radius: 16px;
-	background: var(--surface-glass-strong);
-	backdrop-filter: blur(22px) saturate(180%);
-	-webkit-backdrop-filter: blur(22px) saturate(180%);
+	background-color: var(--surface-glass);
+	background-image: var(--glass-gradient);
+	backdrop-filter: blur(28px) saturate(190%);
+	-webkit-backdrop-filter: blur(28px) saturate(190%);
 	border: 1px solid var(--line);
 	box-shadow: var(--specular-rim), var(--shadow-card);
 }
@@ -145,17 +146,26 @@
 
 .launch-icon-pedestal {
 	position: relative;
-	width: 88px;
-	height: 88px;
-	border-radius: 24px;
-	padding: 8px;
-	background: var(--surface);
-	border: 1px solid var(--line);
-	box-shadow: var(--specular-rim), var(--shadow-card);
+	width: 76px;
+	height: 76px;
+	border-radius: 18px;
+	padding: 0;
+	background: transparent;
+	box-shadow: var(--shadow-card);
 	display: grid;
 	place-items: center;
 	margin-bottom: 20px;
+	overflow: hidden;
 	transition: transform 320ms var(--ease-spring);
+}
+
+.launch-icon-pedestal::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	box-shadow: inset 0 1px 0.5px rgb(255 255 255 / 0.45), inset 0 0 0 1px rgb(255 255 255 / 0.14);
+	pointer-events: none;
 }
 
 .launch-icon-pedestal:hover {
@@ -163,10 +173,11 @@
 }
 
 .launch-app-icon {
-	width: 72px;
-	height: 72px;
+	width: 76px;
+	height: 76px;
 	border-radius: 18px;
 	object-fit: cover;
+	display: block;
 }
 
 .launch-badge-row {
@@ -283,8 +294,12 @@
 	gap: 4px;
 	padding: 4px;
 	border-radius: 14px;
-	background: color-mix(in srgb, var(--surface-subtle) 85%, transparent);
+	background-color: color-mix(in srgb, var(--surface-subtle) 70%, transparent);
+	background-image: var(--glass-gradient);
+	backdrop-filter: blur(22px) saturate(185%);
+	-webkit-backdrop-filter: blur(22px) saturate(185%);
 	border: 1px solid var(--line);
+	box-shadow: var(--specular-rim);
 }
 
 .launch-view-tab {
@@ -292,6 +307,7 @@
 	align-items: center;
 	gap: 7px;
 	min-height: 36px;
+	max-width: 280px;
 	padding: 6px 14px;
 	border-radius: 10px;
 	border: 0;
@@ -299,6 +315,9 @@
 	color: var(--text-secondary);
 	font-size: 12.5px;
 	font-weight: 620;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	cursor: pointer;
 	transition: color 180ms ease;
 }
@@ -757,5 +776,11 @@
 	.launch-spec-row {
 		grid-template-columns: 1fr;
 		gap: 4px;
+	}
+}
+
+@media (max-width: 520px) {
+	.launch-subnav-version {
+		display: none;
 	}
 }

@@ -30,8 +30,8 @@ cover: ../../assets/projects/dim-wallpaper-cover.png
 于是我打开编辑器，用大约 200 行 Swift 和 AppKit 代码写了个叫 [**DimWallpaper (v1.0.0)**](/software/dim-wallpaper/) 的菜单栏小工具。编译出来整个二进制可执行文件只有 68 KB，安静地待在屏幕右上角。
 
 <figure class="case-study-figure">
-  <img src="/media/dim-wallpaper/menubar-overlay-split.webp" alt="DimWallpaper v1.0.0 菜单栏压暗控制弹窗与壁纸压暗前后对比" width="1600" height="1049" loading="lazy" decoding="async" />
-  <figcaption>图 1 · DimWallpaper v1.0.0 菜单栏控制面板与桌面实景对比：底层高亮度壁纸被柔和压暗 55%，而桌面 Finder 图标与文字依然保持 100% 原始亮度。</figcaption>
+  <img src="/media/dim-wallpaper/menubar-overlay-split.webp" alt="DimWallpaper v1.0.0 深色模式下的 macOS 菜单栏状态面板与 40% 壁纸调暗效果" width="1600" height="1000" loading="lazy" decoding="async" />
+  <figcaption>图 1 · DimWallpaper v1.0.0 深色模式运行界面：菜单栏下拉面板调节 40% 调暗强度，底层壁纸被柔和压暗，而桌面 Finder 文件夹图标与文字依然保持 100% 原始亮度。</figcaption>
 </figure>
 
 听起来就是在屏幕上盖一个全屏的黑色半透明窗口对吧？
@@ -54,8 +54,8 @@ cover: ../../assets/projects/dim-wallpaper-cover.png
 看到这张表里的夹缝了吗？壁纸层和桌面图标层之间，刚好留着可以插队的位置。
 
 <figure class="case-study-figure">
-  <img src="/media/dim-wallpaper/window-level-inspector.webp" alt="DimWallpaper CoreGraphics 窗口层级夹心结构与多显示器同步检视器" width="1600" height="1003" loading="lazy" decoding="async" />
-  <figcaption>图 2 · CoreGraphics 窗口合成栈夹心卡位（Level -2147483623）与双显示器热插拔同步状态。</figcaption>
+  <img src="/media/dim-wallpaper/menubar-light-mode.webp" alt="DimWallpaper v1.0.0 浅色模式下的 macOS 菜单栏控制面板与全天候手动调暗视图" width="1600" height="1000" loading="lazy" decoding="async" />
+  <figcaption>图 2 · DimWallpaper v1.0.0 浅色外观运行界面：关闭「仅在深色模式下生效」后，可在日间浅色模式下按需柔和调暗高对比壁纸。</figcaption>
 </figure>
 
 我只需要在代码里把遮罩窗口的 `level` 精确设成壁纸层加 1。

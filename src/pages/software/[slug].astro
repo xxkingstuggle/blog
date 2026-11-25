@@ -64,9 +64,13 @@ const stageViews: SoftwareGalleryItem[] =
 
 function shortTabLabel(item: SoftwareGalleryItem): string {
 	const clean = item.title.replace(/[，。：、·].*$/, '').trim();
-	if (clean.length <= 12) return clean;
-	return clean.slice(0, 12) + '…';
+	if (clean.length <= 20) return clean;
+	return clean.slice(0, 20) + '…';
 }
+
+const versionStatusText = product.statusBadge.includes(product.latestVersion) || product.statusBadge.startsWith('v')
+	? product.statusBadge
+	: `${product.latestVersion} · ${product.statusBadge}`;
 ---
 
 <BaseLayout
@@ -185,7 +189,7 @@ function shortTabLabel(item: SoftwareGalleryItem): string {
 				<dl class="launch-trust-strip" aria-label="版本与工程核验摘要" data-reveal>
 					<div class="launch-trust-cell">
 						<dt>VERSION &amp; STATUS</dt>
-						<dd>{product.latestVersion} · {product.statusBadge}</dd>
+						<dd>{versionStatusText}</dd>
 					</div>
 					<div class="launch-trust-cell">
 						<dt>TARGET PLATFORMS</dt>
