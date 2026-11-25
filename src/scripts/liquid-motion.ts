@@ -28,12 +28,7 @@ const DAMPING = 22;
 const STOP_EPSILON = 0.04;
 
 function initLiquidMotion(): void {
-	const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-	let reducedMotion = motionQuery?.matches ?? false;
-	motionQuery?.addEventListener?.('change', (e) => {
-		reducedMotion = e.matches;
-	});
-
+	const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 	const states: NavSpringState[] = [];
 	let rafId = 0;
 	let lastTime = 0;
@@ -91,41 +86,22 @@ function initLiquidMotion(): void {
 				anyMoving = true;
 				const sx = 1 + Math.min(Math.abs(state.vx) * 0.00012, 0.04);
 				const sy = 1 + Math.min(Math.abs(state.vy) * 0.00015, 0.04);
-				state.pill.style.transform = `translate3d(${state.x.toFixed(2)}px, ${state.y.toFixed(2)}px, 0) scale3d(${sx.toFixed(3)}, ${sy.toFixed(3)}, 1)`;
+				state.pill.style.transform = `translate3d(${state.x.toFixed(2)}px,${state.y.toFixed(2)}px,0) scale3d(${sx.toFixed(3)},${sy.toFixed(3)},1)`;
 			} else {
 				state.x = state.tx;
 				state.y = state.ty;
 				state.vx = 0;
 				state.vy = 0;
-				state.pill.style.transform = `translate3d(${state.tx.toFixed(2)}px, ${state.ty.toFixed(2)}px, 0) scale3d(1, 1, 1)`;
+				state.pill.style.transform = `translate3d(${state.tx.toFixed(2)}px,${state.ty.toFixed(2)}px,0)`;
 			}
 		}
 
-		if (anyMoving) {
-			rafId = requestAnimationFrame(stepSprings);
-		} else {
-			rafId = 0;
-			lastTime = 0;
-		}
-	}
-
-	function scheduleSpring(): void {
-		if (rafId === 0 && !reducedMotion) {
-			lastTime = performance.now();
-			rafId = requestAnimationFrame(stepSprings);
-		}
+		rafId = anyMoving ? requestAnimationFrame(stepSprings) : ((lastTime = 0), 0);
 	}
 
 	function targetItem(state: NavSpringState, item: HTMLElement | null, immediate = false): void {
-		if (!item) {
-			state.visible = false;
-			state.pill.style.opacity = '0';
-			return;
-		}
-		if (state.dirty || !state.cache.has(item)) {
-			measureContainer(state);
-		}
-		const box = state.cache.get(item);
+		if (item && (state.dirty || !state.cache.has(item))) measureContainer(state);
+		const box = item ? state.cache.get(item) : undefined;
 		if (!box || box.w === 0 || box.h === 0) {
 			state.visible = false;
 			state.pill.style.opacity = '0';
@@ -145,11 +121,14 @@ function initLiquidMotion(): void {
 			state.vx = 0;
 			state.vy = 0;
 			state.initialized = true;
-			state.pill.style.transform = `translate3d(${box.x.toFixed(2)}px, ${box.y.toFixed(2)}px, 0) scale3d(1, 1, 1)`;
+			state.pill.style.transform = `translate3d(${box.x.toFixed(2)}px,${box.y.toFixed(2)}px,0)`;
 			return;
 		}
 
-		scheduleSpring();
+		if (rafId === 0) {
+			lastTime = performance.now();
+			rafId = requestAnimationFrame(stepSprings);
+		}
 	}
 
 	const navContainers = document.querySelectorAll<HTMLElement>('[data-liquid-nav]');
@@ -185,30 +164,20 @@ function initLiquidMotion(): void {
 		states.push(state);
 
 		const active = findActiveItem(items);
-		if (active) {
-			targetItem(state, active, true);
-		}
+		if (active) targetItem(state, active, true);
 
 		items.forEach((item) => {
-			item.addEventListener('pointerenter', () => {
-				targetItem(state, item);
-			});
-			item.addEventListener('focus', () => {
-				targetItem(state, item);
-			});
+			item.addEventListener('pointerenter', () => targetItem(state, item));
+			item.addEventListener('focus', () => targetItem(state, item));
 			item.addEventListener('click', () => {
 				requestAnimationFrame(() => {
 					state.dirty = true;
-					const nextActive = findActiveItem(items) ?? item;
-					targetItem(state, nextActive);
+					targetItem(state, findActiveItem(items) ?? item);
 				});
 			});
 		});
 
-		container.addEventListener('pointerleave', () => {
-			const currentActive = findActiveItem(items);
-			targetItem(state, currentActive);
-		});
+		container.addEventListener('pointerleave', () => targetItem(state, findActiveItem(items)));
 	});
 
 	window.addEventListener(
@@ -247,12 +216,43 @@ function initLiquidMotion(): void {
 			});
 		});
 	}
-}
 
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initLiquidMotion, { once: true });
-	} else {
-		initLiquidMotion();
+	// Software Launch multi-view optical stage tabs ([data-stage-tab])
+	const stageTabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-stage-tab]'));
+	const stagePanes = Array.from(document.querySelectorAll<HTMLElement>('[data-stage-pane]'));
+
+	if (stageTabs.length > 0 && stagePanes.length > 0) {
+		const activateStage = (targetIndex: string, focusTab = false): void => {
+			stageTabs.forEach((tab) => {
+				const isMatch = tab.dataset.stageTab === targetIndex;
+				tab.setAttribute('aria-selected', String(isMatch));
+				tab.tabIndex = isMatch ? 0 : -1;
+				if (isMatch && focusTab) tab.focus();
+			});
+			stagePanes.forEach((pane) => {
+				pane.hidden = pane.dataset.stagePane !== targetIndex;
+			});
+		};
+
+		stageTabs.forEach((tab, idx) => {
+			tab.addEventListener('click', () => {
+				activateStage(tab.dataset.stageTab ?? '0');
+			});
+			tab.addEventListener('keydown', (event) => {
+				if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+				event.preventDefault();
+				const nextIdx =
+					event.key === 'ArrowRight'
+						? (idx + 1) % stageTabs.length
+						: (idx - 1 + stageTabs.length) % stageTabs.length;
+				const nextTab = stageTabs[nextIdx];
+				if (nextTab) {
+					activateStage(nextTab.dataset.stageTab ?? String(nextIdx), true);
+					nextTab.click();
+				}
+			});
+		});
 	}
 }
+
+initLiquidMotion();

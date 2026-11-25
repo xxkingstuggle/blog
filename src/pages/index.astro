@@ -80,39 +80,8 @@ const total = SOFTWARE_PRODUCTS.length + posts.length + workbench.length;
       <h2 id="outro-title">源码、安装包与复盘记录全部公开可查。</h2>
       <p>所有项目均在 GitHub 提供 Release 构建产物、SHA-256 校验或完整源码工程。欢迎进一步交流 AI 应用工程与产品实践。</p>
     </div>
-    <a href="/about/#contact">联系方式与简历 <span aria-hidden="true">↗</span></a>
+    <div class="gallery-outro-actions">
+      <a href="/about/#contact">联系方式与简历 <span aria-hidden="true">↗</span></a>
+    </div>
   </section>
 </BaseLayout>
-
-<style>
-  .gallery-index-count { font-size: 11px; color: var(--text-muted); margin: 0 0 15px; letter-spacing: .035em; }
-  .gallery-more-links { display: flex; gap: 10px; flex-wrap: wrap; margin: 34px 0 0; }
-  .gallery-more-links a { display: inline-flex; justify-content: space-between; align-items: center; gap: 28px; min-height: 44px; padding: 10px 15px; border: 1px solid var(--line); border-radius: 10px; font-size: 12px; font-weight: 650; background: var(--surface); }
-  .gallery-more-links a:hover { border-color: var(--line-strong); color: var(--accent-contrast); }
-  .gallery-outro { border-top: 1px solid var(--line); padding: clamp(35px,5vw,66px) 0; display: grid; grid-template-columns: .7fr 1.7fr auto; gap: 25px; align-items: start; }
-  .gallery-outro-index { font-size: 10px; color: var(--text-muted); letter-spacing: .11em; font-weight: 700; }
-  .gallery-outro h2 { font-size: clamp(24px,2.7vw,37px); margin-bottom: 12px; }
-  .gallery-outro p { color: var(--text-secondary); font-size: 14px; max-width: 62ch; }
-  .gallery-outro > a { padding: 10px 13px; border: 1px solid var(--line); border-radius: 9px; font-size: 12px; white-space: nowrap; }
-  @media (max-width:900px) { .gallery-outro { grid-template-columns: 1fr; } .gallery-outro > a { justify-self:start; } }
-</style>
-
-<script>
-  const tabs = [...document.querySelectorAll<HTMLButtonElement>('[data-gallery-filter]')];
-  const items = [...document.querySelectorAll<HTMLElement>('[data-gallery-kind]')];
-  const liveCount = document.getElementById('gallery-live-count');
-  function setGalleryFilter(category: string) {
-    tabs.forEach(tab => tab.setAttribute('aria-pressed', String(tab.dataset.galleryFilter === category)));
-    let visible = 0;
-    items.forEach(item => {
-      const show = category === 'all' || item.dataset.galleryKind === category;
-      item.hidden = !show;
-      if (show) visible++;
-    });
-    if (liveCount) liveCount.textContent = '正在展示 ' + visible + ' 项内容';
-  }
-  tabs.forEach(tab => tab.addEventListener('click', () =>
-    setGalleryFilter(tab.dataset.galleryFilter || 'all')
-  ));
-
-</script>

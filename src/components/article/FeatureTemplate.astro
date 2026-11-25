@@ -2,6 +2,7 @@
 import type { BlogPost } from '../../lib/posts';
 import GalleryHero from '../GalleryHero.astro';
 import { formatDate, getReadingTime, KIND_LABELS } from '../../lib/posts';
+import { getSoftwareByArticleSlug } from '../../lib/software';
 import ArticleRail from './ArticleRail.astro';
 import MobileToc from './MobileToc.astro';
 import NextArticle from './NextArticle.astro';
@@ -24,6 +25,7 @@ const { post, headings, prevPost, nextPost } = Astro.props;
 const description = post.data.description;
 const kindLabel = KIND_LABELS[post.data.kind] || '重点发布';
 const kicker = post.data.kicker || `${kindLabel} · FEATURE`;
+const linkedSoftware = getSoftwareByArticleSlug(post.id);
 const hasToc = headings.some((h) => h.depth === 2 || h.depth === 3);
 ---
 
@@ -40,6 +42,11 @@ const hasToc = headings.some((h) => h.depth === 2 || h.depth === 3);
 			</a>
 			<div class="feature-badge-row">
 				<span class="badge-featured">{kicker}</span>
+				{linkedSoftware && (
+					<a class="status-pill" data-tone={linkedSoftware.statusTone} href={`/software/${linkedSoftware.slug}/`}>
+						<span>对应软件产品：{linkedSoftware.name} ({linkedSoftware.statusBadge})</span>
+					</a>
+				)}
 			</div>
 		</div>
 
@@ -63,6 +70,27 @@ const hasToc = headings.some((h) => h.depth === 2 || h.depth === 3);
         </dd>
       </div>
     </dl>
+
+		{linkedSoftware && (
+			<aside class="related-article-banner" aria-label={`关联软件 ${linkedSoftware.name}`}>
+				<div>
+					<strong style="font-size: 14px; color: var(--text); display: block; margin-bottom: 4px;">
+						本文对应的软件产品：{linkedSoftware.name}（{linkedSoftware.platformsLabel}）
+					</strong>
+					<p style="font-size: 13.5px;">{linkedSoftware.availabilitySummary}</p>
+				</div>
+				<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+					<a class="btn-primary" style="min-height: 38px; padding: 8px 16px; font-size: 13px;" href={`/software/${linkedSoftware.slug}/`}>
+						进入 {linkedSoftware.name} 产品官网页
+					</a>
+					{linkedSoftware.downloads[0] && (
+						<a class="btn-secondary" style="min-height: 38px; padding: 8px 16px; font-size: 13px;" href={linkedSoftware.downloads[0].url} target="_blank" rel="noopener noreferrer">
+							下载 {linkedSoftware.downloads[0].version}
+						</a>
+					)}
+				</div>
+			</aside>
+		)}
 
 	</div>
 	<GalleryHero post={post} />

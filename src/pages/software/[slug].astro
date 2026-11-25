@@ -1,1739 +1,540 @@
 ---
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ThemeSwitcher from '../../components/ThemeSwitcher.astro';
-import { SOFTWARE_PRODUCTS, type SoftwareProduct } from '../../lib/software';
+import { SOFTWARE_PRODUCTS, type SoftwareProduct, type SoftwareGalleryItem } from '../../lib/software';
 
 export function getStaticPaths() {
-  return SOFTWARE_PRODUCTS.map(product => ({
-    params: { slug: product.slug },
-    props: { product },
-  }));
+	return SOFTWARE_PRODUCTS.map((product) => ({
+		params: { slug: product.slug },
+		props: { product },
+	}));
 }
 
 interface Props {
-  product: SoftwareProduct;
+	product: SoftwareProduct;
 }
 
 const { product } = Astro.props;
-const hasGallery = Boolean(product.gallery && product.gallery.length > 0);
-const galleryCount = product.gallery?.length ?? 0;
-const hasFullVisualChapters = galleryCount >= 3;
-const showEditorialHighlights = galleryCount < 3;
-const primaryDownload = product.downloads.find(d => d.primary) ?? product.downloads[0];
+const primaryDownload = product.downloads.find((d) => d.primary) ?? product.downloads[0];
+
+const baseGallery: SoftwareGalleryItem[] =
+	product.gallery && product.gallery.length > 0
+		? product.gallery
+		: [
+				{
+					src: product.screenshot.src,
+					width: product.screenshot.width,
+					height: product.screenshot.height,
+					alt: product.screenshotAlt,
+					kicker: '01 · PRIMARY INTERFACE',
+					title: product.interfaceHeading ?? `${product.name} 原生主界面`,
+					caption: product.screenshotCaption,
+					mechanism: product.platforms.join(' · '),
+				},
+			];
+
+const stageViews: SoftwareGalleryItem[] =
+	product.slug === 'habitbloom'
+		? [
+				...baseGallery,
+				{
+					src: '/media/habitbloom/habitbloom-engineering-scope.svg',
+					width: 1200,
+					height: 675,
+					alt: 'HabitBloom 的 SwiftUI 本地记录、WidgetKit 交互和 Cloudflare 远程能力组成结构图',
+					kicker: '03 · MODULE BOUNDARIES',
+					title: '本地 SwiftData 优先，远端快照按需插拔',
+					caption:
+						'主应用基于 SwiftUI 与 SwiftData 构建本地持久层，无需注册账号或部署云端即可独立完成日常习惯打卡、连续天数统计与本地通知提醒；Cloudflare Worker 与 Durable Objects 作为可选远端层按需启用。',
+					mechanism: 'SwiftUI · SwiftData · WidgetKit · Cloudflare Durable Objects',
+				},
+				{
+					src: '/media/habitbloom/habitbloom-data-path.svg',
+					width: 1200,
+					height: 675,
+					alt: 'SwiftData 数据保存和 Widget 快照、App Group 及 Cloudflare 读取路径的示意图',
+					kicker: '04 · CROSS-PROCESS SNAPSHOT PATH',
+					title: '从主应用到桌面 Widget 的双通道状态回并',
+					caption:
+						'标准环境下通过 App Group 共享容器读写 Widget 快照；针对免费个人证书侧载时 App Group 可能受限的场景，提供轻量 HTTP 远端快照回退路径，并在主应用唤醒时执行增量状态合并。',
+					mechanism: 'App Intents 交互打卡 · App Group 共享容器 · HTTP 快照回并',
+				},
+			]
+		: baseGallery;
+
+function shortTabLabel(item: SoftwareGalleryItem): string {
+	const clean = item.title.replace(/[，。：、·].*$/, '').trim();
+	if (clean.length <= 12) return clean;
+	return clean.slice(0, 12) + '…';
+}
 ---
+
 <BaseLayout
-  title={`${product.name} — ${product.category}`}
-  description={`${product.tagline}。${product.availabilitySummary}`}
-  image={product.screenshot}
-  layoutVariant="launch"
+	title={`${product.name} — ${product.category}`}
+	description={`${product.tagline}。${product.availabilitySummary}`}
+	image={product.screenshot}
+	layoutVariant="launch"
 >
-  <div class="launch-topbar">
-    <div class="launch-container launch-topbar-inner">
-      <nav class="launch-breadcrumbs" aria-label="面包屑导航">
-        <a href="/" class="launch-brand">MYZJX<span>.</span></a>
-        <span class="launch-crumb-sep" aria-hidden="true">/</span>
-        <a href="/software/" class="launch-crumb-link">软件与作品</a>
-        <span class="launch-crumb-sep" aria-hidden="true">/</span>
-        <span class="launch-crumb-current" aria-current="page">
-          <Image src={product.icon} alt="" width={20} height={20} format="webp" densities={[1, 2]} decoding="async" />
-          <span>{product.name}</span>
-        </span>
-      </nav>
-      <div class="launch-topbar-right">
-        <nav class="launch-topbar-nav" aria-label="页面章节">
-          <a href="#capabilities">核心能力</a>
-          {product.slug === 'habitbloom' && <a href="#architecture">系统架构</a>}
-          <a href="#scenarios">使用场景</a>
-          <a href="#downloads">{product.downloads.length ? '下载与规格' : '规格与说明'}</a>
-          <a href={`/posts/${product.articleSlug}/`}>工程手记</a>
-        </nav>
-        <div class="launch-topbar-actions">
-          <ThemeSwitcher />
-          <a
-            class="launch-topbar-cta"
-            href={product.downloads.length ? '#downloads' : `/posts/${product.articleSlug}/`}
-          >
-            {product.downloads.length ? `获取 ${product.latestVersion}` : '阅读架构手记'}
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
+	<div class="launch-page">
+		<!-- 1. Floating Liquid-Glass Product Sub-Topbar -->
+		<div class="launch-subnav-wrap">
+			<div class="shell">
+				<div class="launch-subnav">
+					<div class="launch-subnav-identity">
+						<a class="launch-subnav-back" href="/software/" aria-label="返回软件与作品集">
+							<span aria-hidden="true">←</span>
+						</a>
+						<Image
+							class="launch-subnav-icon"
+							src={product.icon}
+							alt=""
+							width={26}
+							height={26}
+							format="webp"
+							densities={[1, 2]}
+							decoding="async"
+						/>
+						<span class="launch-subnav-name">{product.name}</span>
+						<span class="launch-subnav-version">{product.latestVersion}</span>
+					</div>
 
-  <header class="launch-hero">
-    <div class="launch-container">
-      <div class="launch-hero-center" data-reveal>
-        <div class="launch-identity-badge">
-          <div class="launch-icon-pedestal">
-            <Image src={product.icon} alt="" width={64} height={64} format="webp" densities={[1, 2]} decoding="async" />
-          </div>
-          <div class="launch-pill-group">
-            <span class="status-pill launch-status-pill" data-tone={product.statusTone}>{product.statusBadge}</span>
-            <span class="launch-platform-tag">{product.platformsLabel}</span>
-          </div>
-        </div>
+					<nav class="launch-subnav-links" data-liquid-nav aria-label="产品页章节导航">
+						<span class="liquid-nav-pill" aria-hidden="true"></span>
+						<a href="#stage" aria-current="page">界面与预览</a>
+						<a href="#capabilities">核心能力</a>
+						<a href="#scenarios">场景与上手</a>
+						<a href="#downloads">{product.downloads.length ? '下载与规格' : '规格与来源'}</a>
+						<a href="#faq">常见问题</a>
+					</nav>
 
-        <p class="launch-category-kicker">{product.category}</p>
-        <h1>
-          <span class="launch-title-product">{product.name}</span>
-          <span class="launch-title-sep" aria-hidden="true"> — </span>
-          <span class="launch-title-headline">{product.headline}</span>
-        </h1>
-        <p class="launch-hero-lead">{product.summary}</p>
+					<div class="launch-subnav-actions">
+						<a
+							class="launch-subnav-cta"
+							href={product.downloads.length ? '#downloads' : `/posts/${product.articleSlug}/`}
+						>
+							<span>{product.downloads.length ? `获取 ${product.latestVersion}` : '阅读工程手记'}</span>
+							<span aria-hidden="true">{product.downloads.length ? '↘' : '→'}</span>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
 
-        <div class="launch-cta-row">
-          <a
-            class="btn-primary launch-cta-primary"
-            href={product.downloads.length ? '#downloads' : `/posts/${product.articleSlug}/`}
-          >
-            {primaryDownload ? `${primaryDownload.label} · ${product.latestVersion}` : '阅读工程架构手记'}
-            <span aria-hidden="true">{product.downloads.length ? '↘' : '→'}</span>
-          </a>
-          {product.repoVisibility === 'public' && (
-            <a class="btn-secondary launch-cta-secondary" href={product.repoUrl} target="_blank" rel="noopener noreferrer">
-              GitHub 开源仓库 <span aria-hidden="true">↗</span>
-            </a>
-          )}
-          {product.downloads.length > 0 && (
-            <a class="launch-cta-text" href={`/posts/${product.articleSlug}/`}>
-              阅读工程手记 <span aria-hidden="true">→</span>
-            </a>
-          )}
-        </div>
-      </div>
+		<!-- 2. Flagship Hero & 4-Column Spec Trust Strip -->
+		<header class="launch-hero">
+			<div class="shell">
+				<div class="launch-hero-center" data-reveal>
+					<div class="launch-icon-pedestal">
+						<Image
+							class="launch-app-icon"
+							src={product.icon}
+							alt={`${product.name} 应用图标`}
+							width={72}
+							height={72}
+							format="webp"
+							densities={[1, 2]}
+							loading="eager"
+							decoding="async"
+						/>
+					</div>
 
-      <figure class="launch-hero-stage" data-reveal>
-        <div
-          data-glass-media
-          class:list={[
-            'product-gallery',
-            'launch-stage-canvas',
-            'launch-stage-canvas--hero',
-            { single: !product.secondaryScreenshot },
-          ]}
-          style={'view-transition-name: work-' + product.slug + '; --product-ratio: ' + (product.screenshot.width / product.screenshot.height).toFixed(5)}
-        >
-          <div
-            class:list={[
-              'stage-window-frame',
-              product.heroCropMat === 'window' && 'stage-window-frame--crop-window',
-              product.heroCropMat === 'dialog' && 'stage-window-frame--crop-dialog',
-              product.slug === 'habitbloom' && 'stage-window-frame--compact-brand',
-            ]}
-          >
-            <Image
-              src={product.screenshot}
-              alt={product.screenshotAlt}
-              widths={[640, 960, 1600]}
-              sizes="(max-width: 760px) 92vw, 960px"
-              format="webp"
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-            />
-          </div>
-          {product.secondaryScreenshot && (
-            <div class="stage-window-frame stage-window-frame--phone">
-              <Image
-                class="gallery-phone"
-                src={product.secondaryScreenshot}
-                alt="配套移动端界面预览"
-                width={400}
-                format="webp"
-                decoding="async"
-              />
-            </div>
-          )}
-        </div>
-        <figcaption class="launch-stage-caption">{product.screenshotCaption}</figcaption>
-      </figure>
-    </div>
-  </header>
+					<div class="launch-badge-row">
+						<span class="status-pill" data-tone={product.statusTone}>{product.statusBadge}</span>
+						<span class="status-pill">{product.platformsLabel}</span>
+					</div>
 
-  <section class="launch-section" id="capabilities" aria-labelledby="capabilities-heading">
-    <div class="launch-container">
-      <div class="launch-section-intro" data-reveal>
-        <span class="launch-kicker">{product.galleryKicker ?? 'CORE CAPABILITIES · 核心能力与机制'}</span>
-        <h2 id="capabilities-heading">{product.galleryHeading ?? product.tagline}</h2>
-        {hasGallery && <p class="launch-section-sub">{product.tagline}</p>}
-      </div>
+					<h1 class="launch-title">
+						<span class="launch-title-name">{product.name} · {product.category}</span>
+						{product.headline}
+					</h1>
 
-      {hasGallery && (
-        <div class="launch-chapter-list">
-          {product.gallery!.map((item, idx) => (
-            <article
-              class:list={[
-                'launch-chapter-row',
-                idx % 2 === 1 && 'launch-chapter-row--reverse',
-              ]}
-              data-reveal
-            >
-              <div class="launch-chapter-copy">
-                <span class="launch-chapter-kicker">
-                  {item.kicker ?? `${String(idx + 1).padStart(2, '0')} · FEATURE STAGE`}
-                </span>
-                <h3>{item.title}</h3>
-                <p>{item.caption}</p>
-                {item.mechanism && (
-                  <p class="launch-chapter-mechanism">{item.mechanism}</p>
-                )}
-              </div>
+					<p class="launch-summary">{product.summary}</p>
 
-              <figure class="launch-chapter-visual">
-                <div
-                  data-glass-media
-                  class:list={[
-                    'launch-stage-canvas',
-                    item.secondary && 'launch-stage-canvas--paired',
-                    item.narrow && !item.secondary && 'launch-stage-canvas--narrow',
-                  ]}
-                >
-                  {item.secondary ? (
-                    <div class="stage-paired-tray">
-                      <a
-                        href={item.src}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="stage-window-frame stage-window-frame--popup"
-                        aria-label={`查看 ${item.alt} 原图`}
-                      >
-                        <img src={item.src} width={item.width} height={item.height} loading="lazy" decoding="async" alt={item.alt} />
-                      </a>
-                      <a
-                        href={item.secondary.src}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="stage-window-frame stage-window-frame--popup"
-                        aria-label={`查看 ${item.secondary.alt} 原图`}
-                      >
-                        <img src={item.secondary.src} width={item.secondary.width} height={item.secondary.height} loading="lazy" decoding="async" alt={item.secondary.alt} />
-                      </a>
-                    </div>
-                  ) : (
-                    <a
-                      href={item.src}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class:list={[
-                        'stage-window-frame',
-                        item.narrow && 'stage-window-frame--popup-single',
-                        item.cropMat === 'window' && 'stage-window-frame--crop-window',
-                        item.cropMat === 'dialog' && 'stage-window-frame--crop-dialog',
-                      ]}
-                      aria-label={`查看 ${item.title} 原图`}
-                    >
-                      <img src={item.src} width={item.width} height={item.height} loading="lazy" decoding="async" alt={item.alt} />
-                    </a>
-                  )}
-                </div>
-              </figure>
-            </article>
-          ))}
-        </div>
-      )}
+					<div class="launch-cta-row">
+						<a
+							class="btn-primary"
+							href={product.downloads.length ? '#downloads' : `/posts/${product.articleSlug}/`}
+						>
+							<span>
+								{primaryDownload
+									? primaryDownload.label.startsWith('下载')
+										? primaryDownload.label
+										: `下载 ${primaryDownload.label}`
+									: '阅读工程架构手记'}
+							</span>
+							<span class="launch-cta-meta">{product.latestVersion}</span>
+						</a>
+						{product.repoVisibility === 'public' && (
+							<a
+								class="btn-secondary"
+								href={product.repoUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<span>GitHub 开源仓库</span>
+								<span aria-hidden="true">↗</span>
+							</a>
+						)}
+						<a class="btn-secondary" href={`/posts/${product.articleSlug}/`}>
+							<span>配套工程手记</span>
+							<span aria-hidden="true">→</span>
+						</a>
+					</div>
+				</div>
 
-      {showEditorialHighlights && !hasFullVisualChapters && (
-        <div class="launch-editorial-features">
-          {product.highlights.map((item, idx) => {
-            const pairedScenario = product.scenarios[idx % product.scenarios.length];
-            return (
-              <article class="launch-editorial-row" data-reveal>
-                <div class="launch-editorial-left">
-                  <span class="launch-editorial-num">{String(idx + 1).padStart(2, '0')}</span>
-                  <h3>{item.title}</h3>
-                </div>
-                <div class="launch-editorial-right">
-                  <p class="launch-editorial-body">{item.body}</p>
-                  {pairedScenario && (
-                    <p class="launch-chapter-mechanism">{pairedScenario.mechanism}</p>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  </section>
+				<dl class="launch-trust-strip" aria-label="版本与工程核验摘要" data-reveal>
+					<div class="launch-trust-cell">
+						<dt>VERSION &amp; STATUS</dt>
+						<dd>{product.latestVersion} · {product.statusBadge}</dd>
+					</div>
+					<div class="launch-trust-cell">
+						<dt>TARGET PLATFORMS</dt>
+						<dd>{product.platforms.join(' / ')}</dd>
+					</div>
+					<div class="launch-trust-cell">
+						<dt>DELIVERY &amp; SOURCE</dt>
+						<dd>
+							{product.repoVisibility === 'public' ? 'GitHub 开源 · ' : ''}
+							{product.downloads.length
+								? `${product.downloads.length} 项构建产物与校验`
+								: '开源工程与架构复盘'}
+						</dd>
+					</div>
+					<div class="launch-trust-cell">
+						<dt>VERIFIED RECORD</dt>
+						<dd>{product.verifiedAt}</dd>
+					</div>
+				</dl>
 
-  {product.slug === 'habitbloom' && (
-    <section class="launch-section launch-section--architecture" id="architecture" aria-labelledby="habitbloom-architecture">
-      <div class="launch-container">
-        <div class="launch-section-intro" data-reveal>
-          <span class="launch-kicker">SYSTEM ARCHITECTURE · 客户端与跨进程数据流</span>
-          <h2 id="habitbloom-architecture">不止一张卡片：把本地存储、Widget 与远端快照连成闭环。</h2>
-          <p class="launch-section-sub">以下架构图对应开源仓库中的真实模块划分与快照同步路径，完整代码均已在 GitHub 公开。</p>
-        </div>
+				<!-- 3. Interactive Multi-View Optical Stage -->
+				<div class="launch-stage-wrapper" id="stage" data-reveal>
+					<div class="launch-stage-controls">
+						<div
+							class="launch-view-tabs"
+							data-liquid-nav
+							role="tablist"
+							aria-label={`${product.name} 界面与架构视图切换`}
+						>
+							<span class="liquid-nav-pill" aria-hidden="true"></span>
+							{stageViews.map((view, idx) => (
+								<button
+									type="button"
+									class="launch-view-tab"
+									role="tab"
+									id={`stage-tab-${idx}`}
+									aria-controls={`stage-pane-${idx}`}
+									aria-selected={idx === 0 ? 'true' : 'false'}
+									tabindex={idx === 0 ? 0 : -1}
+									data-stage-tab={String(idx)}
+								>
+									<span class="launch-view-tab-num">{String(idx + 1).padStart(2, '0')}</span>
+									<span>{shortTabLabel(view)}</span>
+								</button>
+							))}
+						</div>
+						<div class="section-kicker">
+							<span class="kicker-dot" aria-hidden="true"></span>
+							<span>{product.galleryKicker ?? 'OPTICAL STAGE · 零裁切真实界面'}</span>
+						</div>
+					</div>
 
-        <div class="launch-chapter-list">
-          <article class="launch-chapter-row" data-reveal>
-            <div class="launch-chapter-copy">
-              <span class="launch-chapter-kicker">01 · MODULE BOUNDARIES</span>
-              <h3>本地 SwiftData 优先，远端快照按需插拔</h3>
-              <p>主应用基于 SwiftUI 与 SwiftData 构建本地持久层，无需注册账号或部署云端即可独立完成日常习惯打卡、连续天数统计与本地通知提醒；Cloudflare Worker 与 Durable Objects 作为可选远端层按需启用。</p>
-              <p class="launch-chapter-mechanism">SwiftUI · SwiftData · WidgetKit · Cloudflare Durable Objects</p>
-            </div>
-            <figure class="launch-chapter-visual">
-              <div class="launch-stage-canvas launch-stage-canvas--diagram">
-                <div class="stage-window-frame stage-window-frame--diagram">
-                  <img
-                    src="/media/habitbloom/habitbloom-engineering-scope.svg"
-                    width="1200"
-                    height="675"
-                    loading="lazy"
-                    decoding="async"
-                    alt="HabitBloom 的 SwiftUI 本地记录、WidgetKit 交互和 Cloudflare 远程能力组成结构图"
-                  />
-                </div>
-              </div>
-            </figure>
-          </article>
+					<div
+						class="launch-stage-frame"
+						style={`view-transition-name: work-${product.slug};`}
+					>
+						{stageViews.map((view, idx) => (
+							<div
+								class="launch-stage-pane"
+								role="tabpanel"
+								id={`stage-pane-${idx}`}
+								aria-labelledby={`stage-tab-${idx}`}
+								data-stage-pane={String(idx)}
+								hidden={idx !== 0}
+							>
+								<div
+									class:list={[
+										'launch-stage-media',
+										view.narrow && !view.secondary && 'launch-stage-media--narrow',
+									]}
+								>
+									<img
+										src={view.src}
+										width={view.width}
+										height={view.height}
+										alt={view.alt}
+										loading={idx === 0 ? 'eager' : 'lazy'}
+										fetchpriority={idx === 0 ? 'high' : 'auto'}
+										decoding="async"
+									/>
+									{view.secondary && (
+										<img
+											src={view.secondary.src}
+											width={view.secondary.width}
+											height={view.secondary.height}
+											alt={view.secondary.alt}
+											loading="lazy"
+											decoding="async"
+										/>
+									)}
+								</div>
 
-          <article class="launch-chapter-row launch-chapter-row--reverse" data-reveal>
-            <div class="launch-chapter-copy">
-              <span class="launch-chapter-kicker">02 · CROSS-PROCESS SNAPSHOT PATH</span>
-              <h3>从主应用到桌面 Widget 的双通道状态回并</h3>
-              <p>标准环境下通过 App Group 共享容器读写 Widget 快照；针对免费个人证书侧载时 App Group 可能受限的场景，提供轻量 HTTP 远端快照回退路径，并在主应用唤醒时执行增量状态合并。</p>
-              <p class="launch-chapter-mechanism">App Intents 交互打卡 · App Group 共享容器 · HTTP 快照回并</p>
-            </div>
-            <figure class="launch-chapter-visual">
-              <div class="launch-stage-canvas launch-stage-canvas--diagram">
-                <div class="stage-window-frame stage-window-frame--diagram">
-                  <img
-                    src="/media/habitbloom/habitbloom-data-path.svg"
-                    width="1200"
-                    height="675"
-                    loading="lazy"
-                    decoding="async"
-                    alt="SwiftData 数据保存和 Widget 快照、App Group 及 Cloudflare 读取路径的示意图"
-                  />
-                </div>
-              </div>
-            </figure>
-          </article>
-        </div>
-      </div>
-    </section>
-  )}
+								<div class="launch-stage-caption-bar">
+									<div class="launch-stage-caption-copy">
+										<span class="launch-stage-caption-kicker">
+											{view.kicker ?? `${String(idx + 1).padStart(2, '0')} · WORKSPACE VIEW`}
+										</span>
+										<strong>{view.title}</strong>
+										<p>{view.caption}</p>
+									</div>
+									{view.mechanism && (
+										<span class="launch-stage-mechanism">{view.mechanism}</span>
+									)}
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</header>
 
-  <section class="launch-band launch-band--toned" id="scenarios" aria-labelledby="scenarios-heading">
-    <div class="launch-container">
-      <div class="launch-section-intro" data-reveal>
-        <span class="launch-kicker">REAL-WORLD SCENARIOS · 典型使用场景</span>
-        <h2 id="scenarios-heading">解决具体工作流里的真实摩擦。</h2>
-      </div>
+		<!-- 4. Bento Capabilities Matrix -->
+		<section class="launch-section" id="capabilities" aria-labelledby="capabilities-heading">
+			<div class="shell">
+				<div class="launch-section-head" data-reveal>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>CORE CAPABILITIES · 核心能力与机制</span>
+					</div>
+					<h2 id="capabilities-heading">{product.galleryHeading ?? product.tagline}</h2>
+					<p>{product.tagline}。围绕真实日常高频动作收敛功能边界，拒绝无效堆砌。</p>
+				</div>
 
-      <div class="launch-scenarios-ledger" data-reveal>
-        {product.scenarios.map((item, idx) => (
-          <article class="launch-scenario-col">
-            <span class="launch-scenario-index">SCENARIO {String(idx + 1).padStart(2, '0')}</span>
-            <h3>{item.scenario}</h3>
-            <div class="launch-scenario-pair">
-              <div class="launch-scenario-block launch-scenario-block--pain">
-                <span>常见痛点</span>
-                <p>{item.pain}</p>
-              </div>
-              <div class="launch-scenario-block launch-scenario-block--outcome">
-                <span>实际效果</span>
-                <p>{item.outcome}</p>
-              </div>
-            </div>
-            <p class="launch-scenario-mech">{item.mechanism}</p>
-          </article>
-        ))}
-      </div>
+				<div class="launch-bento-grid">
+					{product.highlights.map((item, idx) => (
+						<article class="launch-bento-card" data-reveal>
+							<span class="launch-bento-num">
+								{String(idx + 1).padStart(2, '0')} · CAPABILITY
+							</span>
+							<h3>{item.title}</h3>
+							<p>{item.body}</p>
+						</article>
+					))}
+				</div>
+			</div>
+		</section>
 
-      <div class="launch-workflow-block" data-reveal>
-        <div class="launch-workflow-header">
-          <span class="launch-kicker">HOW IT WORKS · 三步上手</span>
-          <h3>从安装到投入使用的最短路径</h3>
-        </div>
-        <div class="launch-workflow-track">
-          {product.workflow.map(step => (
-            <article class="launch-workflow-step">
-              <div class="launch-step-topline">
-                <span class="launch-step-num">{step.step}</span>
-                <span class="launch-step-rule" aria-hidden="true"></span>
-              </div>
-              <h4>{step.title}</h4>
-              <p>{step.description}</p>
-              <span class="launch-step-detail">{step.detail}</span>
-            </article>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
+		<!-- 5. Scenarios & 3-Step Workflow -->
+		<section class="launch-section" id="scenarios" aria-labelledby="scenarios-heading">
+			<div class="shell">
+				<div class="launch-section-head" data-reveal>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>REAL-WORLD SCENARIOS · 典型使用场景</span>
+					</div>
+					<h2 id="scenarios-heading">解决具体工作流里的真实摩擦</h2>
+					<p>将原本繁琐的命令行拼装、多窗口切换或黑盒排查收敛为确定性的可视化操作。</p>
+				</div>
 
-  <section class="launch-essay-section" aria-labelledby="essay-callout-heading">
-    <div class="launch-container">
-      <div class="launch-essay-banner" data-reveal>
-        <div class="launch-essay-copy">
-          <span class="launch-kicker">ENGINEERING DEEP DIVE · 配套工程手记</span>
-          <h2 id="essay-callout-heading">{product.articleTitle}</h2>
-          <p>了解 {product.name} 背后的架构设计取舍、核心状态机实现、跨平台通信边界与排障复盘。</p>
-        </div>
-        <a class="btn-secondary launch-essay-btn" href={`/posts/${product.articleSlug}/`}>
-          阅读完整工程手记 <span aria-hidden="true">→</span>
-        </a>
-      </div>
-    </div>
-  </section>
+				<div class="launch-tri-grid">
+					{product.scenarios.map((item, idx) => (
+						<article class="launch-scenario-card" data-reveal>
+							<span class="launch-bento-num">
+								SCENARIO {String(idx + 1).padStart(2, '0')}
+							</span>
+							<h3>{item.scenario}</h3>
+							<div class="launch-scenario-list">
+								<div>
+									<strong>常见痛点</strong>
+									{item.pain}
+								</div>
+								<div>
+									<strong>实际效果</strong>
+									{item.outcome}
+								</div>
+								<div>
+									<strong>底层机制</strong>
+									{item.mechanism}
+								</div>
+							</div>
+						</article>
+					))}
+				</div>
 
-  <section class="launch-appendix" id="downloads" aria-labelledby="downloads-heading">
-    <div class="launch-container">
-      <div class="launch-acquisition-grid" data-reveal>
-        <div class="launch-acquisition-info">
-          <span class="launch-kicker">RELEASE &amp; PROVENANCE · 获取与环境说明</span>
-          <h2 id="downloads-heading">
-            {product.downloads.length ? `下载 ${product.name} ${product.latestVersion}` : `${product.name} 工程获取与说明`}
-          </h2>
-          <p class="launch-acquisition-lead">{product.availabilitySummary}</p>
+				<div class="launch-section-head" style="margin-top: 56px;" data-reveal>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>HOW IT WORKS · 三步上手</span>
+					</div>
+					<h2>从安装到投入使用的最短路径</h2>
+				</div>
 
-          <div class="launch-provenance-ledger">
-            <div class="launch-provenance-row">
-              <strong>运行环境与签名说明</strong>
-              <p>{product.availabilityNotice}</p>
-            </div>
-            <div class="launch-provenance-row">
-              <strong>架构实现与开源致谢</strong>
-              <p>{product.contribution}</p>
-            </div>
-          </div>
-        </div>
+				<div class="launch-tri-grid">
+					{product.workflow.map((step) => (
+						<article class="launch-step-card" data-reveal>
+							<span class="launch-step-num">STEP {step.step}</span>
+							<h3>{step.title}</h3>
+							<p>{step.description}</p>
+							<p class="launch-step-detail">{step.detail}</p>
+						</article>
+					))}
+				</div>
+			</div>
+		</section>
 
-        <div class="launch-acquisition-packages">
-          {product.downloads.length > 0 ? (
-            <div class="launch-download-list">
-              {product.downloads.map(item => (
-                <a
-                  class:list={['launch-download-item', item.primary && 'launch-download-item--primary']}
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <div class="launch-download-main">
-                    <div class="launch-download-title-row">
-                      <strong>{item.label}</strong>
-                      <span class="launch-download-badge">{item.format} · {item.size}</span>
-                    </div>
-                    <span class="launch-download-platform">{item.platform} · {item.version}</span>
-                    {item.note && <span class="launch-download-note">{item.note}</span>}
-                  </div>
-                  <span class="launch-download-arrow" aria-hidden="true">↘</span>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div class="launch-case-box">
-              <span class="launch-kicker">SOURCE &amp; CASE STUDY</span>
-              <p>当前项目以{product.repoVisibility === 'public' ? '开源 Xcode / 源码工程' : '架构设计与原生重构案例'}形式展示，可通过下方入口查阅仓库或技术复盘。</p>
-            </div>
-          )}
+		<!-- 6. Download & Technical Specs Split -->
+		<section class="launch-section" id="downloads" aria-labelledby="downloads-heading">
+			<div class="shell">
+				<div class="launch-section-head" data-reveal>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>RELEASE &amp; SPECIFICATIONS · 获取与技术规格</span>
+					</div>
+					<h2 id="downloads-heading">
+						{product.downloads.length
+							? `下载 ${product.name} ${product.latestVersion}`
+							: `${product.name} 工程获取与技术规格`}
+					</h2>
+					<p>{product.availabilitySummary}</p>
+				</div>
 
-          <div class="launch-resource-links">
-            {product.sources.map(source => (
-              <a
-                href={source.url}
-                target={source.url.startsWith('http') ? '_blank' : undefined}
-                rel={source.url.startsWith('http') ? 'noopener noreferrer' : undefined}
-              >
-                {source.label} <span aria-hidden="true">{source.url.startsWith('http') ? '↗' : '→'}</span>
-              </a>
-            ))}
-            {product.checksumsUrl && (
-              <a href={product.checksumsUrl} target="_blank" rel="noopener noreferrer">
-                SHA-256 校验清单 <span aria-hidden="true">↗</span>
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
+				<div class="launch-specs-layout">
+					<div class="launch-download-panel" data-reveal>
+						<h3>{product.downloads.length ? '发行安装包与校验' : '开源仓库与架构手记'}</h3>
+						<p style="font-size: 13.5px; color: var(--text-secondary); margin: 0;">
+							{product.availabilityNotice}
+						</p>
 
-      <div class="launch-specs-faq-grid" data-reveal>
-        <div class="launch-specs-column">
-          <span class="launch-kicker">TECHNICAL SPECIFICATIONS · 技术规格</span>
-          <h3>规格与版本参数</h3>
-          <dl class="launch-specs-table">
-            <div class="launch-spec-row">
-              <dt>当前版本</dt>
-              <dd>{product.latestVersion}</dd>
-            </div>
-            <div class="launch-spec-row">
-              <dt>适用平台</dt>
-              <dd>{product.platforms.join(' / ')}</dd>
-            </div>
-            {product.specs.map(spec => (
-              <div class="launch-spec-row">
-                <dt>{spec.label}</dt>
-                <dd>{spec.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+						{product.downloads.length > 0 && (
+							<div class="launch-download-list">
+								{product.downloads.map((item) => (
+									<a
+										class="launch-download-item"
+										data-primary={item.primary ? 'true' : undefined}
+										href={item.url}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<div class="launch-download-main">
+											<strong>
+												{item.label} · {item.version}
+											</strong>
+											<span>
+												{item.platform}
+												{item.note ? ` · ${item.note}` : ''}
+											</span>
+										</div>
+										<span class="launch-download-badge">
+											{item.format} · {item.size} ↘
+										</span>
+									</a>
+								))}
+							</div>
+						)}
 
-        <div class="launch-faq-column">
-          <span class="launch-kicker">FAQ &amp; BOUNDARIES · 常见问题与适用边界</span>
-          <h3>使用前值得了解的细节</h3>
-          <div class="launch-faq-stack">
-            {product.faq.map((item, idx) => (
-              <details class="launch-faq-item" open={idx === 0}>
-                <summary>{item.question}</summary>
-                <p>{item.answer}</p>
-              </details>
-            ))}
-          </div>
+						<div
+							style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-subtle);"
+						>
+							<a class="btn-secondary" href={`/posts/${product.articleSlug}/`}>
+								<span>阅读：{product.articleTitle}</span>
+								<span aria-hidden="true">→</span>
+							</a>
+							{product.checksumsUrl && (
+								<a
+									class="btn-secondary"
+									href={product.checksumsUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									<span>SHA-256 校验清单</span>
+									<span aria-hidden="true">↗</span>
+								</a>
+							)}
+							{product.sources.map((source) => (
+								<a
+									class="btn-secondary"
+									href={source.url}
+									target={source.url.startsWith('http') ? '_blank' : undefined}
+									rel={source.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+								>
+									<span>{source.label}</span>
+									<span aria-hidden="true">{source.url.startsWith('http') ? '↗' : '→'}</span>
+								</a>
+							))}
+						</div>
+					</div>
 
-          {product.limitations.length > 0 && (
-            <div class="launch-boundaries-note">
-              <h4>已知边界与适用前提</h4>
-              <ul>
-                {product.limitations.map(item => <li>{item}</li>)}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  </section>
+					<div class="launch-spec-panel" data-reveal>
+						<h3>技术规格参数</h3>
+						<p style="font-size: 13.5px; color: var(--text-secondary); margin: 0;">
+							{product.installedVersion}
+						</p>
+						<dl class="launch-spec-dl">
+							<div class="launch-spec-row">
+								<dt>当前版本</dt>
+								<dd>{product.latestVersion}（{product.releaseDate}）</dd>
+							</div>
+							<div class="launch-spec-row">
+								<dt>适用平台</dt>
+								<dd>{product.platforms.join(' / ')}</dd>
+							</div>
+							<div class="launch-spec-row">
+								<dt>开发基线</dt>
+								<dd>{product.developmentVersion}</dd>
+							</div>
+							{product.specs.map((spec) => (
+								<div class="launch-spec-row">
+									<dt>{spec.label}</dt>
+									<dd>{spec.value}</dd>
+								</div>
+							))}
+						</dl>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- 7. Accordion FAQ & Engineering Boundaries -->
+		<section class="launch-section" id="faq" aria-labelledby="faq-heading">
+			<div class="shell">
+				<div class="launch-section-head" data-reveal>
+					<div class="section-kicker">
+						<span class="kicker-dot" aria-hidden="true"></span>
+						<span>FAQ &amp; BOUNDARIES · 常见问题与适用边界</span>
+					</div>
+					<h2 id="faq-heading">使用前值得了解的细节</h2>
+					<p>{product.contribution}</p>
+				</div>
+
+				<div class="launch-faq-grid">
+					{product.faq.map((item, idx) => (
+						<details class="launch-faq-item" open={idx === 0}>
+							<summary>
+								<span>{item.question}</span>
+								<span class="launch-faq-icon" aria-hidden="true">+</span>
+							</summary>
+							<div class="launch-faq-body">
+								<p>{item.answer}</p>
+							</div>
+						</details>
+					))}
+
+					{product.limitations.length > 0 && (
+						<details class="launch-faq-item">
+							<summary>
+								<span>已知适用边界与环境前提（{product.limitations.length} 项）</span>
+								<span class="launch-faq-icon" aria-hidden="true">+</span>
+							</summary>
+							<div class="launch-faq-body">
+								<ul style="margin: 0; padding-left: 18px; display: grid; gap: 8px;">
+									{product.limitations.map((item) => (
+										<li>{item}</li>
+									))}
+								</ul>
+							</div>
+						</details>
+					)}
+				</div>
+			</div>
+		</section>
+	</div>
 </BaseLayout>
-
-<style is:global>
-  /* Full-width independent canvas for product launch pages: collapse the 280px blog side rail. */
-  body.front-body.front-body--launch .studio-side-rail {
-    display: none !important;
-  }
-  body.front-body.front-body--launch #main-content,
-  body.front-body.front-body--launch .site-footer {
-    margin-left: 0 !important;
-  }
-</style>
-
-<style>
-  .launch-container {
-    width: min(calc(100% - clamp(32px, 6vw, 88px)), 1220px);
-    margin: 0 auto;
-  }
-
-  .launch-kicker {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 650;
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-  }
-
-  /* Sticky Minimalist Top Bar */
-  .launch-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 90;
-    border-bottom: 1px solid color-mix(in srgb, var(--line-subtle) 75%, transparent);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    -webkit-backdrop-filter: blur(20px) saturate(145%);
-    backdrop-filter: blur(20px) saturate(145%);
-  }
-
-  .launch-topbar-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    min-height: 60px;
-  }
-
-  .launch-breadcrumbs {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    font-size: 13px;
-  }
-
-  .launch-brand {
-    font-size: 17px;
-    font-weight: 780;
-    letter-spacing: -0.06em;
-    color: var(--text);
-    text-decoration: none;
-    flex-shrink: 0;
-  }
-
-  .launch-crumb-sep {
-    color: var(--text-muted);
-    opacity: 0.45;
-    flex-shrink: 0;
-  }
-
-  .launch-crumb-link {
-    color: var(--text-secondary);
-    text-decoration: none;
-    white-space: nowrap;
-    transition: color 0.18s ease;
-  }
-
-  .launch-crumb-link:hover {
-    color: var(--text);
-  }
-
-  .launch-crumb-current {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    font-weight: 650;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .launch-crumb-current :global(img) {
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    object-fit: contain;
-    flex-shrink: 0;
-  }
-
-  .launch-topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 22px;
-    flex-shrink: 0;
-  }
-
-  .launch-topbar-nav {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-  }
-
-  .launch-topbar-nav a {
-    font-size: 13px;
-    font-weight: 520;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: color 0.18s ease;
-  }
-
-  .launch-topbar-nav a:hover {
-    color: var(--text);
-  }
-
-  .launch-topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .launch-topbar-actions :global(.theme-menu-trigger) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    height: 34px;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-    background: color-mix(in srgb, var(--surface-subtle) 65%, transparent);
-    color: var(--text-secondary);
-    font-size: 12.5px;
-    font-weight: 560;
-    cursor: pointer;
-    list-style: none;
-    transition: border-color 0.18s ease, color 0.18s ease;
-  }
-
-  .launch-topbar-actions :global(.theme-menu-trigger:hover) {
-    border-color: var(--text);
-    color: var(--text);
-  }
-
-  .launch-topbar-cta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 34px;
-    padding: 0 14px;
-    border-radius: 999px;
-    background: var(--text);
-    color: var(--bg);
-    font-size: 12.5px;
-    font-weight: 650;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: opacity 0.18s ease, transform 0.18s ease;
-  }
-
-  .launch-topbar-cta:hover {
-    opacity: 0.88;
-  }
-
-  /* Centered Hero */
-  .launch-hero {
-    padding: clamp(48px, 6.5vw, 88px) 0 clamp(40px, 5vw, 72px);
-  }
-
-  .launch-hero-center {
-    max-width: 960px;
-    margin: 0 auto;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .launch-identity-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
-    padding: 6px 14px 6px 8px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface-subtle) 78%, transparent);
-    border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
-    margin-bottom: 22px;
-  }
-
-  .launch-icon-pedestal {
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
-    overflow: hidden;
-    display: grid;
-    place-items: center;
-    background: var(--surface);
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-    flex-shrink: 0;
-  }
-
-  .launch-icon-pedestal :global(img) {
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
-  }
-
-  .launch-pill-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .launch-platform-tag {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 540;
-  }
-
-  .launch-category-kicker {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin: 0 0 12px;
-  }
-
-  .launch-hero-center h1 {
-    width: 100%;
-    font-size: clamp(32px, 4.4vw, 52px);
-    line-height: 1.16;
-    letter-spacing: -0.042em;
-    font-weight: 720;
-    color: var(--text);
-    margin: 0 0 20px;
-    text-wrap: normal;
-  }
-
-  .launch-title-product {
-    color: var(--text);
-  }
-
-  .launch-title-sep {
-    display: none;
-  }
-
-  .launch-title-headline {
-    display: block;
-    margin-top: 10px;
-    font-size: clamp(23px, 2.95vw, 37px);
-    line-height: 1.26;
-    letter-spacing: -0.032em;
-    color: color-mix(in srgb, var(--text) 86%, var(--text-secondary));
-    font-weight: 640;
-    text-wrap: normal;
-  }
-
-  .launch-hero-lead {
-    max-width: 64ch;
-    margin: 0 auto 30px;
-    font-size: clamp(15.5px, 1.25vw, 18px);
-    line-height: 1.78;
-    color: var(--text-secondary);
-    text-wrap: pretty;
-  }
-
-  .launch-cta-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px 16px;
-    flex-wrap: wrap;
-  }
-
-  .launch-cta-text {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 44px;
-    padding: 0 10px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: color 0.18s ease;
-  }
-
-  .launch-cta-text:hover {
-    color: var(--text);
-  }
-
-  /* Stage Canvas System */
-  .launch-hero-stage {
-    margin: clamp(36px, 4.5vw, 56px) 0 0;
-  }
-
-  .launch-stage-canvas {
-    --glass-primary-rgb: 114, 136, 160;
-    --glass-secondary-rgb: 167, 181, 196;
-    position: relative;
-    isolation: isolate;
-    display: grid;
-    place-items: center;
-    width: 100%;
-    padding: clamp(26px, 4.2vw, 56px);
-    border-radius: 26px;
-    border: 1px solid rgba(var(--glass-primary-rgb), 0.18);
-    background:
-      radial-gradient(ellipse 78% 72% at 15% 18%, rgba(var(--glass-primary-rgb), 0.22), transparent 68%),
-      radial-gradient(ellipse 72% 68% at 86% 85%, rgba(var(--glass-secondary-rgb), 0.20), transparent 70%),
-      linear-gradient(155deg, #f3f6fa 0%, #e8edf5 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.78),
-      0 20px 50px -20px rgba(15, 23, 42, 0.08);
-    overflow: hidden;
-  }
-
-  :global(:root[data-color-mode='dark']) .launch-stage-canvas {
-    background:
-      radial-gradient(ellipse 78% 72% at 15% 18%, rgba(var(--glass-primary-rgb), 0.24), transparent 68%),
-      radial-gradient(ellipse 72% 68% at 86% 85%, rgba(var(--glass-secondary-rgb), 0.18), transparent 70%),
-      linear-gradient(155deg, #1a202c 0%, #12161f 100%);
-    border-color: rgba(var(--glass-primary-rgb), 0.24);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 26px 60px -20px rgba(0, 0, 0, 0.5);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :global(:root[data-color-mode='system']) .launch-stage-canvas {
-      background:
-        radial-gradient(ellipse 78% 72% at 15% 18%, rgba(var(--glass-primary-rgb), 0.24), transparent 68%),
-        radial-gradient(ellipse 72% 68% at 86% 85%, rgba(var(--glass-secondary-rgb), 0.18), transparent 70%),
-        linear-gradient(155deg, #1a202c 0%, #12161f 100%);
-      border-color: rgba(var(--glass-primary-rgb), 0.24);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 26px 60px -20px rgba(0, 0, 0, 0.5);
-    }
-  }
-
-  .stage-window-frame {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: 100%;
-    max-width: min(100%, 920px);
-    margin: 0 auto;
-    border-radius: 13px;
-    overflow: hidden;
-    box-shadow:
-      0 24px 60px -12px rgba(10, 18, 34, 0.25),
-      0 6px 20px -4px rgba(10, 18, 34, 0.12),
-      0 0 0 1px rgba(15, 23, 42, 0.08);
-    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  :global(:root[data-color-mode='dark']) .stage-window-frame {
-    box-shadow:
-      0 28px 68px -12px rgba(0, 0, 0, 0.62),
-      0 8px 24px -4px rgba(0, 0, 0, 0.42),
-      0 0 0 1px rgba(255, 255, 255, 0.11);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :global(:root[data-color-mode='system']) .stage-window-frame {
-      box-shadow:
-        0 28px 68px -12px rgba(0, 0, 0, 0.62),
-        0 8px 24px -4px rgba(0, 0, 0, 0.42),
-        0 0 0 1px rgba(255, 255, 255, 0.11);
-    }
-  }
-
-  .stage-window-frame :global(img) {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-  }
-
-  /* Trim black capture mat on zjx-download screenshots so only the macOS window floats on the stage */
-  .stage-window-frame--crop-window :global(img) {
-    width: 103.8% !important;
-    max-width: none !important;
-    margin: -1.6% -1.9% -3.2% -1.9% !important;
-    border-radius: 0 !important;
-  }
-
-  .stage-window-frame--crop-dialog {
-    max-width: min(100%, 620px);
-  }
-
-  .stage-window-frame--crop-dialog :global(img) {
-    width: 112.4% !important;
-    max-width: none !important;
-    margin: -4.2% -6.2% -9.8% -6.2% !important;
-    border-radius: 0 !important;
-  }
-
-  .stage-window-frame--compact-brand {
-    max-width: min(100%, 720px);
-  }
-
-  /* Paired narrow popups (e.g., Route Lens light & dark 360x740 extension popups) */
-  .stage-paired-tray {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(18px, 3.2vw, 38px);
-    width: 100%;
-  }
-
-  .stage-window-frame--popup {
-    width: auto;
-    flex: 0 1 224px;
-    max-width: 224px;
-    margin: 0;
-    border-radius: 14px;
-  }
-
-  .stage-window-frame--popup-single {
-    max-width: 260px;
-    border-radius: 14px;
-  }
-
-  .launch-stage-caption {
-    max-width: 72ch;
-    margin: 16px auto 0;
-    text-align: center;
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--text-muted);
-  }
-
-  /* Sections & Chapter Showcases ("One Screen, One Core Capability") */
-  .launch-section {
-    padding: clamp(56px, 7.5vw, 108px) 0;
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 75%, transparent);
-  }
-
-  .launch-section-intro {
-    max-width: 880px;
-    margin-bottom: clamp(40px, 5.5vw, 72px);
-  }
-
-  .launch-section-intro h2 {
-    font-size: clamp(25px, 2.95vw, 38px);
-    line-height: 1.24;
-    letter-spacing: -0.032em;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0;
-    text-wrap: normal;
-  }
-
-  .launch-section-sub {
-    margin: 14px 0 0;
-    font-size: 16px;
-    line-height: 1.75;
-    color: var(--text-secondary);
-  }
-
-  .launch-chapter-list {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(56px, 8vw, 112px);
-  }
-
-  .launch-chapter-row {
-    display: grid;
-    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
-    gap: clamp(28px, 4.8vw, 64px);
-    align-items: center;
-  }
-
-  .launch-chapter-row--reverse {
-    grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
-  }
-
-  .launch-chapter-row--reverse .launch-chapter-copy {
-    order: 2;
-  }
-
-  .launch-chapter-row--reverse .launch-chapter-visual {
-    order: 1;
-  }
-
-  .launch-chapter-kicker {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    font-weight: 650;
-    letter-spacing: 0.09em;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-  }
-
-  .launch-chapter-copy h3 {
-    font-size: clamp(21px, 2.15vw, 28px);
-    line-height: 1.28;
-    letter-spacing: -0.026em;
-    font-weight: 680;
-    color: var(--text);
-    margin: 0 0 16px;
-    text-wrap: normal;
-  }
-
-  .launch-chapter-copy p {
-    font-size: 15.5px;
-    line-height: 1.82;
-    color: var(--text-secondary);
-    margin: 0;
-  }
-
-  .launch-chapter-mechanism {
-    margin-top: 20px !important;
-    padding-left: 14px;
-    border-left: 2px solid var(--text);
-    font-family: var(--font-mono);
-    font-size: 12.5px !important;
-    line-height: 1.65 !important;
-    color: var(--text) !important;
-    opacity: 0.86;
-  }
-
-  .launch-chapter-visual {
-    margin: 0;
-    min-width: 0;
-  }
-
-  .launch-chapter-visual .launch-stage-canvas {
-    padding: clamp(22px, 3.2vw, 42px);
-    border-radius: 22px;
-  }
-
-  /* Unboxed Architectural Pillars Strip (for products with multi-gallery) */
-  .launch-pillars-band {
-    margin-top: clamp(64px, 8vw, 108px);
-    padding-top: clamp(40px, 5vw, 64px);
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 80%, transparent);
-  }
-
-  .launch-pillars-header {
-    margin-bottom: 36px;
-  }
-
-  .launch-pillars-header h3 {
-    font-size: clamp(21px, 2.2vw, 28px);
-    font-weight: 680;
-    letter-spacing: -0.025em;
-    margin: 0;
-    color: var(--text);
-  }
-
-  .launch-pillars-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(24px, 3.2vw, 40px);
-  }
-
-  .launch-pillar-item {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .launch-pillar-num {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 650;
-    color: var(--text-muted);
-    letter-spacing: 0.08em;
-  }
-
-  .launch-pillar-item h4 {
-    font-size: 17px;
-    line-height: 1.38;
-    font-weight: 660;
-    color: var(--text);
-    margin: 0;
-  }
-
-  .launch-pillar-item p {
-    font-size: 14px;
-    line-height: 1.75;
-    color: var(--text-secondary);
-    margin: 0;
-  }
-
-  /* Unboxed Editorial Feature Rows (for products with 0 or 1 secondary screenshot) */
-  .launch-editorial-features {
-    margin-top: clamp(32px, 4.5vw, 56px);
-    display: flex;
-    flex-direction: column;
-  }
-
-  .launch-editorial-row {
-    display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    gap: clamp(24px, 4.5vw, 64px);
-    padding: clamp(28px, 3.8vw, 46px) 0;
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-    align-items: start;
-  }
-
-  .launch-editorial-left {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-  }
-
-  .launch-editorial-num {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 680;
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-
-  .launch-editorial-left h3 {
-    font-size: clamp(21px, 2.2vw, 28px);
-    line-height: 1.28;
-    letter-spacing: -0.028em;
-    font-weight: 680;
-    color: var(--text);
-    margin: 0;
-  }
-
-  .launch-editorial-body {
-    font-size: 16px;
-    line-height: 1.82;
-    color: var(--text-secondary);
-    margin: 0;
-  }
-
-  /* Toned Surface Band: Scenarios & 3-Step Workflow */
-  .launch-band--toned {
-    padding: clamp(64px, 8vw, 112px) 0;
-    background: color-mix(in srgb, var(--surface-subtle) 62%, transparent);
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 80%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--line-subtle) 80%, transparent);
-  }
-
-  :global(:root[data-color-mode='dark']) .launch-band--toned {
-    background: color-mix(in srgb, var(--surface) 58%, transparent);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :global(:root[data-color-mode='system']) .launch-band--toned {
-      background: color-mix(in srgb, var(--surface) 58%, transparent);
-    }
-  }
-
-  .launch-scenarios-ledger {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(28px, 4vw, 52px);
-  }
-
-  .launch-scenario-col {
-    display: flex;
-    flex-direction: column;
-    padding-top: 20px;
-    border-top: 2px solid color-mix(in srgb, var(--text) 22%, transparent);
-  }
-
-  .launch-scenario-index {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 650;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-  }
-
-  .launch-scenario-col h3 {
-    font-size: clamp(19px, 1.8vw, 23px);
-    line-height: 1.32;
-    font-weight: 680;
-    color: var(--text);
-    margin: 0 0 18px;
-  }
-
-  .launch-scenario-pair {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-bottom: 18px;
-  }
-
-  .launch-scenario-block span {
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 640;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-  }
-
-  .launch-scenario-block p {
-    font-size: 14.5px;
-    line-height: 1.72;
-    margin: 0;
-  }
-
-  .launch-scenario-block--pain p {
-    color: var(--text-secondary);
-  }
-
-  .launch-scenario-block--outcome span {
-    color: var(--text);
-  }
-
-  .launch-scenario-block--outcome p {
-    color: var(--text);
-    font-weight: 480;
-  }
-
-  .launch-scenario-mech {
-    margin: auto 0 0;
-    padding-top: 14px;
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--text-muted);
-  }
-
-  /* 3-Step Workflow Track */
-  .launch-workflow-block {
-    margin-top: clamp(56px, 7vw, 92px);
-    padding-top: clamp(44px, 5.5vw, 72px);
-    border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  }
-
-  .launch-workflow-header {
-    margin-bottom: 36px;
-  }
-
-  .launch-workflow-header h3 {
-    font-size: clamp(22px, 2.4vw, 30px);
-    font-weight: 680;
-    letter-spacing: -0.028em;
-    margin: 0;
-    color: var(--text);
-  }
-
-  .launch-workflow-track {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(28px, 4vw, 52px);
-  }
-
-  .launch-workflow-step {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .launch-step-topline {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-
-  .launch-step-num {
-    font-family: var(--font-mono);
-    font-size: 26px;
-    font-weight: 720;
-    letter-spacing: -0.04em;
-    color: var(--text);
-    line-height: 1;
-  }
-
-  .launch-step-rule {
-    flex: 1;
-    height: 1px;
-    background: color-mix(in srgb, var(--line) 85%, transparent);
-  }
-
-  .launch-workflow-step h4 {
-    font-size: 18px;
-    font-weight: 670;
-    color: var(--text);
-    margin: 0 0 10px;
-  }
-
-  .launch-workflow-step p {
-    font-size: 14.5px;
-    line-height: 1.75;
-    color: var(--text-secondary);
-    margin: 0 0 12px;
-  }
-
-  .launch-step-detail {
-    margin-top: auto;
-    font-size: 12.5px;
-    line-height: 1.6;
-    color: var(--text-muted);
-  }
-
-  /* Engineering Deep Dive Banner */
-  .launch-essay-section {
-    padding: clamp(44px, 6vw, 76px) 0;
-  }
-
-  .launch-essay-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 32px;
-    padding: clamp(28px, 4vw, 48px);
-    border-radius: 22px;
-    background:
-      radial-gradient(ellipse at 92% 20%, color-mix(in srgb, var(--accent-soft) 75%, transparent), transparent 65%),
-      color-mix(in srgb, var(--surface-subtle) 75%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
-  }
-
-  .launch-essay-copy {
-    max-width: 68ch;
-  }
-
-  .launch-essay-copy h2 {
-    font-size: clamp(21px, 2.3vw, 29px);
-    line-height: 1.3;
-    letter-spacing: -0.025em;
-    font-weight: 680;
-    color: var(--text);
-    margin: 0 0 10px;
-  }
-
-  .launch-essay-copy p {
-    font-size: 14.5px;
-    line-height: 1.72;
-    color: var(--text-secondary);
-    margin: 0;
-  }
-
-  .launch-essay-btn {
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  /* Appendix: Downloads, Provenance, Specs & FAQ */
-  .launch-appendix {
-    padding: clamp(56px, 7vw, 96px) 0 clamp(64px, 8vw, 112px);
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 80%, transparent);
-  }
-
-  .launch-acquisition-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-    gap: clamp(36px, 5vw, 72px);
-    align-items: start;
-    padding-bottom: clamp(48px, 6vw, 80px);
-    border-bottom: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-  }
-
-  .launch-acquisition-info h2 {
-    font-size: clamp(26px, 3vw, 38px);
-    line-height: 1.2;
-    letter-spacing: -0.032em;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0 0 14px;
-  }
-
-  .launch-acquisition-lead {
-    font-size: 15.5px;
-    line-height: 1.78;
-    color: var(--text-secondary);
-    margin: 0 0 28px;
-  }
-
-  .launch-provenance-ledger {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    padding-top: 20px;
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-  }
-
-  .launch-provenance-row strong {
-    display: block;
-    font-size: 12.5px;
-    font-weight: 660;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-
-  .launch-provenance-row p {
-    font-size: 13.5px;
-    line-height: 1.72;
-    color: var(--text-muted);
-    margin: 0;
-  }
-
-  .launch-download-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .launch-download-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    padding: 18px 22px;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-subtle) 55%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-    text-decoration: none;
-    transition: border-color 0.18s ease, transform 0.18s ease;
-  }
-
-  .launch-download-item--primary {
-    border-color: color-mix(in srgb, var(--text) 32%, var(--line));
-    background: var(--surface);
-  }
-
-  .launch-download-item:hover {
-    border-color: var(--text);
-    transform: translateY(-1px);
-  }
-
-  .launch-download-main {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .launch-download-title-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .launch-download-title-row strong {
-    font-size: 15.5px;
-    font-weight: 670;
-    color: var(--text);
-  }
-
-  .launch-download-badge {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    font-weight: 640;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--surface-subtle);
-    color: var(--text-secondary);
-  }
-
-  .launch-download-platform {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-
-  .launch-download-note {
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  .launch-download-arrow {
-    font-size: 18px;
-    color: var(--text-secondary);
-    flex-shrink: 0;
-  }
-
-  .launch-case-box {
-    padding: 22px 24px;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--surface-subtle) 55%, transparent);
-    border: 1px solid color-mix(in srgb, var(--line-subtle) 90%, transparent);
-  }
-
-  .launch-case-box p {
-    margin: 4px 0 0;
-    font-size: 14.5px;
-    line-height: 1.75;
-    color: var(--text-secondary);
-  }
-
-  .launch-resource-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 18px;
-    margin-top: 20px;
-  }
-
-  .launch-resource-links a {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-decoration: none;
-    padding: 6px 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-    transition: color 0.18s ease, border-color 0.18s ease;
-  }
-
-  .launch-resource-links a:hover {
-    color: var(--text);
-    border-color: var(--text);
-  }
-
-  /* Specs Ledger & FAQ Split */
-  .launch-specs-faq-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-    gap: clamp(36px, 5.5vw, 76px);
-    padding-top: clamp(44px, 5.5vw, 72px);
-    align-items: start;
-  }
-
-  .launch-specs-column h3,
-  .launch-faq-column h3 {
-    font-size: clamp(21px, 2.2vw, 27px);
-    font-weight: 680;
-    letter-spacing: -0.025em;
-    color: var(--text);
-    margin: 0 0 22px;
-  }
-
-  .launch-specs-table {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .launch-spec-row {
-    display: grid;
-    grid-template-columns: 128px minmax(0, 1fr);
-    gap: 16px;
-    padding: 13px 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-    align-items: baseline;
-  }
-
-  .launch-spec-row:first-child {
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-  }
-
-  .launch-spec-row dt {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-  }
-
-  .launch-spec-row dd {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.65;
-    color: var(--text);
-  }
-
-  .launch-faq-stack {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .launch-faq-item {
-    border-bottom: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-    padding: 16px 0;
-  }
-
-  .launch-faq-item:first-child {
-    border-top: 1px solid color-mix(in srgb, var(--line-subtle) 85%, transparent);
-  }
-
-  .launch-faq-item summary {
-    cursor: pointer;
-    font-size: 15.5px;
-    font-weight: 650;
-    line-height: 1.5;
-    color: var(--text);
-    list-style: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-  }
-
-  .launch-faq-item summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .launch-faq-item summary::after {
-    content: '+';
-    font-family: var(--font-mono);
-    font-size: 17px;
-    font-weight: 400;
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-
-  .launch-faq-item[open] summary::after {
-    content: '−';
-  }
-
-  .launch-faq-item p {
-    margin: 10px 0 2px;
-    font-size: 14.5px;
-    line-height: 1.78;
-    color: var(--text-secondary);
-  }
-
-  .launch-boundaries-note {
-    margin-top: 28px;
-    padding-top: 20px;
-  }
-
-  .launch-boundaries-note h4 {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 650;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    margin: 0 0 10px;
-  }
-
-  .launch-boundaries-note ul {
-    margin: 0;
-    padding-left: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .launch-boundaries-note li {
-    font-size: 13.5px;
-    line-height: 1.7;
-    color: var(--text-secondary);
-  }
-
-  /* Responsive Adaptation */
-  @media (max-width: 980px) {
-    .launch-topbar-nav {
-      display: none;
-    }
-
-    .launch-chapter-row,
-    .launch-chapter-row--reverse,
-    .launch-editorial-row,
-    .launch-acquisition-grid,
-    .launch-specs-faq-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .launch-chapter-row--reverse .launch-chapter-copy {
-      order: 1;
-    }
-
-    .launch-chapter-row--reverse .launch-chapter-visual {
-      order: 2;
-    }
-
-    .launch-pillars-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .launch-scenarios-ledger,
-    .launch-workflow-track {
-      grid-template-columns: 1fr;
-      gap: 32px;
-    }
-
-    .launch-essay-banner {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .launch-topbar-actions :global(.theme-menu) {
-      display: none;
-    }
-
-    .launch-crumb-link,
-    .launch-crumb-sep:nth-of-type(2) {
-      display: none;
-    }
-
-    .launch-stage-canvas {
-      padding: clamp(16px, 4vw, 24px);
-      border-radius: 20px;
-    }
-
-    .stage-paired-tray {
-      gap: 12px;
-    }
-
-    .stage-window-frame--popup {
-      flex: 0 1 150px;
-      max-width: 150px;
-    }
-
-    .launch-pillars-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .launch-spec-row {
-      grid-template-columns: 104px minmax(0, 1fr);
-      gap: 12px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .stage-window-frame,
-    .launch-download-item,
-    .launch-topbar-cta {
-      transition: none !important;
-    }
-  }
-</style>

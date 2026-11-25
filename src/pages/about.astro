@@ -135,6 +135,35 @@ import { SOFTWARE_PRODUCTS } from '../lib/software';
 		color: var(--text);
 		background: var(--surface-subtle);
 	}
+	.workbench-product-card {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 12px;
+		border-radius: 14px;
+		background: var(--bg);
+		border: 1px solid var(--line);
+		box-shadow: var(--specular-rim);
+		transition: transform 200ms var(--ease-out), border-color 200ms ease;
+	}
+	.workbench-product-card:hover {
+		border-color: var(--line-strong);
+		transform: translateY(-1.5px);
+	}
+	.workbench-app-icon {
+		width: 44px;
+		height: 44px;
+		border-radius: 11px;
+		overflow: hidden;
+		flex-shrink: 0;
+		border: 1px solid var(--line);
+		background: var(--surface);
+	}
+	.workbench-app-icon img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
 	@media (max-width: 920px) {
 		.about-layout {
 			grid-template-columns: 1fr;
