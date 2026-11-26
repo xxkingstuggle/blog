@@ -101,4 +101,4 @@ Android 端收到这个迟到的 `onClose` 回调时，根本分不清它是旧�
   <figcaption>图 4 · v4.0.17 【日志】工作区，所有连接握手、音频缓冲与网络转发动作均可实时追踪。</figcaption>
 </figure>
 
-现在再去开线上会，不管我是插着线还是连着 Wi-Fi，终于不用再分心去盯那个连接状态灯了。最新的 macOS DMG、ZIP 和 Android APK 我都已经放在了 [USBLinkMic 作品页](/software/usblinkmic/) 和 [GitHub Release v4.0.17](https://github.com/xxkingstuggle/usblinkmic/releases/tag/v4.0.17) 上，手里有闲置 Android 手机的朋友可以直接装上试试。
+现在再去开线上会，不管我是插着线还是连着 Wi-Fi，终于不用再分心去盯那个连接状态灯了。最新的 macOS DMG、ZIP 和 Android APK 我都已经放在了 [USBLinkMic 作品页](/software/usblinkmic/) 和 [GitHub Release v4.0.18](https://github.com/xxkingstuggle/usblinkmic/releases/tag/v4.0.18) 上，手里有闲置 Android 手机的朋友可以直接装上试试。

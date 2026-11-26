@@ -73,4 +73,4 @@ cover: ../../assets/projects/route-lens-cover.png
 
 为了让这条右侧窄栏在 ChatGPT 频繁改版的 Tailwind 样式里稳如泰山，我把整个面板都封进了独立的 `ShadowRoot` 里，自带深浅色主题切换和独立滚动条。你在扩展的 Popup 弹窗里还可以随时拖动滑块，调整窄栏的宽度、高度和停靠位置。哪怕手滑调乱了，点一下「恢复默认外观」，它也只会重置尺寸和主题，绝不会动你已经配好的捕获开关。
 
-整个仓库配齐了 18 项 `node:test` 单元测试和 `scripts/check.mjs` 静态校验脚本。如果你平时用 ChatGPT 也总爱琢磨它到底给没给你用对模型，可以直接去 [Route Lens 作品页](/software/route-lens/) 或者 [GitHub Release v1.3.1](https://github.com/xxkingstuggle/route-lens/releases/tag/v1.3.1) 装上看看，眼见为实。
+整个仓库目前已迭代至 v1.3.2，配齐了 32 项 `node:test` 单元测试和 `scripts/check.mjs` 静态校验脚本。如果你平时用 ChatGPT 也总爱琢磨它到底给没给你用对模型，可以直接去 [Route Lens 作品页](/software/route-lens/) 或者 [GitHub Release v1.3.2](https://github.com/xxkingstuggle/route-lens/releases/tag/v1.3.2) 装上看看，眼见为实。

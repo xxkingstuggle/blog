@@ -143,16 +143,16 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     headline:'把下载交回原生桌面，分片进度落盘可恢复。',
     summary:'zjx-download 是基于 Swift / SwiftUI 编写的 macOS 原生多线程下载器，配套 Chrome MV3 浏览器扩展、Native Messaging Host 与无头 CLI。支持 HTTP Range 多连接并发分片、跨会话断点续传状态落盘、未知长度流回退续传以及定时队列调度。',
     platforms:['macOS 14+ · Universal (arm64 / x86_64)','Chrome MV3 扩展','macOS CLI'],platformsLabel:'macOS · Chrome MV3 · CLI',
-    statusBadge:'v2.0.5 公开发布',statusTone:'release',latestVersion:'v2.0.5',releaseDate:'2026-11-26',
-    availabilitySummary:'公开提供 v2.0.5 macOS 原生应用包（内置 ZJXDownloadCore.framework、Native Host 与 CLI）及同步升级的 Chrome MV3 扩展包（v2.0.5）。',
+    statusBadge:'v2.0.6 公开发布',statusTone:'release',latestVersion:'v2.0.6',releaseDate:'2026-11-26',
+    availabilitySummary:'公开提供 v2.0.6 macOS 原生通用架构应用包（Universal arm64 + x86_64，内置 ZJXDownloadCore.framework、Native Host 与 CLI）及同步升级的 Chrome MV3 扩展包（v2.0.6）。',
     availabilityNotice:'macOS 应用使用 Apple Development 签名，尚未完成公证。流媒体下载仅支持未加密的有限 TS media playlist，明确不支持 DRM、独立音轨拼接或无限直播流录制。',
     repoUrl:'https://github.com/xxkingstuggle/zjx-download',repoVisibility:'public',
-    releasesUrl:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.5',
-    checksumsUrl:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/SHA256SUMS.txt',
+    releasesUrl:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.6',
+    checksumsUrl:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.6/SHA256SUMS.txt',
     articleSlug:'zjx-download-native-architecture',articleTitle:'zjx-download 架构复盘：用 Swift 重写 macOS 原生多线程下载器与 Chrome Native Messaging 交接',
     icon:zjxDownloadIcon,screenshot:zjxDownloadShot,
     screenshotAlt:'zjx-download macOS 原生主窗口与分片进度面板',
-    screenshotCaption:'zjx-download v2.0.5 macOS 原生主界面真实运行截图，支持按分类筛选、并发队列调度、分片级断点续传与 SHA-256 校验。',
+    screenshotCaption:'zjx-download v2.0.6 macOS 原生主界面真实运行截图，支持按分类筛选、并发队列调度、分片级断点续传与 SHA-256 校验。',
     interfaceHeading:'分片进度与队列状态，一目了然。',
     galleryKicker:'NATIVE WORKFLOW · 原生交互细节',
     galleryHeading:'从浏览器捕获到原生分片落盘的完整闭环。',
@@ -179,20 +179,20 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'分片原子合并 · 内置 SHA-256 / MD5 摘要核验 · 原生拖拽与 Finder 定位'
       }
     ],
-    verifiedAt:'2026-11-26（v2.0.5 22/22 XCTest + 5/5 扩展单测、签名包与热重载回环验收全部通过并公开发布）',
-    developmentVersion:'v2.0.5（分片落盘幂等清理、热更新 API、多 Cookie 保留、MV3 深浅色重塑与品牌归属）',
-    installedVersion:'公开包 macOS v2.0.5 + Chrome MV3 扩展 v2.0.5（22+5 项单测全绿）',
+    verifiedAt:'2026-11-26（v2.0.6 22/22 XCTest + 5/5 扩展单测、通用架构签名包、公开文档脱敏与热重载回环验收全部通过并公开发布）',
+    developmentVersion:'v2.0.6（匿名公开署名与文档脱敏、cURL 多重 Cookie 保留、分片落盘幂等清理、热更新 API 与 MV3 深浅色重塑）',
+    installedVersion:'公开包 macOS Universal v2.0.6 + Chrome MV3 扩展 v2.0.6（22+5 项单测全绿）',
     contribution:'我主导了 Swift/SwiftUI 原生客户端架构、分片断点续传状态机、Loopback 与 Native Messaging 通信层及 Chrome MV3 扩展重写。早期浏览器集成协议参考了 AmirHossein Abdolmotallebi 的开源项目并在许可中完整致谢。',
     limitations:['仅支持 HTTP/HTTPS 与未加密有限 HLS TS 媒体列表，不支持 DRM 流媒体或私有视频站点破解。','macOS 安装包暂未进行 Apple Notarization 公证，首次运行需在系统设置中放行。','跨站点重定向时的认证 Header 会按安全策略自动剥离，防止凭据泄露。'],
     sources:[
-      {label:'v2.0.5 发行页与安装包',url:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.5'},
-      {label:'安装与校验说明',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/INSTALL.md'},
+      {label:'v2.0.6 发行页与安装包',url:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.6'},
+      {label:'安装与校验说明',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.6/INSTALL.md'},
       {label:'GitHub 开源仓库',url:'https://github.com/xxkingstuggle/zjx-download'},
       {label:'安装与使用账本',url:'https://github.com/xxkingstuggle/zjx-download/blob/main/INSTALL_LEDGER.md'}
     ],
     downloads:[
-      {label:'macOS 原生应用包',platform:'macOS 26+ · Apple Silicon',version:'v2.0.5',size:'4.5 MB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/zjx-download-2.0.5-macOS.zip',primary:true,note:'含 zjx-download.app、Native Messaging Host 与无头 CLI'},
-      {label:'Chrome MV3 浏览器扩展',platform:'Chromium / Chrome 114+',version:'v2.0.5',size:'65 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/zjx-download-chrome-extension-2.0.5.zip',note:'解压后在 chrome://extensions 加载即可接管浏览器下载'}
+      {label:'macOS 原生应用包',platform:'macOS 14+ · Universal (arm64 / x86_64)',version:'v2.0.6',size:'4.5 MB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.6/zjx-download-2.0.6-macOS.zip',primary:true,note:'含通用架构 zjx-download.app、Native Messaging Host 与无头 CLI'},
+      {label:'Chrome MV3 浏览器扩展',platform:'Chromium / Chrome 114+',version:'v2.0.6',size:'70 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.6/zjx-download-chrome-extension-2.0.6.zip',note:'解压后在 chrome://extensions 加载即可接管浏览器下载'}
     ],
     highlights:[
       {title:'分片级断点续传与崩溃幂等清理',body:'多连接 HTTP Range 分片与 HEAD→GET Range 回退探测统一写入序列化 StateStore；合并校验原子提交后再清理 range-parts 分片目录，断电不丢续传能力且零磁盘残留。'},
@@ -208,10 +208,10 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     workflow:[
       {step:'01',title:'安装桌面端与注册 Host',description:'解压 zjx-download.app 移入 /Applications，首次打开自动完成 Native Messaging 清单注册。',detail:'也可使用 scripts/manage-native-host 手动管理。'},
       {step:'02',title:'加载 Chrome MV3 扩展',description:'解压扩展包并在 chrome://extensions 开启开发者模式加载，弹窗即显示桌面端连接状态。',detail:'支持配置自动拦截的文件后缀与最小体积阈值。'},
-      {step:'03',title:'分片下载与完成核验',description:'在主窗口查看实时分片进度、暂停恢复或执行 SHA-256 校验。',detail:'v2.0.5 已全量覆盖 22 项核心 XCTest + 5 项 MV3 扩展单测。'}
+      {step:'03',title:'分片下载与完成核验',description:'在主窗口查看实时分片进度、暂停恢复或执行 SHA-256 校验。',detail:'v2.0.6 已全量覆盖 22 项核心 XCTest + 5 项 MV3 扩展单测。'}
     ],
     specs:[
-      {label:'公开版本',value:'v2.0.5 (build 20261126.1 / 2026-11-26)'},
+      {label:'公开版本',value:'v2.0.6 / 2026-11-26'},
       {label:'架构支持',value:'macOS Universal (arm64 + x86_64)'},
       {label:'核心框架',value:'Swift 6 · SwiftUI · ZJXDownloadCore.framework'},
       {label:'浏览器扩展',value:'Chrome Manifest V3 · Native Messaging'},
@@ -406,7 +406,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {label:'许可协议',value:'MIT License'}
     ],
     faq:[
-      {question:'Tintpane 和以前文章里提到的 Colorful 是什么关系？',answer:'Colorful 是早期私有原型的内部代号；在完成按需动态脚本注册、域名树继承与双向别名同步重构后，项目以 Tintpane 正式开源并发布了 v2.4.0。'},
+      {question:'Tintpane 和以前文章里提到的 Colorful 是什么关系？',answer:'Colorful 是早期私有原型的内部代号；在完成按需动态脚本注册、域名树继承与双向别名同步重构后，项目以 Tintpane 正式开源并持续迭代至 v2.5.0。'},
       {question:'为什么坚持“默认关闭”而不是全局自动注入所有网页？',answer:'全局注入不仅浪费后台内存，还会在用户未预期的站点覆盖原生主题色。按需动态注册能做到只管用户点名的 PWA，且随时可逆。'},
       {question:'页面切换深色模式时标题栏会自动跟着变吗？',answer:'会。扩展通过 MutationObserver 与 prefers-color-scheme 监听页面主题变更，在毫秒级重新计算并更新标题栏色值。'}
     ]
@@ -604,20 +604,20 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
   },
   {
     slug:'dim-wallpaper',name:'DimWallpaper',category:'macOS 原生菜单栏工具 · 壁纸压暗与专注遮罩',
-    tagline:'不改壁纸与硬件参数，提供壁纸压暗与类 HazeOver 后台专注遮罩，支持菜单栏与 Dock 精细分条压暗',
+    tagline:'不改壁纸与硬件参数，提供壁纸压暗与顶边余弦羽化专注遮罩，支持 3 套过渡动画与菜单栏/Dock 分条压暗',
     headline:'压暗刺眼壁纸，也把视线聚焦回当前窗口。',
-    summary:'DimWallpaper 是用纯 Swift + AppKit + SwiftUI 编写的零依赖 macOS 原生菜单栏工具。既能在 CGWindowLevelForKey(.desktopWindow) + 1 夹缝为每块显示器挂载全穿透壁纸压暗层（保留桌面图标 100% 原亮，5%–80% 无级调节与色温滤镜），也在主干新增了独立「专注遮罩模式（Focus Mode，类 HazeOver）」：保留当前前台应用或最前单窗高亮，柔和压暗后台窗口，并支持独立控制顶部菜单栏与 Dock 零重叠分条压暗、双全局热键与原生毛玻璃控制中心，全程无需录屏或辅助功能权限。',
+    summary:'DimWallpaper 是用纯 Swift + AppKit + SwiftUI 编写的零依赖 macOS 原生菜单栏工具。既能在 CGWindowLevelForKey(.desktopWindow) + 1 夹缝为每块显示器挂载全穿透壁纸压暗层（保留桌面图标 100% 原亮，5%–80% 无级调节与色温滤镜），也内置独立「专注遮罩模式（Focus Mode）」：保留当前前台应用或最前单窗高亮，通过 CAGradientLayer 6 点余弦平滑曲线消除菜单栏下沿硬边，提供 3 档顶边羽化与 3 套过渡动画预设，并支持菜单栏/Dock 零重叠分条压暗与双全局热键，全程无需录屏或辅助功能权限。',
     platforms:['macOS 13.0+ · Apple Silicon'],platformsLabel:'macOS · AppKit',
-    statusBadge:'v2.0.0 公开发布',statusTone:'release',latestVersion:'v2.0.0',releaseDate:'2026-11-26',
-    availabilitySummary:'公开提供 v2.0.0 macOS 应用压缩包（ZIP）、SHA-256 校验清单与 MIT 开源仓库；完整内置壁纸压暗、Focus Mode v2 专注遮罩、3 档双屏策略（默认每屏保留最前窗口）、全屏视频豁免与零渗黑菜单栏/Dock 分条压暗。',
+    statusBadge:'v2.1.0 公开发布',statusTone:'release',latestVersion:'v2.1.0',releaseDate:'2026-11-26',
+    availabilitySummary:'公开提供 v2.1.0 macOS 应用压缩包（ZIP）、SHA-256 校验清单与 MIT 开源仓库；完整内置壁纸压暗、顶边余弦平滑羽化专注遮罩（柔和晕影 38pt / 细腻羽化 18pt / 清晰硬边 0pt）、3 套过渡动画预设、3 档多屏策略与菜单栏/Dock 零重叠分条压暗。',
     availabilityNotice:'应用采用本地 ad-hoc 签名（未公证），首次打开如遇系统拦截可在「系统设置 → 隐私与安全性」中点击仍要打开。',
     repoUrl:'https://github.com/xxkingstuggle/dim-wallpaper',repoVisibility:'public',
-    releasesUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v2.0.0',
-    checksumsUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v2.0.0/SHA256SUMS.txt',
+    releasesUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v2.1.0',
+    checksumsUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v2.1.0/SHA256SUMS.txt',
     articleSlug:'dim-wallpaper-macos-desktop-overlay',articleTitle:'DimWallpaper：从桌面壁纸黑纱到类 HazeOver 专注遮罩与菜单栏/Dock 零重叠压暗',
     icon:dimWallpaperIcon,screenshot:dimWallpaperShot,
-    screenshotAlt:'DimWallpaper v2.0.0 macOS 菜单栏控制面板与壁纸压暗/专注遮罩实景对比',
-    screenshotCaption:'DimWallpaper v2.0.0 真实运行预览：支持壁纸压暗与类 HazeOver 专注遮罩双引擎、每屏保留最前窗口双屏策略、全屏视频自动豁免与桌面图标 100% 原亮保留。',
+    screenshotAlt:'DimWallpaper v2.1.0 macOS 菜单栏控制面板与壁纸压暗/专注遮罩实景对比',
+    screenshotCaption:'DimWallpaper v2.1.0 真实运行预览：支持壁纸压暗与顶边余弦羽化专注遮罩双引擎、3 套过渡动画预设、每屏保留最前窗口双屏策略与桌面图标 100% 原亮保留。',
     interfaceHeading:'只压暗壁纸，不遮挡桌面图标。',
     galleryKicker:'MENUBAR & CGWINDOWLEVEL · 原生图层控制',
     galleryHeading:'卡在壁纸与桌面图标之间的 68 KB 原生薄纱。',
@@ -643,24 +643,24 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'ignoresMouseEvents = true · .canJoinAllSpaces · didChangeScreenParameters 热插拔重建'
       }
     ],
-    verifiedAt:'2026-11-26（v2.0.0 23/23 Swift 核心单测与双屏 WindowServer 动态实测通过并公开发布：零重叠菜单栏截断、台前调度退场、全屏视频豁免与空闲 CPU 0.0%）',
-    developmentVersion:'v2.0.0（壁纸调暗 + Focus Mode v2 + 3 档多屏策略 + 全屏视频豁免 + 菜单栏/Dock 零重叠压暗）',
-    installedVersion:'macOS arm64 v2.0.0 常驻验证通过（空闲 CPU 0.0%）',
-    contribution:'我独立完成了 CGWindowLevel 桌面图层方案、专注遮罩精确 Z 序锚定与菜单栏/Dock 零重叠几何分割、SwiftUI/AppKit 毛玻璃控制中心、双 Carbon 全局热键及 SMAppService 登录项管理。',
+    verifiedAt:'2026-11-26（v2.1.0 Swift 核心单测与双屏 WindowServer 动态实测通过并公开发布：CAGradientLayer 顶边余弦羽化、3 套过渡动画无硬切切换、全屏视频豁免与空闲 CPU 0.0%）',
+    developmentVersion:'v2.1.0（壁纸调暗 + 顶边余弦平滑羽化 FocusEdgeFeather + 3 套过渡动画预设 FocusTransitionSpeed + 3 档多屏策略 + 菜单栏/Dock 零重叠压暗）',
+    installedVersion:'macOS arm64 v2.1.0 常驻验证通过（空闲 CPU 0.0%）',
+    contribution:'我独立完成了 CGWindowLevel 桌面图层方案、CAGradientLayer 6 点余弦顶边羽化与 3 套过渡动画曲线、专注遮罩精确 Z 序锚定与菜单栏/Dock 零重叠几何分割、SwiftUI/AppKit 毛玻璃控制中心及双 Carbon 全局热键。',
     limitations:[
       '对标准 .desktopWindow 层壁纸及常规应用窗口均可无损压暗，不调用硬件 Gamma/亮度 API 且无需录屏或辅助功能权限；高于 .desktopIconWindow 的自定义桌面挂件与系统通知中心保持可见不遮挡。'
     ],
     sources:[
-      {label:'v2.0.0 发行页与安装包',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v2.0.0'},
+      {label:'v2.1.0 发行页与安装包',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v2.1.0'},
       {label:'GitHub 开源仓库',url:'https://github.com/xxkingstuggle/dim-wallpaper'}
     ],
     downloads:[
-      {label:'DimWallpaper macOS 应用包',platform:'macOS 13+ · Apple Silicon',version:'v2.0.0',size:'606 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v2.0.0/DimWallpaper-2.0.0-macOS.zip',primary:true,note:'解压后将 DimWallpaper.app 拖入应用程序即可'}
+      {label:'DimWallpaper macOS 应用包',platform:'macOS 13+ · Apple Silicon',version:'v2.1.0',size:'638 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v2.1.0/DimWallpaper-2.1.0-macOS.zip',primary:true,note:'解压后将 DimWallpaper.app 拖入应用程序即可'}
     ],
     highlights:[
       {title:'壁纸压暗 + 后台专注遮罩双层沉浸',body:'壁纸层固定在 .desktopWindow + 1 保留桌面图标原亮；主干新增专注遮罩层（Focus Mode），按只读窗口栈精确锚定当前前台应用窗口组或最前单窗下方，两者可独立或叠加使用。'},
-      {title:'菜单栏与 Dock 零重叠分条压暗',body:'默认保留系统栏原色；开启压暗时按 screen.frame 与 visibleFrame 将主遮罩、菜单栏条（statusBar + 1）与底/左/右 Dock 条（dock + 1）无重叠切割，并自动扣减伸入 Dock 的前台窗轮廓。'},
-      {title:'原生毛玻璃控制中心与双全局热键',body:'左键弹出三标签页毛玻璃 NSPopover（双层实时预览、色温滤镜、逐屏豁免与前台应用一键豁免），右键保留极速菜单；内置零权限 Carbon 双热键（⌃⌥⌘D 壁纸 / ⌃⌥⌘F 专注）。'},
+      {title:'顶边余弦平滑羽化与零重叠分条压暗',body:'保留菜单栏时采用零 CPU 开销 CAGradientLayer 6 点余弦平滑曲线消除菜单栏下沿生硬黑边与马赫带（支持柔和晕影 38pt / 细腻羽化 18pt / 清晰硬边 0pt）；压暗系统栏时按几何边界零重叠分割菜单栏与 Dock。'},
+      {title:'3 套过渡动画预设与双全局热键',body:'提供柔化呼吸（0.52s/0.40s）、缓慢线性（0.80s/0.62s）、轻快流畅（0.24s/0.18s）三套质感曲线，彻底消除台前调度与切桌面的 0ms 硬切；左键弹出三标签毛玻璃控制中心实时预览，内置 Carbon 双热键（⌃⌥⌘D / ⌃⌥⌘F）。'},
       {title:'零显存常驻与多屏拓扑自愈',body:'暂停、浅色待命或命中豁免应用时自动 orderOut 释放 WindowServer 合成缓冲；响应热插拔、休眠唤醒与空间切换，双屏常驻实测空闲 CPU 0.0%。'}
     ],
     scenarios:[
@@ -674,11 +674,11 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {step:'03',title:'开机自启与零空转待命',description:'开启「登录时启动」由 macOS 原生 SMAppService.mainApp 托管；暂停或浅色待命时自动卸载遮罩释放显存。',detail:'不改壁纸源文件，也不修改硬件显示 Gamma。'}
     ],
     specs:[
-      {label:'公开版本',value:'v2.0.0 / 2026-11-26'},
-      {label:'技术栈',value:'Swift 6 · AppKit · SwiftUI · CoreGraphics · Carbon · SMAppService'},
+      {label:'公开版本',value:'v2.1.0 / 2026-11-26'},
+      {label:'技术栈',value:'Swift 6 · AppKit · SwiftUI · CoreGraphics · QuartzCore (CAGradientLayer) · Carbon'},
       {label:'窗口层级',value:'壁纸 desktopWindow+1 · 专注精确 Z 序 · 菜单栏 statusBar+1 / Dock dock+1'},
       {label:'权限与硬件边界',value:'零录屏权限 · 零辅助功能权限 · 零硬件 Gamma/色表修改'},
-      {label:'自动化与动态验证',value:'23/23 Swift 核心单测 · 双屏 WindowServer 零重叠/全屏豁免实测 · 空闲 CPU 0.0%'},
+      {label:'边缘与过渡质感',value:'6 点余弦顶边羽化（38pt / 18pt / 0pt）· 3 套无打断过渡动画曲线 · 空闲 CPU 0.0%'},
       {label:'系统要求与许可',value:'macOS 13.0+ (Ventura 及以上) · MIT License'}
     ],
     faq:[
@@ -696,7 +696,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     statusBadge:'v0.2.0 私有工程案例',statusTone:'source',latestVersion:'v0.2.0（本地工程版）',releaseDate:'2026-11-26',
     availabilitySummary:'当前作为 macOS 窗口布局算法、自定义网格编辑器与原生 UI 重构的工程案例展示。因早期兼容性研究涉及第三方二进制资源比对，按开源合规原则（PROVENANCE.md）保持仓库私有，不分发二进制安装包。',
     availabilityNotice:'本项目全部 77 项图标与视觉资产已由原创生成式图稿替换，Swift 源码为独立实现；但在彻底完成历史非图像资源（如本地化词条与命令表）的 clean-room 替换前，仅展示架构设计与界面重构成果。',
-    repoUrl:'https://github.com/xxkingstuggle/FrameLift',repoVisibility:'private',
+    repoUrl:'https://myzjx.com/software/framelit/',repoVisibility:'private',
     articleSlug:'framelit-macos-window-manager',articleTitle:'FrameLit：macOS 原生窗口管理器的坐标网格编辑器与无阻塞诊断日志设计',
     icon:framelitIcon,screenshot:framelitShot,
     screenshotAlt:'FrameLit 深色模式下的窗口布局指令与自定义坐标网格编辑器界面',

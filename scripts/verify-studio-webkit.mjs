@@ -337,7 +337,7 @@ async function run(){
   for (const slug of [
     'single-domain-private-digital-space',
     'webkit-assertions-over-visual-guessing',
-    'paopao-ai-edtech-product-practice'
+    'b2b2c-ai-edtech-product-practice'
   ]) {
     await mobile.goto(`${origin}/posts/${slug}/`, { waitUntil: 'networkidle' });
     await ensureWithinViewport(mobile, `mobile /posts/${slug}/`);

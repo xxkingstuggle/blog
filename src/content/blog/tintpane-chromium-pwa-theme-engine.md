@@ -72,4 +72,4 @@ cover: ../../assets/projects/tintpane-cover.png
 
 而且我给这套脚本留了一个特别干净的退场机制。脚本第一次修改页面的 `<meta name="theme-color">` 之前，会先把网页原有的全部 `theme-color` 节点和属性原样备份下来。只要你在弹窗里关掉这个站点的开关，连网页都不用刷新，原本的 DOM 节点就会立刻原封不动地塞回去。
 
-如果你也是桌面 PWA 窗口的重度用户，受够了深色模式下那条刺眼的白标题栏，可以直接去 [Tintpane 作品页](/software/tintpane/) 或 [GitHub Release v2.4.0](https://github.com/xxkingstuggle/tintpane/releases/tag/v2.4.0) 把它装上。
+如果你也是桌面 PWA 窗口的重度用户，受够了深色模式下那条刺眼的白标题栏，可以直接去 [Tintpane 作品页](/software/tintpane/) 或最新的 [GitHub Release v2.5.0](https://github.com/xxkingstuggle/tintpane/releases/tag/v2.5.0) 把它装上。

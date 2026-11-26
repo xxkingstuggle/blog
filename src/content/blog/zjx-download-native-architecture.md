@@ -1,7 +1,7 @@
 ---
 title: 自己用 Swift 6 写了个 Mac 下载器，才发现暂停归零和跨域带 Cookie 有多坑
 pubDate: 2026-11-15
-updatedDate: 2026-11-24
+updatedDate: 2026-11-26
 description: 写一个能发 Range 请求的下载 Demo 很容易，但天天拿它接管浏览器下载时，我接连撞上了进度归零、单流临时文件被误删、15151 端口自己抢自己和 302 重定向泄露 Cookie 四个真坑。
 kicker: MACOS NATIVE · SWIFT 6 & CHROME MV3
 kind: project
@@ -89,4 +89,4 @@ cover: ../../assets/projects/zjx-download-cover.png
 
 意识到这一点之后，我立刻在 `NetworkConfiguration` 的重定向拦截器里加了一道铁闸。每次发生重定向，先做严格的同源比对。只要发现跳转后的目标 Origin 变了，当场自动剥掉 `Cookie` 和 `Authorization` 等所有敏感认证头，并用 `testNetworkConfigurationStripsCrossOriginCredentials` 单测把这个行为焊死。
 
-现在这套 [**zjx-download v2.0.4**](https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.4) 已经成了我每天主力使用的下载工具。主应用、`ZJXDownloadCore.framework`、`zjx-download-native-host` 还有命令行 `zjx-download-cli` 全部编译成了 macOS Universal（`arm64` 加 `x86_64`）双架构二进制，仓库里的 11 项 XCTest 单元测试在 0.08 秒内就能跑完，把断点恢复、并发队列、cURL 导入解析、同名文件防覆盖和 SHA-256 校验全看住了。安装包和源码都在 [zjx-download 作品页](/software/zjx-download/) 里，在 Mac 上缺个干净原生下载器的朋友可以拿去试试。
+现在这套下载器已持续迭代至 [**zjx-download v2.0.6**](https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.6)，成了我每天主力使用的下载工具。主应用、`ZJXDownloadCore.framework`、`zjx-download-native-host` 还有命令行 `zjx-download-cli` 全部编译成了 macOS Universal（`arm64` 加 `x86_64`）双架构二进制，仓库里的 22 项核心 XCTest 与 5 项 MV3 扩展单测把断点恢复、分片幂等清理、cURL 多重 Cookie 保留、本机 API 热重载和 SHA-256 校验全看住了。安装包和源码都在 [zjx-download 作品页](/software/zjx-download/) 里，在 Mac 上缺个干净原生下载器的朋友可以拿去试试。

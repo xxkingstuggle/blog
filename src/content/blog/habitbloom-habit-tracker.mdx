@@ -30,7 +30,7 @@ cover: ../../assets/projects/habitbloom-cover.png
 
 更别提用非付费或者侧载重签名装到真机上的时候，有时候小组件干脆连一张习惯卡片都读不出来，直接给你摆出一块空白。
 
-为了把这件「点一下就打卡」的小事真正做通，我一路从本地 SwiftData 折腾到了跨进程快照，最后甚至用 Cloudflare Workers 和 Durable Objects 给它搭了一条远端快照通道。目前整个仓库已经完成凭据隔离审计，在 GitHub 上发出了开源的 [**HabitBloom v1.0.0 源码 Release**](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0)（MIT 许可），工程细节也都整理在了 [HabitBloom 作品页](/software/habitbloom/) 里。
+为了把这件「点一下就打卡」的小事真正做通，我一路从本地 SwiftData 折腾到了跨进程快照，最后甚至用 Cloudflare Workers 和 Durable Objects 给它搭了一条远端快照通道。目前整个仓库已经完成凭据隔离审计并升级至开源的 [**HabitBloom v1.1.0 源码 Release**](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.1.0)（MIT 许可），工程细节也都整理在了 [HabitBloom 作品页](/software/habitbloom/) 里。
 
 回过头来看，我挺庆幸自己一开始是从一张本地卡片做起，而没有一上来就去搭什么庞大的用户注册、登录和云端大数据库。
 
@@ -94,6 +94,6 @@ cover: ../../assets/projects/habitbloom-cover.png
 
 为了保证这套逻辑经得起折腾，我把连续天数和统计计算这些跟 UI 无关的纯逻辑全部抽成了独立的核心模块，在工程里配齐了 Smoke 冒烟测试和 Stress 压力测试两套入口，同时保留了 iOS 模拟器和 Mac Catalyst 的完整构建配置。
 
-如果你对这套「本地 SwiftData 权威源加远端轻量快照」的实现感兴趣，可以直接去 [HabitBloom 作品页](/software/habitbloom/) 或 [GitHub 仓库](https://github.com/xxkingstuggle/HabitBloom) 下载 [v1.0.0 Release](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0) 源码包。仓库里的 [PROJECT_STATUS.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/PROJECT_STATUS.md)、[TESTING.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/TESTING.md) 和 [REMOTE_SYNC.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/REMOTE_SYNC.md) 把每一条数据链路和验证步骤都写得明明白白。
+如果你对这套「本地 SwiftData 权威源加远端轻量快照」的实现感兴趣，可以直接去 [HabitBloom 作品页](/software/habitbloom/) 或 [GitHub 仓库](https://github.com/xxkingstuggle/HabitBloom) 查看最新 [v1.1.0 Release](https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.1.0) 源码工程。仓库里的 [PROJECT_STATUS.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/PROJECT_STATUS.md)、[TESTING.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/TESTING.md) 和 [REMOTE_SYNC.md](https://github.com/xxkingstuggle/HabitBloom/blob/main/REMOTE_SYNC.md) 把每一条数据链路和验证步骤都写得明明白白。
 
 折腾完 HabitBloom 我最大的感触就是，把一张漂亮的卡片画出来，最多只算走完了十分之一的路。真正决定一个软件你会不会天天打开的，永远是它怎么存数据、怎么在组件之间传话，以及当外部环境不理想的时候，它能不能体面地退回一个照样好使的状态。
