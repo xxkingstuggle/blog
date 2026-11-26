@@ -103,7 +103,7 @@ window.level = NSWindow.Level(rawValue: levelRaw)
 |---|---|---|
 | 桌面壁纸遮罩 | `CGWindowLevelForKey(.desktopWindow) + 1` | 全屏压暗壁纸，严格低于桌面图标 |
 | 专注主遮罩 | `layer = 0`（`order(.below, relativeTo:)`） | 仅覆盖扣除菜单栏与 Dock 后的 `visibleFrame` 内容区 |
-| 顶部菜单栏遮罩条 | `CGWindowLevelForKey(.statusBar) + 1` | 仅覆盖顶部状态栏带，严格低于 `.popUpMenu`，下拉菜单保持原亮 |
+| 顶部菜单栏遮罩条 | `max(.statusWindow, .mainMenuWindow) + 1` | 仅覆盖实际可见顶部菜单栏带，严格低于 `.popUpMenuWindow`，下拉菜单保持原亮 |
 | 程序坞 Dock 遮罩条 | `CGWindowLevelForKey(.dock) + 1` | 自动适配底/左/右 Dock 方位，低于 `.mainMenu`，并自动扣减伸入 Dock 区的前台窗轮廓 |
 
 在 `1920×1080` 外接屏 + `1470×956` 内建视网膜屏的双显示器 WindowServer 动态实测中，同时开启壁纸压暗、专注遮罩、双屏菜单栏条与主屏底部 Dock 条时，全部专注遮罩窗口在系统合成器中的两两交集面积精确为 `0`，彻底消除接缝重叠与黑带。
@@ -112,6 +112,6 @@ window.level = NSWindow.Level(rawValue: levelRaw)
 
 交互层面，菜单栏改为左键弹出三标签页原生毛玻璃 `NSPopover` 控制中心（壁纸调暗 / 专注遮罩 / 通用与热键），顶部提供双层桌面实时缩略预览，支持中性黑/暖夜/深蓝夜色温滤镜、逐显示器独立豁免与当前外部前台应用一键豁免；右键继续保留极速开关菜单，并接入零权限 Carbon 双全局热键（壁纸默认 `⌃⌥⌘D`、专注默认 `⌃⌥⌘F`），同时完整适配浅/深色与系统「降低透明度」「减弱动态效果」。
 
-资源开销上，无论是壁纸调暗暂停、浅色待命，还是专注遮罩关闭、命中豁免应用，淡出结束后都会立即停止轮询并调用 `orderOut` 卸载遮罩窗口，不留无意义的 WindowServer 离屏合成缓冲。本机最新主干通过了 16 项 `DimWallpaperCoreTests` 核心单测，常驻实测空闲 CPU `0.0%`（RSS 约 `73 MB`）。
+资源开销上，无论是壁纸调暗暂停、浅色待命，还是专注遮罩关闭、命中豁免应用，淡出结束后都会立即停止轮询并调用 `orderOut` 卸载遮罩窗口，不留无意义的 WindowServer 离屏合成缓冲。v2.0.0 通过了 23 项 `DimWallpaperCoreTests` 核心单测（含全屏视频豁免与三档多屏策略），常驻实测空闲 CPU `0.0%`。
 
-目前 v1.0.0 壁纸压暗公开包已发布在 [DimWallpaper 作品页](/software/dim-wallpaper/) 与 [DimWallpaper v1.0.0 Release](https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v1.0.0) 上；上述专注遮罩（Focus Mode）、菜单栏/Dock 精细压暗与毛玻璃控制中心已在本地仓库主干完成双屏动态验收，将在下一版本随预编译包一并发布。如果你既舍不得换掉心爱的亮色壁纸，又希望夜里写代码时周围的窗口安静下来，这层轻巧的黑纱刚好够用。
+目前 v2.0.0 公开包已携上述专注遮罩（Focus Mode）、全屏视频自动豁免、三档多屏策略、菜单栏/Dock 零重叠压暗与原生毛玻璃控制中心正式发布在 [DimWallpaper 作品页](/software/dim-wallpaper/) 与 [DimWallpaper v2.0.0 Release](https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v2.0.0) 上。如果你既舍不得换掉心爱的亮色壁纸，又希望夜里写代码时周围的窗口安静下来，这层轻巧的黑纱刚好够用。

@@ -61,10 +61,10 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     tagline:'让 Android 的麦克风和网络，接进 Mac 的工作流',
     headline:'一根线，接起手边的两个设备。',
     summary:'USBLinkMic 把 Android 手机拾音、手机 USB 网络共享给 Mac、Mac 网络反向共享给手机整合进一个原生 macOS 面板与菜单栏入口。音频支持 USB ADB 与局域网自动发现重连，并对接 BlackHole 虚拟声卡供会议与录音软件直接选用。',
-    platforms:['macOS 26+ · Apple Silicon','Android 8.0+'], platformsLabel:'macOS · Android', statusBadge:'v4.0.17 公开发布', statusTone:'release',latestVersion:'v4.0.17',releaseDate:'2026-11-24',
-    availabilitySummary:'公开提供 v4.0.17 macOS DMG / ZIP 与 Android APK，配套 SHA-256 校验清单。Mac 安装包内置配套 Android APK、ADB 与精简 OpenJDK 运行时。',
+    platforms:['macOS 26+ · Apple Silicon','Android 8.0+'], platformsLabel:'macOS · Android', statusBadge:'v4.0.18 公开发布', statusTone:'release',latestVersion:'v4.0.18',releaseDate:'2026-11-26',
+    availabilitySummary:'公开提供 v4.0.18 macOS DMG / ZIP 与协议 v4 兼容版 Android APK（v4.0.17），配套 VALIDATION.md 与 SHA-256 校验清单。Mac 安装包内置配套 Android APK、ADB 与精简 OpenJDK 运行时。',
     availabilityNotice:'macOS 公开包尚未完成 Apple 公证。USB 功能需要调试授权；供其他 Mac 软件使用的音频输入需要 BlackHole 2ch。Android USB 网络共享依赖系统与机型支持，请先读安装说明。',
-    repoUrl:'https://github.com/xxkingstuggle/usblinkmic',repoVisibility:'public',releasesUrl:`${release}/tag/v4.0.17`,checksumsUrl:`${release}/download/v4.0.17/SHA256SUMS.txt`,
+    repoUrl:'https://github.com/xxkingstuggle/usblinkmic',repoVisibility:'public',releasesUrl:`${release}/tag/v4.0.18`,checksumsUrl:`${release}/download/v4.0.18/SHA256SUMS.txt`,
     articleSlug:'usblinkmic-v4-evolution',articleTitle:'USBLinkMic 4.0 演进手记：USB 充电协商、ADB 断连自愈与局域网自动重连',
     icon:usblinkmicIcon,screenshot:usblinkmicShot,screenshotAlt:'USBLinkMic Mac 4.0.10 开发版的手机麦克风面板，设备标识已遮盖',
     screenshotCaption:'USBLinkMic macOS 原生主界面（设备标识已脱敏），集中呈现目标设备、PCM 有效音频帧传输状态与实时电平。',
@@ -113,14 +113,14 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'结构化事件流 · 模块级实时过滤 · 本地一键导出'
       }
     ],
-    verifiedAt:'2026-11-26（主干 macOS 宿主侧 114/114 Swift 单测与动态验收通过；公开包维持 v4.0.17）',developmentVersion:'v4.0.17+（主干完成 Wi-Fi 分代连接池、JSON 脱敏与日志工作区升级）',installedVersion:'公开包 Mac v4.0.17 · 主干宿主侧 114/114 单测全绿（待下版发包）',
+    verifiedAt:'2026-11-26（v4.0.18 macOS 宿主侧 115/115 Swift 单测与动态验收通过并已公开发布）',developmentVersion:'v4.0.18（Wi-Fi 分代连接池、JSON 脱敏、日志工作区升级与关于品牌归属）',installedVersion:'公开包 Mac v4.0.18 + 兼容协议 v4 Android APK v4.0.17（115/115 单测全绿）',
     contribution:'我负责需求取舍、跨平台集成、维护与验收，Codex 等 AI 助手参与实现和审查。项目复用 Android platform-tools、Gnirehtet 的 Java relay，随包保留 OpenJDK 运行时与许可，并通过外部 BlackHole 虚拟声卡对接音频输入；这些第三方成果不属于个人从零实现。',
     limitations:['跨机型、息屏、插拔与长时间运行的完整 T01–T24 设备矩阵仍在持续扩充；2026-11-26 主干加固为 macOS 宿主侧验证，尚未重跑实体 Android 物理链路。','收到 PCM 帧不等于会议软件已收到可听声音；音频路由与系统输入需配合 BlackHole 2ch 确认。','未承诺普遍的低延迟数值、功耗收益或所有 Android ROM 的网络兼容性。','无线麦克风链路未加密，只适合可信局域网。'],
-    sources:[{label:'v4.0.17 发行页与文件',url:`${release}/tag/v4.0.17`},{label:'公开版安装说明',url:`${release}/download/v4.0.17/INSTALL.md`},{label:'工作原理说明',url:`${release}/download/v4.0.17/HOW-IT-WORKS.md`},{label:'依赖与来源',url:'https://github.com/xxkingstuggle/usblinkmic/blob/main/docs/dependencies.md'}],
+    sources:[{label:'v4.0.18 发行页与文件',url:`${release}/tag/v4.0.18`},{label:'宿主机验证记录',url:`${release}/download/v4.0.18/VALIDATION.md`},{label:'安装说明',url:'https://github.com/xxkingstuggle/usblinkmic/blob/main/docs/install.md'},{label:'依赖与来源',url:'https://github.com/xxkingstuggle/usblinkmic/blob/main/docs/dependencies.md'}],
     downloads:[
-      {label:'下载 macOS DMG（推荐）',platform:'macOS 26+ · Apple Silicon',version:'v4.0.17',size:'33.0 MB',format:'DMG',url:`${release}/download/v4.0.17/USBLinkMic-4.0.17.dmg`,primary:true,note:'拖入应用程序即可；已内置配套 v4.0.17 Android APK'},
-      {label:'下载 Android APK',platform:'Android 8.0+',version:'v4.0.17',size:'11.0 MB',format:'APK',url:`${release}/download/v4.0.17/USBLinkMic-4.0.17.apk`,primary:true,note:'与公开 Mac v4.0.17 版本配套'},
-      {label:'macOS ZIP',platform:'macOS 26+ · Apple Silicon',version:'v4.0.17',size:'30.0 MB',format:'ZIP',url:`${release}/download/v4.0.17/USBLinkMic-4.0.17-macOS.zip`,note:'与 DMG 同版，适合直接解压检查'}
+      {label:'下载 macOS DMG（推荐）',platform:'macOS 26+ · Apple Silicon',version:'v4.0.18',size:'34.8 MB',format:'DMG',url:`${release}/download/v4.0.18/USBLinkMic-4.0.18.dmg`,primary:true,note:'拖入应用程序即可；已内置协议 v4 兼容版 Android APK'},
+      {label:'下载 Android APK（协议 v4）',platform:'Android 8.0+',version:'v4.0.17',size:'11.0 MB',format:'APK',url:`${release}/download/v4.0.18/USBLinkMic-4.0.17.apk`,primary:true,note:'与公开 Mac v4.0.18 完全兼容'},
+      {label:'macOS ZIP',platform:'macOS 26+ · Apple Silicon',version:'v4.0.18',size:'31.6 MB',format:'ZIP',url:`${release}/download/v4.0.18/USBLinkMic-4.0.18-macOS.zip`,note:'与 DMG 同版，适合直接解压检查'}
     ],
     highlights:[{title:'手机拾音，Mac 接收',body:'Android AudioRecord 采集音频，通过 USB ADB 转发或局域网直连传给 Mac。主干已将 Wi-Fi 控制通道升级为分代连接池与串行生命周期隔离，避免断连重连残留幽灵会话。'},
       {title:'网络有两个方向',body:'手机网络给 Mac 走 Android USB 网络共享；Mac 网络给手机走 Java relay 和 Android VPNService。两条网络路径互斥，并各有权限和系统条件。'},
@@ -132,7 +132,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     workflow:[{step:'01',title:'先准备两端',description:'按公开版安装说明准备 Mac 应用、Android 客户端与 BlackHole 2ch。',detail:'先确认系统要求和未公证安装边界。'},
       {step:'02',title:'建立连接',description:'USB 模式需要数据线与手机调试授权；无线麦克风使用同一局域网配对。',detail:'USB 网络链路仍需要数据线，不随无线麦克风启用。'},
       {step:'03',title:'确认实际使用结果',description:'在 Mac 软件里选择音频输入，分别检查手机、接收与软件端的状态。',detail:'收到音频帧只是中间一步，听见声音还需要正确路由。'}],
-    specs:[{label:'公开版本',value:'v4.0.17 / 2026-11-24（主干已完成宿主加固待发版）'},{label:'系统',value:'macOS 26+ Apple Silicon / Android 8.0+'},{label:'USB 网络',value:'手机网络共享需兼容 Android 系统（文档建议 Android 11+）'},{label:'源码',value:'Swift / Kotlin / 第三方 Java relay'},{label:'音频链路',value:'USB ADB 或局域网分代连接池自动重连 / BlackHole 2ch'},{label:'发版与单测校验',value:'公开 v4.0.17 54 项 SHA-256 校验；主干 macOS 侧 114/114 Swift 单测通过'}],
+    specs:[{label:'公开版本',value:'v4.0.18 / 2026-11-26（协议 v4 兼容 4.0.17 APK）'},{label:'系统',value:'macOS 26+ Apple Silicon / Android 8.0+'},{label:'USB 网络',value:'手机网络共享需兼容 Android 系统（文档建议 Android 11+）'},{label:'源码',value:'Swift / Kotlin / 第三方 Java relay'},{label:'音频链路',value:'USB ADB 或局域网分代连接池自动重连 / BlackHole 2ch'},{label:'发版与单测校验',value:'SHA256SUMS.txt 校验清单；macOS 侧 115/115 Swift 单测全绿'}],
     faq:[{question:'v4.0.17 相比早期 v4.0.8 解决了哪些关键问题？',answer:'新增了局域网无线麦克风断线自动重连、USB 充电状态探测与协商策略、ADB 掉线自愈以及全新的深浅色工作区面板。'},
       {question:'为什么需要 BlackHole？',answer:'它提供一个可被其他 Mac 软件选择的虚拟音频设备。USBLinkMic 负责接收和转送手机音频，BlackHole 负责系统侧音频接入，两者职责不同。'},
       {question:'已经可以保证所有手机都稳定使用吗？',answer:'还不能。已有公开包与实现，但系统网络能力、音频路由、锁屏和长期运行仍需要逐设备验证。遇到问题可以在公开仓库提交经过脱敏的复现步骤。'}]
@@ -143,16 +143,16 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     headline:'把下载交回原生桌面，分片进度落盘可恢复。',
     summary:'zjx-download 是基于 Swift / SwiftUI 编写的 macOS 原生多线程下载器，配套 Chrome MV3 浏览器扩展、Native Messaging Host 与无头 CLI。支持 HTTP Range 多连接并发分片、跨会话断点续传状态落盘、未知长度流回退续传以及定时队列调度。',
     platforms:['macOS 14+ · Universal (arm64 / x86_64)','Chrome MV3 扩展','macOS CLI'],platformsLabel:'macOS · Chrome MV3 · CLI',
-    statusBadge:'v2.0.4 公开发布',statusTone:'release',latestVersion:'v2.0.4',releaseDate:'2026-11-24',
-    availabilitySummary:'公开提供 v2.0.4 Universal macOS 原生应用包（内置 ZJXDownloadCore.framework、Native Host 与 CLI）及 Chrome MV3 扩展包。',
+    statusBadge:'v2.0.5 公开发布',statusTone:'release',latestVersion:'v2.0.5',releaseDate:'2026-11-26',
+    availabilitySummary:'公开提供 v2.0.5 macOS 原生应用包（内置 ZJXDownloadCore.framework、Native Host 与 CLI）及同步升级的 Chrome MV3 扩展包（v2.0.5）。',
     availabilityNotice:'macOS 应用使用 Apple Development 签名，尚未完成公证。流媒体下载仅支持未加密的有限 TS media playlist，明确不支持 DRM、独立音轨拼接或无限直播流录制。',
     repoUrl:'https://github.com/xxkingstuggle/zjx-download',repoVisibility:'public',
-    releasesUrl:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.4',
-    checksumsUrl:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.4/SHA256SUMS.txt',
+    releasesUrl:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.5',
+    checksumsUrl:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/SHA256SUMS.txt',
     articleSlug:'zjx-download-native-architecture',articleTitle:'zjx-download 架构复盘：用 Swift 重写 macOS 原生多线程下载器与 Chrome Native Messaging 交接',
     icon:zjxDownloadIcon,screenshot:zjxDownloadShot,
     screenshotAlt:'zjx-download macOS 原生主窗口与分片进度面板',
-    screenshotCaption:'zjx-download v2.0.4 macOS 原生主界面真实运行截图，支持按分类筛选、并发队列调度、分片级断点续传与 SHA-256 校验。',
+    screenshotCaption:'zjx-download v2.0.5 macOS 原生主界面真实运行截图，支持按分类筛选、并发队列调度、分片级断点续传与 SHA-256 校验。',
     interfaceHeading:'分片进度与队列状态，一目了然。',
     galleryKicker:'NATIVE WORKFLOW · 原生交互细节',
     galleryHeading:'从浏览器捕获到原生分片落盘的完整闭环。',
@@ -179,19 +179,20 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'分片原子合并 · 内置 SHA-256 / MD5 摘要核验 · 原生拖拽与 Finder 定位'
       }
     ],
-    verifiedAt:'2026-11-25（主干 22/22 XCTest + 5/5 扩展单测通过，隔离沙箱空闲 CPU 0.00% 与 API 无损热更新实测通过；公开包维持 v2.0.4）',
-    developmentVersion:'v2.0.4+（分片落盘幂等清理、热更新 API、进度解耦与 MV3 深浅色重塑）',
-    installedVersion:'公开包 macOS Universal v2.0.4（分支 22+5 项单测与沙箱真机验收通过）',
+    verifiedAt:'2026-11-26（v2.0.5 22/22 XCTest + 5/5 扩展单测、签名包与热重载回环验收全部通过并公开发布）',
+    developmentVersion:'v2.0.5（分片落盘幂等清理、热更新 API、多 Cookie 保留、MV3 深浅色重塑与品牌归属）',
+    installedVersion:'公开包 macOS v2.0.5 + Chrome MV3 扩展 v2.0.5（22+5 项单测全绿）',
     contribution:'我主导了 Swift/SwiftUI 原生客户端架构、分片断点续传状态机、Loopback 与 Native Messaging 通信层及 Chrome MV3 扩展重写。早期浏览器集成协议参考了 AmirHossein Abdolmotallebi 的开源项目并在许可中完整致谢。',
     limitations:['仅支持 HTTP/HTTPS 与未加密有限 HLS TS 媒体列表，不支持 DRM 流媒体或私有视频站点破解。','macOS 安装包暂未进行 Apple Notarization 公证，首次运行需在系统设置中放行。','跨站点重定向时的认证 Header 会按安全策略自动剥离，防止凭据泄露。'],
     sources:[
-      {label:'v2.0.4 发行页与安装包',url:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.4'},
+      {label:'v2.0.5 发行页与安装包',url:'https://github.com/xxkingstuggle/zjx-download/releases/tag/v2.0.5'},
+      {label:'安装与校验说明',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/INSTALL.md'},
       {label:'GitHub 开源仓库',url:'https://github.com/xxkingstuggle/zjx-download'},
       {label:'安装与使用账本',url:'https://github.com/xxkingstuggle/zjx-download/blob/main/INSTALL_LEDGER.md'}
     ],
     downloads:[
-      {label:'macOS 原生应用包（Universal）',platform:'macOS 14+ · arm64 & x86_64',version:'v2.0.4',size:'1.6 MB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.4/zjx-download-2.0.4-macOS.zip',primary:true,note:'含 zjx-download.app、Native Messaging Host 与无头 CLI'},
-      {label:'Chrome MV3 浏览器扩展',platform:'Chromium / Chrome 114+',version:'v2.0.1',size:'34 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.4/zjx-download-chrome-extension-2.0.1.zip',note:'解压后在 chrome://extensions 加载即可接管浏览器下载'}
+      {label:'macOS 原生应用包',platform:'macOS 26+ · Apple Silicon',version:'v2.0.5',size:'4.5 MB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/zjx-download-2.0.5-macOS.zip',primary:true,note:'含 zjx-download.app、Native Messaging Host 与无头 CLI'},
+      {label:'Chrome MV3 浏览器扩展',platform:'Chromium / Chrome 114+',version:'v2.0.5',size:'65 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/zjx-download/releases/download/v2.0.5/zjx-download-chrome-extension-2.0.5.zip',note:'解压后在 chrome://extensions 加载即可接管浏览器下载'}
     ],
     highlights:[
       {title:'分片级断点续传与崩溃幂等清理',body:'多连接 HTTP Range 分片与 HEAD→GET Range 回退探测统一写入序列化 StateStore；合并校验原子提交后再清理 range-parts 分片目录，断电不丢续传能力且零磁盘残留。'},
@@ -207,14 +208,14 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     workflow:[
       {step:'01',title:'安装桌面端与注册 Host',description:'解压 zjx-download.app 移入 /Applications，首次打开自动完成 Native Messaging 清单注册。',detail:'也可使用 scripts/manage-native-host 手动管理。'},
       {step:'02',title:'加载 Chrome MV3 扩展',description:'解压扩展包并在 chrome://extensions 开启开发者模式加载，弹窗即显示桌面端连接状态。',detail:'支持配置自动拦截的文件后缀与最小体积阈值。'},
-      {step:'03',title:'分片下载与完成核验',description:'在主窗口查看实时分片进度、暂停恢复或执行 SHA-256 校验。',detail:'公开包 v2.0.4 基线为 11 项 XCTest；最新代码已扩充至 22 项核心单测 + 5 项扩展逻辑单测。'}
+      {step:'03',title:'分片下载与完成核验',description:'在主窗口查看实时分片进度、暂停恢复或执行 SHA-256 校验。',detail:'v2.0.5 已全量覆盖 22 项核心 XCTest + 5 项 MV3 扩展单测。'}
     ],
     specs:[
-      {label:'公开版本',value:'v2.0.4 (build 20261117.2，最新加固待下版发包)'},
+      {label:'公开版本',value:'v2.0.5 (build 20261126.1 / 2026-11-26)'},
       {label:'架构支持',value:'macOS Universal (arm64 + x86_64)'},
       {label:'核心框架',value:'Swift 6 · SwiftUI · ZJXDownloadCore.framework'},
       {label:'浏览器扩展',value:'Chrome Manifest V3 · Native Messaging'},
-      {label:'自动化测试',value:'22 项 XCTest + 5 项 MV3 扩展单测通过（公开 v2.0.4 基线 11 项）'},
+      {label:'自动化测试',value:'22 项 Swift Core XCTest + 5 项 MV3 扩展单测全绿'},
       {label:'开源许可',value:'Apache-2.0'}
     ],
     faq:[
@@ -229,16 +230,16 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     headline:'请求了什么模型，实际返回了什么路由，当场对照。',
     summary:'Route Lens 是一款面向 ChatGPT Web 端的 Chrome Manifest V3 扩展。它在页面 Main World 拦截会话请求与 SSE 响应流，提取请求参数与服务端响应中的模型与路由字段，在 Shadow DOM 隔离的右侧窄栏与弹窗中实时对照展示，帮助开发者识别模型静默降级、路由转发或字段冲突。',
     platforms:['Chrome / Chromium 114+ (Manifest V3)','ChatGPT Web (chatgpt.com)'],platformsLabel:'Chrome MV3 · Web',
-    statusBadge:'v1.3.1 公开发布',statusTone:'release',latestVersion:'v1.3.1',releaseDate:'2026-11-24',
-    availabilitySummary:'公开提供 v1.3.1 Chrome 扩展安装包（ZIP）与完整源码；最新分支已完成 6 端零 innerHTML 视觉统一、流式缓冲释放与 7 套共 32 项自动化测试加固（待下版统一发包）。',
+    statusBadge:'v1.3.2 公开发布',statusTone:'release',latestVersion:'v1.3.2',releaseDate:'2026-11-26',
+    availabilitySummary:'公开提供 v1.3.2 Chrome MV3 扩展安装包（ZIP）与完整源码归档；包含 6 端零 innerHTML 视觉统一、流式缓冲释放、导出脱敏加固与 7 套共 32 项自动化测试。',
     availabilityNotice:'扩展仅在浏览器本地解析并展示请求与响应中的路由元数据，不上传任何对话内容，也不会修改、伪造或绕过任何服务端鉴权与安全挑战。',
     repoUrl:'https://github.com/xxkingstuggle/route-lens',repoVisibility:'public',
-    releasesUrl:'https://github.com/xxkingstuggle/route-lens/releases/tag/v1.3.1',
-    checksumsUrl:'https://github.com/xxkingstuggle/route-lens/releases/download/v1.3.1/SHA256SUMS.txt',
+    releasesUrl:'https://github.com/xxkingstuggle/route-lens/releases/tag/v1.3.2',
+    checksumsUrl:'https://github.com/xxkingstuggle/route-lens/releases/download/v1.3.2/SHA256SUMS.txt',
     articleSlug:'route-lens-chatgpt-routing-inspector',articleTitle:'Route Lens：在 Chrome MV3 中拦截并对照 ChatGPT 请求与响应的模型路由字段',
     icon:routeLensIcon,screenshot:routeLensShot,
     screenshotAlt:'Route Lens 在深色模式下展示右侧窄栏的模型路由对照信息',
-    screenshotCaption:'Route Lens v1.3.1 真实运行预览：右侧 Shadow DOM 窄栏实时显示请求模型、响应报告模型、路由状态与时间戳，支持深浅色与几何尺寸自定义。',
+    screenshotCaption:'Route Lens v1.3.2 真实运行预览：右侧 Shadow DOM 窄栏实时显示请求模型、响应报告模型、路由状态与时间戳，支持深浅色与几何尺寸自定义。',
     interfaceHeading:'请求与响应字段，同屏透明对照。',
     galleryKicker:'INTERFACE & CONTROLS · 观测栏与双语控制',
     galleryHeading:'不打断对话流，在窄栏与弹窗中掌控全部路由细节。',
@@ -282,19 +283,20 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         }
       }
     ],
-    verifiedAt:'2026-11-25（32/32 node:test 单测、10 语种对称校验与 6 端无头 Chrome 渲染验收通过；公开包维持 v1.3.1）',
-    developmentVersion:'v1.3.1+（6 端零 innerHTML 统一、流缓冲释放、Abort 证据保留与导出脱敏）',
-    installedVersion:'Chrome MV3 v1.3.1 公开发行版（最新分支 32/32 单测与 6 端渲染验收通过）',
+    verifiedAt:'2026-11-26（v1.3.2 32/32 node:test 单测、10 语种对称校验与 6 端无头 Chrome 渲染验收通过并已公开发布）',
+    developmentVersion:'v1.3.2（6 端零 innerHTML 统一、流缓冲释放、Abort 证据保留、导出脱敏与双品牌归属）',
+    installedVersion:'Chrome MV3 v1.3.2 公开发行版（32/32 单测与 6 端渲染验收全绿）',
     contribution:'我独立完成了 Main World 握手与流解析钩子、模型路由一致性判定状态机、Shadow DOM 窄栏与中英双语 Popup 控制面板的架构、实现与测试。',
     limitations:['当服务端 SSE 响应未携带某项内部路由字段时，严格标记为“未报告/无法确认”，绝不猜测或虚构模型名称。','受 ChatGPT 前端接口结构演进影响，如上游更改 JSON/SSE 字段路径需同步更新解析器。'],
     sources:[
-      {label:'v1.3.1 发行页与扩展包',url:'https://github.com/xxkingstuggle/route-lens/releases/tag/v1.3.1'},
+      {label:'v1.3.2 发行页与扩展包',url:'https://github.com/xxkingstuggle/route-lens/releases/tag/v1.3.2'},
+      {label:'安装说明',url:'https://github.com/xxkingstuggle/route-lens/releases/download/v1.3.2/INSTALL.md'},
       {label:'GitHub 开源仓库',url:'https://github.com/xxkingstuggle/route-lens'},
       {label:'维护与架构说明',url:'https://github.com/xxkingstuggle/route-lens/blob/main/MAINTENANCE.md'}
     ],
     downloads:[
-      {label:'Chrome MV3 扩展安装包',platform:'Chrome / Edge / Brave (MV3)',version:'v1.3.1',size:'159 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/route-lens/releases/download/v1.3.1/route-lens-1.3.1.zip',primary:true,note:'解压后在 chrome://extensions 加载即可使用'},
-      {label:'完整源码与测试归档',platform:'Node.js 20+ · Chrome MV3',version:'v1.3.1',size:'1.0 MB',format:'ZIP',url:'https://github.com/xxkingstuggle/route-lens/releases/download/v1.3.1/route-lens-1.3.1-source.zip',note:'含 18 项自动化测试与 UI 验证脚本'}
+      {label:'Chrome MV3 扩展安装包',platform:'Chrome / Edge / Brave (MV3)',version:'v1.3.2',size:'164 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/route-lens/releases/download/v1.3.2/route-lens-1.3.2.zip',primary:true,note:'解压后在 chrome://extensions 加载即可使用'},
+      {label:'完整源码与测试归档',platform:'Node.js 20+ · Chrome MV3',version:'v1.3.2',size:'1.1 MB',format:'ZIP',url:'https://github.com/xxkingstuggle/route-lens/releases/download/v1.3.2/route-lens-1.3.2-source.zip',note:'含 32 项自动化测试、静态安全门禁与 UI 验证脚本'}
     ],
     highlights:[
       {title:'零残留流式钩子与后台零唤醒',body:'Main World 钩子握手前零采集、隐藏标签页彻底停轮询；SSE 流解析在 finally 中强制释放克隆流缓冲，并在 Abort 中断时保留已到达的路由证据。'},
@@ -308,16 +310,16 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {scenario:'窄屏或分屏阅读时不遮挡正文',pain:'传统浮窗容易挡住代码块或输入框。',outcome:'通过 Popup 滑块自由收缩窄栏宽度、高度或折叠非核心字段。',mechanism:'Shadow DOM CSS 变量实时注入与外观独立重置。'}
     ],
     workflow:[
-      {step:'01',title:'解压并加载扩展',description:'下载 route-lens-1.3.1.zip 解压，在 chrome://extensions 开启开发者模式加载。',detail:'仅申请 chatgpt.com 最小主机权限与 storage。'},
+      {step:'01',title:'解压并加载扩展',description:'下载 route-lens-1.3.2.zip 解压，在 chrome://extensions 开启开发者模式加载。',detail:'仅申请 chatgpt.com 最小主机权限与 storage。'},
       {step:'02',title:'发起对话实时观测',description:'打开 ChatGPT 发送消息，右侧窄栏自动显示请求模型与响应流模型字段。',detail:'可在扩展弹窗随时暂停采集或清空当前记录。'},
       {step:'03',title:'按需定制窄栏外观',description:'在 Popup 切换中英语言、深浅色主题、窄栏尺寸与显示字段。',detail:'重置外观不会清除已保存的隐私与捕获开关设置。'}
     ],
     specs:[
-      {label:'公开版本',value:'v1.3.1 / 2026-11-24（最新分支已完成 6 端重构待发版）'},
+      {label:'公开版本',value:'v1.3.2 / 2026-11-26'},
       {label:'扩展规范',value:'Chrome Manifest V3 (Main World + Isolated World)'},
       {label:'UI 隔离与安全',value:'Shadow DOM + 全仓零 innerHTML/eval 静态门禁'},
       {label:'国际化',value:'10 套 _locales 与 6 端 data-i18n 完整校验'},
-      {label:'自动化测试',value:'7 套共 32 项 node:test 单测 + 6 端真浏览器渲染验收（v1.3.1 基线 18 项）'},
+      {label:'自动化测试',value:'7 套共 32 项 node:test 单测 + check.mjs 静态门禁全绿'},
       {label:'数据边界',value:'100% 本地内存与 chrome.storage.local · 导出默认脱敏'}
     ],
     faq:[
@@ -332,15 +334,16 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     headline:'每个独立窗口，都拥有贴合页面的呼吸感标题栏。',
     summary:'Tintpane（原代号 Colorful）是一款专为 Chromium 桌面 PWA 窗口设计的 Manifest V3 扩展。它采用“默认关闭、按需动态注册脚本”的轻量架构，通过 display-mode: standalone 精确识别独立应用窗口，实时采样页面顶栏或背景色注入 meta[name="theme-color"]，并支持域名树层级继承、双向别名同步与窗口焦点/失焦双态配色。',
     platforms:['Chrome / Edge / Brave Desktop (Manifest V3)','macOS / Windows / Linux Chromium PWA'],platformsLabel:'Chrome MV3 · Desktop PWA',
-    statusBadge:'v2.4.0 公开发布',statusTone:'release',latestVersion:'v2.4.0',releaseDate:'2026-10-29',
-    availabilitySummary:'公开提供 v2.4.0 扩展安装包（ZIP）与完整开源仓库；2.5.0 分支已完成拟真 macOS 标题栏预览弹窗、抗 SPA 死循环引擎与零依赖测试套件（待下版统一发包）。',
+    statusBadge:'v2.5.0 公开发布',statusTone:'release',latestVersion:'v2.5.0',releaseDate:'2026-11-26',
+    availabilitySummary:'公开提供 v2.5.0 Chrome MV3 扩展安装包（ZIP）与 SHA-256 校验清单；完整上线拟真 macOS 标题栏预览弹窗、抗 SPA 死循环引擎与 21 项零依赖单测套件。',
     availabilityNotice:'Tintpane 默认对所有普通浏览器标签页关闭，仅在用户显式启用且处于独立 PWA / 应用窗口（或显式允许的场景）时更新 theme-color。',
     repoUrl:'https://github.com/xxkingstuggle/tintpane',repoVisibility:'public',
-    releasesUrl:'https://github.com/xxkingstuggle/tintpane/releases/tag/v2.4.0',
+    releasesUrl:'https://github.com/xxkingstuggle/tintpane/releases/tag/v2.5.0',
+    checksumsUrl:'https://github.com/xxkingstuggle/tintpane/releases/download/v2.5.0/SHA256SUMS.txt',
     articleSlug:'tintpane-chromium-pwa-theme-engine',articleTitle:'Tintpane 2.4：Chromium PWA 窗口动态主题色注入、域名树继承与双向别名同步',
     icon:tintpaneIcon,screenshot:tintpaneShot,
-    screenshotAlt:'Tintpane v2.4.0 Chromium PWA 独立窗口动态标题栏取色与扩展控制面板实景',
-    screenshotCaption:'Tintpane v2.4.0 真实运行预览：独立 Chromium PWA 窗口顶栏自动同步网页深色背景，右侧扩展 Popup 支持当前域名开关、四路调色盘与站点预设。',
+    screenshotAlt:'Tintpane v2.5.0 Chromium PWA 独立窗口动态标题栏取色与扩展控制面板实景',
+    screenshotCaption:'Tintpane v2.5.0 真实运行预览：独立 Chromium PWA 窗口顶栏自动同步网页深色背景，右侧扩展 Popup 支持拟真标题栏预览、四路调色盘与站点预设。',
     interfaceHeading:'默认安静，启用即贴合。',
     galleryKicker:'EXTENSION & PWA WORKSPACE · 真实运行界面',
     galleryHeading:'按需动态注入，让每个独立 PWA 窗口拥有呼吸感标题栏。',
@@ -366,17 +369,17 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'MutationObserver 节点守护 · 固定色值锁定 · 关闭开关即刻还原'
       }
     ],
-    verifiedAt:'2026-11-25（2.5.0 分支 21/21 node:test 单测、静态安全检查与真实 Chromium DOM 对抗验收通过；公开包维持 v2.4.0）',
-    developmentVersion:'v2.5.0-dev（拟真标题栏预览弹窗 + 抗 SPA 覆盖熔断 + 21 项零依赖单测）',
-    installedVersion:'Chrome MV3 v2.4.0 公开发行版（2.5.0 分支已就绪待发版）',
+    verifiedAt:'2026-11-26（v2.5.0 21/21 node:test 单测与静态检查全部通过并已公开发布）',
+    developmentVersion:'v2.5.0（拟真标题栏预览弹窗 + 抗 SPA 覆盖熔断 + 21 项零依赖单测 + 品牌归属）',
+    installedVersion:'Chrome MV3 v2.5.0 公开发行版',
     contribution:'我独立设计并实现了按需动态脚本注册机制、域名树配置继承算法、双向别名组同步及窗口焦点状态配色引擎。',
     limitations:['部分强制锁定 manifest theme_color 且不允许 DOM 覆盖的特殊内嵌页面可能受 Chromium 内核限制。','颜色自动采样依赖页面顶部固定栏或 body 计算背景色，全屏 Canvas/WebGL 页面建议使用手动指定颜色。'],
     sources:[
-      {label:'v2.4.0 发行页与下载',url:'https://github.com/xxkingstuggle/tintpane/releases/tag/v2.4.0'},
+      {label:'v2.5.0 发行页与下载',url:'https://github.com/xxkingstuggle/tintpane/releases/tag/v2.5.0'},
       {label:'GitHub 开源仓库',url:'https://github.com/xxkingstuggle/tintpane'}
     ],
     downloads:[
-      {label:'Tintpane Chrome MV3 扩展包',platform:'Chrome / Edge / Brave (MV3)',version:'v2.4.0',size:'48 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/tintpane/releases/download/v2.4.0/tintpane-v2.4.0.zip',primary:true,note:'公开发行版，解压后在 chrome://extensions 加载'}
+      {label:'Tintpane Chrome MV3 扩展包',platform:'Chrome / Edge / Brave (MV3)',version:'v2.5.0',size:'30 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/tintpane/releases/download/v2.5.0/Tintpane-2.5.0.zip',primary:true,note:'公开发行版，解压后在 chrome://extensions 加载'}
     ],
     highlights:[
       {title:'按需动态注册与幂等防循环内核',body:'按启用域名动态注册脚本且全量 IIFE 封装防重入叠加；MutationObserver 内置重入锁与 1 秒速率熔断，既可毫秒级夺回 SPA 覆写的 theme-color，又杜绝死循环。'},
@@ -395,7 +398,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {step:'03',title:'随时还原或导出配置',description:'任何时候关闭站点开关，立即恢复网页原生 theme-color，不留持久化污染。',detail:'配置保存在本地 storage，支持完整备份恢复。'}
     ],
     specs:[
-      {label:'公开版本',value:'v2.4.0（2.5.0 分支已验证待发版）'},
+      {label:'公开版本',value:'v2.5.0 / 2026-11-26'},
       {label:'扩展架构',value:'Chrome Manifest V3 · Dynamic Content Scripts'},
       {label:'配置模型',value:'域名树前缀继承（含公共后缀防护）+ 双向别名同步'},
       {label:'窗口检测',value:'standalone / minimal-ui / window-controls-overlay'},
@@ -517,16 +520,16 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     headline:'让今天的目标，变成愿意点开的卡片。',
     summary:'HabitBloom 是一个以本地数据为核心的 SwiftUI 习惯打卡应用，包含习惯卡片、提醒、统计、交互式 Widget 与可选的 Cloudflare 快照备份。重点不在把功能堆满，而是把记录、小组件和数据回并组成完整的使用路径。',
     platforms:['iPhone / iPad（SwiftUI）','Mac Catalyst','WidgetKit'],platformsLabel:'iOS · iPadOS · Mac',
-    statusBadge:'v1.0.0 源码公开',statusTone:'source',
-    latestVersion:'v1.0.0（开源源码版）',releaseDate:'2026-11-24',
-    availabilitySummary:'GitHub 仓库已正式转为 Public 并发布 v1.0.0 源码 Release，完整公开 SwiftUI、SwiftData、WidgetKit 与 Cloudflare Worker / Durable Objects 工程，可通过 Xcode 自行编译运行。',
+    statusBadge:'v1.1.0 源码公开',statusTone:'source',
+    latestVersion:'v1.1.0（开源源码版）',releaseDate:'2026-11-26',
+    availabilitySummary:'GitHub 仓库已发布 v1.1.0 源码 Release，完整公开 SwiftUI、SwiftData、Mac Catalyst、WidgetKit 与加固版 Cloudflare Worker / Durable Objects 工程，可通过 Xcode 自行编译运行。',
     availabilityNotice:'项目以完整 Xcode 开源工程形式分发。远程快照服务（Cloudflare Worker / Durable Objects）为可选模块，未部署远端时仍可作为纯本地习惯打卡应用完整运行。',
     repoUrl:'https://github.com/xxkingstuggle/HabitBloom',repoVisibility:'public',
-    releasesUrl:'https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0',
+    releasesUrl:'https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.1.0',
     articleSlug:'habitbloom-habit-tracker',articleTitle:'HabitBloom：从习惯卡片到可交互 Widget 的工程实践',
     icon:habitbloomIcon,screenshot:habitbloomShot,
     screenshotAlt:'HabitBloom 原生 SwiftUI 今日习惯打卡卡片、连续天数统计与 Widget 快照状态界面',
-    screenshotCaption:'HabitBloom v1.0.0 原生运行界面：左侧为 SwiftData 习惯分类与 Cloudflare 快照同步状态，右侧为今日习惯打卡卡片、7 日火花线与完成率面板。',
+    screenshotCaption:'HabitBloom v1.1.0 原生运行界面：左侧为 SwiftData 习惯分类与 Cloudflare 快照同步状态，右侧为今日习惯打卡卡片、7 日火花线与完成率面板。',
     interfaceHeading:'从一张卡片开始。',
     galleryKicker:'NATIVE SWIFTUI & WIDGETKIT · 真实界面预览',
     galleryHeading:'本地 SwiftData 秒级打卡，跨进程快照实时同步。',
@@ -554,9 +557,9 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'MonthCalendarView 历史补记 · App Group 共享容器 · Cloudflare DO 远端快照降级'
       }
     ],
-    verifiedAt:'2026-11-26（主干完成 Worker 安全门禁、双通道时间戳仲裁、Mac Catalyst 桌面化，双平台编译与本机实机拉起验收通过）',
-    developmentVersion:'v1.0.0+ · SwiftUI + Mac Catalyst + WidgetKit + 加固版 Cloudflare Worker',
-    installedVersion:'源码公开版（iOS Simulator / Mac Catalyst 双平台 0 错编译、Core Smoke/Stress 与 Worker 单测全绿）',
+    verifiedAt:'2026-11-26（v1.1.0 完成 Worker 安全门禁、SwiftData 回退容错、Mac Catalyst 桌面化与关于卡片，双平台编译与全部单测全绿并已发布）',
+    developmentVersion:'v1.1.0 · SwiftUI + Mac Catalyst + WidgetKit + 加固版 Cloudflare Worker',
+    installedVersion:'源码公开版 v1.1.0（Mac Catalyst 本地已签装验证，Core Smoke/Stress 与 Worker 5/5 单测全绿）',
     contribution:'我负责产品范围、交互取舍和客户端/Widget/Worker 数据路径的组织，使用 AI 工具协助开发与代码审查。源码里的第三方平台能力归 Apple、Cloudflare 所有；实际运行结果以构建、测试和真机核验为准。',
     limitations:[
       '当前以 Xcode 源码工程与 GitHub Release 源码包形式分发，暂未上架 App Store。',
@@ -564,7 +567,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       'Widget 刷新频率遵循 iOS WidgetKit 系统时间线预算，在应用启动与小组件交互时触发增量回并。'
     ],
     sources:[
-      {label:'v1.0.0 源码 Release',url:'https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.0.0'},
+      {label:'v1.1.0 源码 Release',url:'https://github.com/xxkingstuggle/HabitBloom/releases/tag/v1.1.0'},
       {label:'GitHub 开源仓库',url:'https://github.com/xxkingstuggle/HabitBloom'},
       {label:'工程实践文章',url:'/posts/habitbloom-habit-tracker/'}
     ],
@@ -590,7 +593,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {label:'远程选项',value:'Cloudflare Workers · Durable Objects'},
       {label:'构建',value:'Xcode · iOS Simulator · Mac Catalyst'},
       {label:'自动化检查',value:'HabitCore Smoke & Stress + Worker 5 组安全并发单测 + iOS/Mac Catalyst 双平台编译'},
-      {label:'开源状态',value:'Public (MIT License) · v1.0.0 已发布'},
+      {label:'开源状态',value:'Public (MIT License) · v1.1.0 已发布'},
       {label:'分发状态',value:'提供完整 Xcode 源码工程；暂未分发签名 IPA'}
     ],
     faq:[
@@ -605,16 +608,16 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     headline:'压暗刺眼壁纸，也把视线聚焦回当前窗口。',
     summary:'DimWallpaper 是用纯 Swift + AppKit + SwiftUI 编写的零依赖 macOS 原生菜单栏工具。既能在 CGWindowLevelForKey(.desktopWindow) + 1 夹缝为每块显示器挂载全穿透壁纸压暗层（保留桌面图标 100% 原亮，5%–80% 无级调节与色温滤镜），也在主干新增了独立「专注遮罩模式（Focus Mode，类 HazeOver）」：保留当前前台应用或最前单窗高亮，柔和压暗后台窗口，并支持独立控制顶部菜单栏与 Dock 零重叠分条压暗、双全局热键与原生毛玻璃控制中心，全程无需录屏或辅助功能权限。',
     platforms:['macOS 13.0+ · Apple Silicon'],platformsLabel:'macOS · AppKit',
-    statusBadge:'v1.0.0 公开发布',statusTone:'release',latestVersion:'v1.0.0',releaseDate:'2026-11-24',
-    availabilitySummary:'公开提供 v1.0.0 macOS 应用压缩包（ZIP）与 MIT 开源仓库；专注遮罩（Focus Mode）、菜单栏/Dock 精细压暗与三标签页毛玻璃控制中心已在本地主干完成双屏动态验收，待下一版本统一打包发布。',
+    statusBadge:'v2.0.0 公开发布',statusTone:'release',latestVersion:'v2.0.0',releaseDate:'2026-11-26',
+    availabilitySummary:'公开提供 v2.0.0 macOS 应用压缩包（ZIP）、SHA-256 校验清单与 MIT 开源仓库；完整内置壁纸压暗、Focus Mode v2 专注遮罩、3 档双屏策略（默认每屏保留最前窗口）、全屏视频豁免与零渗黑菜单栏/Dock 分条压暗。',
     availabilityNotice:'应用采用本地 ad-hoc 签名（未公证），首次打开如遇系统拦截可在「系统设置 → 隐私与安全性」中点击仍要打开。',
     repoUrl:'https://github.com/xxkingstuggle/dim-wallpaper',repoVisibility:'public',
-    releasesUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v1.0.0',
-    checksumsUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v1.0.0/SHA256SUMS.txt',
+    releasesUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v2.0.0',
+    checksumsUrl:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v2.0.0/SHA256SUMS.txt',
     articleSlug:'dim-wallpaper-macos-desktop-overlay',articleTitle:'DimWallpaper：从桌面壁纸黑纱到类 HazeOver 专注遮罩与菜单栏/Dock 零重叠压暗',
     icon:dimWallpaperIcon,screenshot:dimWallpaperShot,
-    screenshotAlt:'DimWallpaper v1.0.0 macOS 菜单栏控制面板与桌面壁纸压暗前后实景对比',
-    screenshotCaption:'DimWallpaper v1.0.0 真实运行预览：菜单栏弹窗无级调节 55% 遮罩浓度，左侧亮色壁纸被柔和压暗，而桌面 Finder 图标与文字依然保持 100% 原始清晰度。',
+    screenshotAlt:'DimWallpaper v2.0.0 macOS 菜单栏控制面板与壁纸压暗/专注遮罩实景对比',
+    screenshotCaption:'DimWallpaper v2.0.0 真实运行预览：支持壁纸压暗与类 HazeOver 专注遮罩双引擎、每屏保留最前窗口双屏策略、全屏视频自动豁免与桌面图标 100% 原亮保留。',
     interfaceHeading:'只压暗壁纸，不遮挡桌面图标。',
     galleryKicker:'MENUBAR & CGWINDOWLEVEL · 原生图层控制',
     galleryHeading:'卡在壁纸与桌面图标之间的 68 KB 原生薄纱。',
@@ -640,20 +643,19 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'ignoresMouseEvents = true · .canJoinAllSpaces · didChangeScreenParameters 热插拔重建'
       }
     ],
-    verifiedAt:'2026-11-26（主干 16/16 Swift 核心单测与双屏 WindowServer 动态实测通过：零重叠分条压暗、空闲 CPU 0.0%；公开包维持 v1.0.0）',
-    developmentVersion:'v2.0-dev（壁纸调暗 + 专注遮罩 + 菜单栏/Dock 压暗 + 原生毛玻璃控制中心）',
-    installedVersion:'macOS arm64 本地常驻验证通过（空闲 CPU 0.0% / RSS 73.0 MB）',
+    verifiedAt:'2026-11-26（v2.0.0 23/23 Swift 核心单测与双屏 WindowServer 动态实测通过并公开发布：零重叠菜单栏截断、台前调度退场、全屏视频豁免与空闲 CPU 0.0%）',
+    developmentVersion:'v2.0.0（壁纸调暗 + Focus Mode v2 + 3 档多屏策略 + 全屏视频豁免 + 菜单栏/Dock 零重叠压暗）',
+    installedVersion:'macOS arm64 v2.0.0 常驻验证通过（空闲 CPU 0.0%）',
     contribution:'我独立完成了 CGWindowLevel 桌面图层方案、专注遮罩精确 Z 序锚定与菜单栏/Dock 零重叠几何分割、SwiftUI/AppKit 毛玻璃控制中心、双 Carbon 全局热键及 SMAppService 登录项管理。',
     limitations:[
-      '公开下载的 v1.0.0 安装包仅包含桌面壁纸调暗功能；专注遮罩（Focus Mode）、菜单栏/Dock 分条压暗与毛玻璃控制中心位于最新主干，待下一 Release 打包同步。',
       '对标准 .desktopWindow 层壁纸及常规应用窗口均可无损压暗，不调用硬件 Gamma/亮度 API 且无需录屏或辅助功能权限；高于 .desktopIconWindow 的自定义桌面挂件与系统通知中心保持可见不遮挡。'
     ],
     sources:[
-      {label:'v1.0.0 发行页与安装包',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v1.0.0'},
+      {label:'v2.0.0 发行页与安装包',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v2.0.0'},
       {label:'GitHub 开源仓库',url:'https://github.com/xxkingstuggle/dim-wallpaper'}
     ],
     downloads:[
-      {label:'DimWallpaper macOS 应用包',platform:'macOS 13+ · Apple Silicon',version:'v1.0.0',size:'68 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v1.0.0/DimWallpaper-1.0.0-macOS.zip',primary:true,note:'解压后将 DimWallpaper.app 拖入应用程序即可'}
+      {label:'DimWallpaper macOS 应用包',platform:'macOS 13+ · Apple Silicon',version:'v2.0.0',size:'606 KB',format:'ZIP',url:'https://github.com/xxkingstuggle/dim-wallpaper/releases/download/v2.0.0/DimWallpaper-2.0.0-macOS.zip',primary:true,note:'解压后将 DimWallpaper.app 拖入应用程序即可'}
     ],
     highlights:[
       {title:'壁纸压暗 + 后台专注遮罩双层沉浸',body:'壁纸层固定在 .desktopWindow + 1 保留桌面图标原亮；主干新增专注遮罩层（Focus Mode），按只读窗口栈精确锚定当前前台应用窗口组或最前单窗下方，两者可独立或叠加使用。'},
@@ -672,11 +674,11 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {step:'03',title:'开机自启与零空转待命',description:'开启「登录时启动」由 macOS 原生 SMAppService.mainApp 托管；暂停或浅色待命时自动卸载遮罩释放显存。',detail:'不改壁纸源文件，也不修改硬件显示 Gamma。'}
     ],
     specs:[
-      {label:'公开版本',value:'v1.0.0 / 2026-11-24（本地主干已升级至 v2 专注遮罩架构）'},
+      {label:'公开版本',value:'v2.0.0 / 2026-11-26'},
       {label:'技术栈',value:'Swift 6 · AppKit · SwiftUI · CoreGraphics · Carbon · SMAppService'},
       {label:'窗口层级',value:'壁纸 desktopWindow+1 · 专注精确 Z 序 · 菜单栏 statusBar+1 / Dock dock+1'},
       {label:'权限与硬件边界',value:'零录屏权限 · 零辅助功能权限 · 零硬件 Gamma/色表修改'},
-      {label:'自动化与动态验证',value:'16/16 Swift 核心单测 · 双屏 WindowServer 零重叠实测 · 空闲 CPU 0.0%'},
+      {label:'自动化与动态验证',value:'23/23 Swift 核心单测 · 双屏 WindowServer 零重叠/全屏豁免实测 · 空闲 CPU 0.0%'},
       {label:'系统要求与许可',value:'macOS 13.0+ (Ventura 及以上) · MIT License'}
     ],
     faq:[
@@ -691,7 +693,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     headline:'用精确的坐标网格与快捷键，重排桌面上的每一扇窗。',
     summary:'FrameLit 是一个用纯 Swift 与 AppKit / Accessibility API 实现的 macOS 窗口管理器工程。它支持半屏、三分屏、四分屏、中心聚焦及跨显示器投送等丰富布局指令，内置可调节精度的 Custom Layout Canvas（6×3 至 48×24 坐标网格编辑器），并配备了 10MiB 自动轮转、零主线程阻塞且自动剥离敏感路径的异步诊断日志系统。',
     platforms:['macOS 14+ · Apple Silicon & Intel','Swift · AppKit · AXUIElement'],platformsLabel:'macOS · Swift · Accessibility',
-    statusBadge:'v1.3 架构与原型案例',statusTone:'source',latestVersion:'v1.3（本地工程版）',releaseDate:'2026-11-24',
+    statusBadge:'v0.2.0 私有工程案例',statusTone:'source',latestVersion:'v0.2.0（本地工程版）',releaseDate:'2026-11-26',
     availabilitySummary:'当前作为 macOS 窗口布局算法、自定义网格编辑器与原生 UI 重构的工程案例展示。因早期兼容性研究涉及第三方二进制资源比对，按开源合规原则（PROVENANCE.md）保持仓库私有，不分发二进制安装包。',
     availabilityNotice:'本项目全部 77 项图标与视觉资产已由原创生成式图稿替换，Swift 源码为独立实现；但在彻底完成历史非图像资源（如本地化词条与命令表）的 clean-room 替换前，仅展示架构设计与界面重构成果。',
     repoUrl:'https://github.com/xxkingstuggle/FrameLift',repoVisibility:'private',
@@ -705,8 +707,8 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
     gallery:[
       {
         src:'/media/framelit/commands-dark.webp',
-        width:1600,
-        height:1369,
+        width:1760,
+        height:1400,
         alt:'FrameLit 深色模式下的窗口布局命令列表与 6x3 至 48x24 坐标网格编辑器',
         kicker:'01 · COMMANDS & GRID WORKSPACE',
         title:'窗口布局命令列表与 6×3 至 48×24 坐标网格编辑器',
@@ -715,8 +717,8 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       },
       {
         src:'/media/framelit/prefs-dark.webp',
-        width:1600,
-        height:1369,
+        width:1760,
+        height:1400,
         alt:'FrameLit 深色模式偏好设置面板',
         kicker:'02 · PREFERENCES, GAPS & SAFE AREAS',
         title:'窗口边距、Dock / 菜单栏安全区与偏好同步控制',
@@ -725,8 +727,8 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       },
       {
         src:'/media/framelit/commands-light.webp',
-        width:1600,
-        height:1169,
+        width:1760,
+        height:1400,
         alt:'FrameLit 浅色模式指令面板与网格画布',
         kicker:'03 · SEMANTIC LIGHT & DARK TOKENS',
         title:'语义化深浅双主题与 77 项重绘矢量图标',
@@ -744,8 +746,8 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
         mechanism:'48×24 高精度网格吸附 · 归一化分数坐标 · 即时持久化'
       }
     ],
-    verifiedAt:'2026-11-26（13 组回归套件全绿、AX 超时与零空转加固、浅/深色 AppKit 视觉快照验收通过；遵守 PROVENANCE 保持私有）',
-    developmentVersion:'v1.3+ · Swift 原生实现 + 13 组回归套件 + 77 项重绘视觉资产',
+    verifiedAt:'2026-11-26（v0.2.0 880×700 顶栏重塑、13 组回归套件全绿、AX 超时与零空转加固、浅/深色 AppKit 视觉快照验收通过；遵守 PROVENANCE 保持私有）',
+    developmentVersion:'v0.2.0 · Swift 原生实现 + 880×700 顶栏导航重塑 + 13 组回归套件 + 77 项重绘视觉资产',
     installedVersion:'本地验证通过（空闲 CPU 0.0%）；遵守 PROVENANCE 合规边界暂不公开分发',
     contribution:'我完成了 Swift 窗口几何计算引擎、Custom Layout Canvas 网格编辑器、深浅色 UI 系统重构、77 项原创图标资产管线（prepare_artwork.swift）以及异步轮转脱敏诊断日志模块的设计与实现。',
     limitations:['依据仓库 docs/PROVENANCE.md 的合规门禁，在完成全部历史 plist / 本地化资源清理与 Git 历史剥离前，不对外开放仓库或提供 DMG 下载。','部分拒绝响应标准 AXUIElement Size/Position 写操作的非标全屏游戏窗口不支持强制缩放。'],
@@ -771,7 +773,7 @@ export const SOFTWARE_PRODUCTS:SoftwareProduct[] = [
       {step:'03',title:'执行三步坐标补偿对齐',description:'触发快捷键或菜单栏命令时，按 Position → Size → Position 顺序写入 AX 属性，消除跨屏缩放偏差。',detail:'对被排除应用名单自动跳过干预，布局后手动拖动不回弹。'}
     ],
     specs:[
-      {label:'工程版本',value:'v1.3+（本地验证构建 · 空闲 CPU 0.0%）'},
+      {label:'工程版本',value:'v0.2.0 (build 12 · 本地验证构建 · 空闲 CPU 0.0%)'},
       {label:'核心技术',value:'Swift · AppKit · ApplicationServices (AXUIElement)'},
       {label:'网格精度',value:'支持 6×3、12×6、24×12、48×24 四档归一化网格'},
       {label:'日志配额',value:'2 × 5 MiB（总上限 10 MiB 后台异步轮转 + 隐私脱敏）'},
