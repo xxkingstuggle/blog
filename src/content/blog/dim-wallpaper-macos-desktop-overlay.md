@@ -1,8 +1,8 @@
 ---
 title: 嫌深色模式下亮色壁纸太晃眼，我用 200 行 Swift 在壁纸和桌面图标之间塞了一层黑纱
 pubDate: 2026-11-11
-updatedDate: 2026-11-24
-description: 白天好看的亮色风景壁纸一到夜里就刺眼，但我又不想把桌面文件夹图标也一起蒙灰。于是我利用 CoreGraphics 窗口层级夹缝，写了个只有 68KB 的菜单栏小工具 DimWallpaper。
+updatedDate: 2026-11-26
+description: 从桌面壁纸与图标之间的 CGWindowLevel 黑纱，到类 HazeOver 后台专注遮罩与菜单栏/Dock 零重叠分条压暗：零权限、零硬件 Gamma 改动构建轻量 macOS 原生菜单栏工具 DimWallpaper。
 kicker: MACOS APPKIT · COREGRAPHICS WINDOW LEVEL
 kind: project
 presentation: article
@@ -77,4 +77,41 @@ window.level = NSWindow.Level(rawValue: levelRaw)
 
 至于外接显示器插拔、改分辨率或者笔记本合盖休眠再唤醒的场景，程序也会实时监听 `didChangeScreenParametersNotification` 和 `didWakeNotification`，按照每块屏幕的 `CGDirectDisplayID` 自动重算并铺满遮罩尺寸，绝不会在副屏上留下一截尴尬的白边。
 
-整个项目的源码和打好的 `.app` 安装包都已经放在了 [DimWallpaper 作品页](/software/dim-wallpaper/) 和 [DimWallpaper v1.0.0 Release](https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v1.0.0) 上。如果你也有几张舍不得换掉的亮色壁纸，晚上不妨拿这层 68 KB 的黑纱救个急。
+## 后续演进：从壁纸压暗到专注遮罩（Focus Mode）
+
+用了一段时间后我发现，只压暗壁纸解决了一半问题：真正多窗口、双屏干活时，桌面经常早就被铺满了，真正抢走视线的是旁边亮晃晃的聊天窗口、浏览器和副屏应用。但市面上不少同类专注工具要么收费重，要么依赖辅助功能权限或全局整屏覆盖，一不小心就把顶部下拉菜单、Dock 甚至屏幕色温一锅端了。
+
+于是我沿着同一条设计底线——**零第三方依赖、零录屏权限、零辅助功能权限、绝不调用硬件 Gamma/色表修改 API**——把 DimWallpaper 升级成了「壁纸调暗 + 后台专注遮罩（类 HazeOver）」双层原生架构，两者可以各自开关，也可以叠加进入「双重沉浸」模式。
+
+### 1. 只读窗口栈 + 精确 Z 序锚定
+
+专注遮罩的核心难点是把半透明黑纱精准插到**当前前台窗口的正下方**，而不是粗暴盖在最顶层。
+
+我通过只读的 `CGWindowListCopyWindowInfo` 读取当前在屏窗口列表，过滤掉自进程窗口、非标准层和微小辅助窗，并按主显示器高度把 CoreGraphics 的左上角坐标系翻回 AppKit 的左下角坐标系；随后再借助 `NSWindow.order(.below, relativeTo:)` 把每块屏幕的主专注遮罩精准锚定到目标窗口下方：
+
+- **当前前台应用模式**：锚定该应用最前一组连续窗口的底部，切分屏或多文档编辑时同一应用的关联窗口保持同步高亮，同时避免被夹在中间的第三方后台窗口误亮。
+- **仅最前单窗模式**：锚定最前单张标准窗口正下方，只留眼前这一扇窗原亮。
+- **非 `.regular` 瞬态进程免疫与自进程保活**：macOS 的系统通知框（`UserNotificationCenter`）或菜单栏辅助工具偶尔会短暂成为前台进程却没有 `layer=0` 标准窗，锚定逻辑会自动穿透回退到顶层标准应用窗；点开 DimWallpaper 自己的控制中心或 Spotlight 调参时，也会维持上一外部前台应用高亮，方便一边拖滑杆一边实时看效果。
+
+### 2. 菜单栏与 Dock 的零重叠分条压暗
+
+默认情况下，专注遮罩保留顶部菜单栏和程序坞（Dock）原色；但如果深夜写作想要彻底沉浸，也可以独立开启「压暗顶部菜单栏」或「压暗程序坞 Dock」。
+
+这里最容易踩的坑是直接拉高一整张遮罩的窗口层级——一旦和主遮罩发生垂直重叠，交界处立刻出现一道刺眼的双重压暗黑带，而且还会把点击菜单栏弹出的下拉菜单一起盖暗。为此我按每块显示器的 `screen.frame` 与 `visibleFrame` 做**无重叠几何分条分割**：
+
+| 遮罩分区 | CoreGraphics 层级 | 覆盖区域与避让规则 |
+|---|---|---|
+| 桌面壁纸遮罩 | `CGWindowLevelForKey(.desktopWindow) + 1` | 全屏压暗壁纸，严格低于桌面图标 |
+| 专注主遮罩 | `layer = 0`（`order(.below, relativeTo:)`） | 仅覆盖扣除菜单栏与 Dock 后的 `visibleFrame` 内容区 |
+| 顶部菜单栏遮罩条 | `CGWindowLevelForKey(.statusBar) + 1` | 仅覆盖顶部状态栏带，严格低于 `.popUpMenu`，下拉菜单保持原亮 |
+| 程序坞 Dock 遮罩条 | `CGWindowLevelForKey(.dock) + 1` | 自动适配底/左/右 Dock 方位，低于 `.mainMenu`，并自动扣减伸入 Dock 区的前台窗轮廓 |
+
+在 `1920×1080` 外接屏 + `1470×956` 内建视网膜屏的双显示器 WindowServer 动态实测中，同时开启壁纸压暗、专注遮罩、双屏菜单栏条与主屏底部 Dock 条时，全部专注遮罩窗口在系统合成器中的两两交集面积精确为 `0`，彻底消除接缝重叠与黑带。
+
+### 3. 原生毛玻璃控制中心、双热键与零空转收口
+
+交互层面，菜单栏改为左键弹出三标签页原生毛玻璃 `NSPopover` 控制中心（壁纸调暗 / 专注遮罩 / 通用与热键），顶部提供双层桌面实时缩略预览，支持中性黑/暖夜/深蓝夜色温滤镜、逐显示器独立豁免与当前外部前台应用一键豁免；右键继续保留极速开关菜单，并接入零权限 Carbon 双全局热键（壁纸默认 `⌃⌥⌘D`、专注默认 `⌃⌥⌘F`），同时完整适配浅/深色与系统「降低透明度」「减弱动态效果」。
+
+资源开销上，无论是壁纸调暗暂停、浅色待命，还是专注遮罩关闭、命中豁免应用，淡出结束后都会立即停止轮询并调用 `orderOut` 卸载遮罩窗口，不留无意义的 WindowServer 离屏合成缓冲。本机最新主干通过了 16 项 `DimWallpaperCoreTests` 核心单测，常驻实测空闲 CPU `0.0%`（RSS 约 `73 MB`）。
+
+目前 v1.0.0 壁纸压暗公开包已发布在 [DimWallpaper 作品页](/software/dim-wallpaper/) 与 [DimWallpaper v1.0.0 Release](https://github.com/xxkingstuggle/dim-wallpaper/releases/tag/v1.0.0) 上；上述专注遮罩（Focus Mode）、菜单栏/Dock 精细压暗与毛玻璃控制中心已在本地仓库主干完成双屏动态验收，将在下一版本随预编译包一并发布。如果你既舍不得换掉心爱的亮色壁纸，又希望夜里写代码时周围的窗口安静下来，这层轻巧的黑纱刚好够用。

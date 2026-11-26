@@ -839,7 +839,7 @@ test('登录后后台页面由 Worker 鉴权后加载独立的静态界面资源
 
 test('总览 API 只向已登录管理员提供真实汇总与内容元数据', async () => {
 	const { db, env, ctx, authedRequest } = await createTestEnv();
-	db.prepare("INSERT INTO drafts (id, slug, title, body, status, source_path) VALUES ('draft-overview', 'overview-note', 'Overview note', 'private body', 'draft', 'src/content/blog/overview-note.md')").run();
+	db.prepare("INSERT INTO drafts (id, slug, title, body, status, source_path, updated_at) VALUES ('draft-overview', 'overview-note', 'Overview note', 'private body', 'draft', 'src/content/blog/overview-note.md', datetime('now', '+1 day'))").run();
 	db.prepare("INSERT INTO comments (id, slug, author_name, body, status) VALUES ('comment-overview', 'overview-note', 'Reader', 'A pending note', 'pending')").run();
 	db.prepare("INSERT INTO links (id, name, url, status) VALUES ('link-overview', 'Friend', 'https://example.com', 'active')").run();
 
